@@ -74,6 +74,39 @@ export class MCPServiceError extends EngageError {
   }
 }
 
+export class FirmNotFoundError extends EngageError {
+  constructor(firmId: string) {
+    super(
+      `Firm not found: ${firmId}`,
+      'FIRM_NOT_FOUND',
+      404,
+      { firmId }
+    );
+  }
+}
+
+export class DuplicateFirmError extends EngageError {
+  constructor(reason: string) {
+    super(
+      `Duplicate firm registration: ${reason}`,
+      'DUPLICATE_FIRM',
+      409,
+      { reason }
+    );
+  }
+}
+
+export class InvalidFirmDataError extends EngageError {
+  constructor(reason: string) {
+    super(
+      `Invalid firm data: ${reason}`,
+      'INVALID_FIRM_DATA',
+      400,
+      { reason }
+    );
+  }
+}
+
 export function handleError(error: unknown, defaultMessage: string = 'An unexpected error occurred'): EngageError {
   if (error instanceof EngageError) {
     return error;

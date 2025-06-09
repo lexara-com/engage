@@ -9,7 +9,7 @@
     "dev:admin": "wrangler dev --config wrangler-admin.toml",
     "build": "tsc && wrangler build",
     "build:ui": "astro build",
-    "build:admin": "tsc && wrangler build --config wrangler-admin.toml",
+    "build:admin": "wrangler build --config wrangler-admin.toml",
     "preview:ui": "astro preview",
     "deploy": "wrangler deploy",
     "deploy:admin": "wrangler deploy --config wrangler-admin.toml",

@@ -9,6 +9,7 @@ import { ClaudeAgent } from './claude-agent';
 
 // Export Durable Object classes
 export { ConversationSession } from '../durable-objects/conversation-session';
+export { FirmRegistry } from '../durable-objects/firm-registry';
 
 export default {
   async fetch(request: Request, env: Env, _ctx: ExecutionContext): Promise<Response> {

@@ -47,7 +47,9 @@
       "Bash(git push:*)",
       "Bash(gh repo view:*)",
       "Bash(git checkout:*)",
-      "WebFetch(domain:blog.cloudflare.com)"
+      "WebFetch(domain:blog.cloudflare.com)",
+      "Bash(wrangler vectorize list:*)",
+      "Bash(nslookup:*)"
     ],
     "deny": []
   }

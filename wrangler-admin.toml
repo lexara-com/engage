@@ -11,32 +11,32 @@ route = { pattern = "admin.lexara.app/*", zone_name = "lexara.app" }
 [env.dev]
 name = "engage-admin-api-dev"
 route = { pattern = "admin.dev.lexara.app/*", zone_name = "lexara.app" }
-vars = { 
-  ENVIRONMENT = "development", 
-  LOG_LEVEL = "debug",
-  CORS_ORIGINS = "https://dev.lexara.app",
-  AUTH0_DOMAIN = "lexara-dev.us.auth0.com"
-}
+
+[env.dev.vars]
+ENVIRONMENT = "development"
+LOG_LEVEL = "debug"
+CORS_ORIGINS = "https://dev.lexara.app"
+AUTH0_DOMAIN = "lexara-dev.us.auth0.com"
 
 [env.test] 
 name = "engage-admin-api-test"
 route = { pattern = "admin.test.lexara.app/*", zone_name = "lexara.app" }
-vars = { 
-  ENVIRONMENT = "test", 
-  LOG_LEVEL = "info",
-  CORS_ORIGINS = "https://test.lexara.app",
-  AUTH0_DOMAIN = "lexara-test.us.auth0.com"
-}
+
+[env.test.vars]
+ENVIRONMENT = "test"
+LOG_LEVEL = "info"
+CORS_ORIGINS = "https://test.lexara.app"
+AUTH0_DOMAIN = "lexara-test.us.auth0.com"
 
 [env.production]
 name = "engage-admin-api-production"
 route = { pattern = "admin.lexara.app/*", zone_name = "lexara.app" }
-vars = { 
-  ENVIRONMENT = "production", 
-  LOG_LEVEL = "warn",
-  CORS_ORIGINS = "https://lexara.app",
-  AUTH0_DOMAIN = "lexara.us.auth0.com"
-}
+
+[env.production.vars]
+ENVIRONMENT = "production"
+LOG_LEVEL = "warn"
+CORS_ORIGINS = "https://lexara.app"
+AUTH0_DOMAIN = "lexara.us.auth0.com"
 
 # Durable Object bindings
 [[durable_objects.bindings]]
@@ -85,15 +85,15 @@ preview_bucket_name = "engage-admin-uploads-preview"
 binding = "ADMIN_ANALYTICS"
 dataset = "admin_api_usage"
 
-# Limits and performance
-[limits]
-cpu_ms = 30000  # 30 seconds for complex admin operations
+# Limits and performance (disabled for free plan)
+# [limits]
+# cpu_ms = 30000  # 30 seconds for complex admin operations
 
-# Build configuration
-[build]
-command = "npm run build:admin"
-cwd = "."
-watch_dir = "src"
+# Build configuration - skip for now
+# [build]
+# command = "npm run build:admin"
+# cwd = "."
+# watch_dir = "src"
 
 # Rate limiting and security (applied to all environments)
 [vars]
