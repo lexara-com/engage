@@ -1,0 +1,135 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    font-family: 'Figtree', 'Inter', system-ui, sans-serif;
+  }
+  
+  body {
+    @apply text-lexara-navy antialiased;
+  }
+  
+  /* Remove default button styling */
+  button {
+    @apply focus:outline-none focus:ring-2 focus:ring-lexara-blue-gray focus:ring-offset-2;
+  }
+  
+  /* Input styling */
+  input, textarea {
+    @apply focus:outline-none focus:ring-2 focus:ring-lexara-blue-gray focus:border-lexara-blue-gray;
+  }
+}
+
+@layer components {
+  /* Professional button styles */
+  .btn-primary {
+    @apply inline-flex items-center px-4 py-2 text-sm font-medium rounded-md text-white bg-lexara-navy hover:bg-lexara-slate transition-colors duration-200 focus:ring-2 focus:ring-lexara-blue-gray focus:ring-offset-2;
+  }
+  
+  .btn-secondary {
+    @apply inline-flex items-center px-4 py-2 text-sm font-medium rounded-md text-lexara-navy bg-white border border-lexara-blue-gray hover:bg-lexara-gray-50 transition-colors duration-200 focus:ring-2 focus:ring-lexara-blue-gray focus:ring-offset-2;
+  }
+  
+  /* Chat-specific components */
+  .chat-container {
+    @apply flex flex-col h-full max-w-4xl mx-auto bg-white shadow-lg sm:rounded-lg overflow-hidden;
+  }
+  
+  .chat-header {
+    @apply bg-lexara-navy text-white px-4 sm:px-6 py-3 sm:py-4 border-b border-lexara-blue-gray;
+  }
+  
+  .chat-messages {
+    @apply flex-1 overflow-y-auto p-3 sm:p-4 space-y-3 sm:space-y-4 bg-lexara-gray-50;
+  }
+  
+  .chat-input-area {
+    @apply bg-white border-t border-lexara-blue-gray p-3 sm:p-4;
+  }
+  
+  .message-bubble {
+    @apply max-w-xs sm:max-w-sm md:max-w-md rounded-lg px-3 sm:px-4 py-2 text-sm leading-relaxed;
+  }
+  
+  .message-user {
+    @apply bg-lexara-navy text-white ml-auto;
+  }
+  
+  .message-ai {
+    @apply bg-white text-lexara-navy border border-lexara-blue-gray mr-auto;
+  }
+  
+  .message-system {
+    @apply bg-lexara-beige text-lexara-slate text-xs text-center mx-auto px-3 py-1 rounded-full;
+  }
+  
+  /* Typing indicator */
+  .typing-indicator {
+    @apply flex items-center space-x-1 text-lexara-slate text-sm;
+  }
+  
+  .typing-dot {
+    @apply w-2 h-2 bg-lexara-blue-gray rounded-full animate-pulse;
+  }
+  
+  /* Professional legal disclaimer styling */
+  .legal-disclaimer {
+    @apply text-xs text-lexara-slate bg-lexara-beige border-l-4 border-lexara-blue-gray pl-4 py-2 italic;
+  }
+  
+  /* Loading states */
+  .loading-spinner {
+    @apply animate-spin w-4 h-4 border-2 border-lexara-blue-gray border-t-transparent rounded-full;
+  }
+  
+  /* Professional form styling */
+  .form-input {
+    @apply w-full px-3 py-2 border border-lexara-blue-gray rounded-md bg-white text-lexara-navy placeholder-lexara-gray-400 focus:ring-2 focus:ring-lexara-blue-gray focus:border-lexara-blue-gray transition-colors duration-200;
+  }
+  
+  .form-label {
+    @apply block text-sm font-medium text-lexara-navy mb-1;
+  }
+  
+  /* Mobile-specific input styling */
+  .form-input-mobile {
+    @apply form-input text-base; /* Prevent zoom on iOS */
+  }
+  
+  /* Responsive design utilities */
+  .container-responsive {
+    @apply w-full max-w-7xl mx-auto px-2 sm:px-4 lg:px-6 xl:px-8;
+  }
+  
+  /* Mobile-friendly touch targets */
+  .touch-target {
+    @apply min-h-[44px] min-w-[44px];
+  }
+}
+
+@layer utilities {
+  /* Professional shadows */
+  .shadow-professional {
+    box-shadow: 0 4px 6px -1px rgba(30, 43, 59, 0.1), 0 2px 4px -1px rgba(30, 43, 59, 0.06);
+  }
+  
+  .shadow-professional-lg {
+    box-shadow: 0 10px 15px -3px rgba(30, 43, 59, 0.1), 0 4px 6px -2px rgba(30, 43, 59, 0.05);
+  }
+  
+  /* Text utilities */
+  .text-balance {
+    text-wrap: balance;
+  }
+  
+  /* Animation utilities */
+  .animate-fade-in {
+    animation: fadeIn 0.5s ease-in-out;
+  }
+  
+  .animate-slide-up {
+    animation: slideUp 0.3s ease-out;
+  }
+}

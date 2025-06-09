@@ -1,0 +1,90 @@
+case_type: "personal_injury_auto"
+practice_area: "personal_injury"
+description: "Standard car accident consultation template approved by Lexara legal team"
+
+conversation_flow:
+  - turn: 1
+    user_input: "I was in a car accident and need legal help"
+    expected_ai_themes: 
+      - "expresses empathy for accident"
+      - "offers to gather information"
+      - "clarifies no legal advice provided"
+    required_elements:
+      - "acknowledges the accident"
+      - "shows willingness to help"
+      - "maintains legal boundaries"
+    
+  - turn: 2
+    user_input: "My name is {name} and I live in {city}, {state}. My phone is {phone}"
+    expected_ai_themes:
+      - "acknowledges client information"
+      - "asks about accident specifics"
+    required_elements:
+      - "confirms receipt of contact information"
+      - "requests accident details"
+    
+  - turn: 3
+    user_input: "The other driver ran a red light and hit my car yesterday at 3 PM"
+    expected_ai_themes:
+      - "inquires about injuries"
+      - "asks about documentation"
+      - "shows understanding of fault"
+    required_elements:
+      - "asks about physical injuries"
+      - "mentions police reports"
+      - "requests more details"
+
+  - turn: 4
+    user_input: "I have neck pain and went to the emergency room. The police filed a report"
+    expected_ai_themes:
+      - "acknowledges medical treatment"
+      - "asks about insurance"
+      - "inquires about damages"
+    required_elements:
+      - "shows concern for medical care"
+      - "requests insurance information"
+      - "asks about vehicle damage"
+
+  - turn: 5
+    user_input: "My car has $8000 in damage. I have State Farm and the other driver has Allstate"
+    expected_ai_themes:
+      - "summarizes key information"
+      - "mentions attorney review"
+      - "sets expectations for follow-up"
+    required_elements:
+      - "acknowledges damage amount"
+      - "mentions attorney will contact client"
+      - "provides timeline expectations"
+
+validation_criteria:
+  information_capture:
+    - client_name
+    - location
+    - accident_details
+    - fault_determination
+    - injuries
+    - medical_treatment
+    - insurance_information
+    - damages_amount
+    
+  tone_requirements:
+    - professional
+    - empathetic
+    - legally_compliant
+    
+  prohibited_content:
+    - "attorney-client privilege"
+    - "I recommend you sue"
+    - "you will win"
+    - "specific legal advice"
+    - "medical advice"
+    
+  required_disclaimers:
+    - "not legal advice"
+    - "attorney will contact"
+    
+  response_quality:
+    min_length: 50
+    max_length: 500
+    should_ask_questions: true
+    should_show_empathy: true

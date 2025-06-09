@@ -1,0 +1,168 @@
+---
+export interface Props {
+  variant?: 'inline' | 'modal' | 'footer';
+  className?: string;
+}
+
+const { variant = 'inline', className = '' } = Astro.props;
+---
+
+{variant === 'inline' && (
+  <div class={`legal-disclaimer ${className}`}>
+    <div class="flex items-start space-x-2">
+      <svg class="w-4 h-4 text-lexara-blue-gray mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+      </svg>
+      <div class="text-xs leading-relaxed">
+        <strong>Important Legal Notice:</strong> This conversation is for informational purposes only and does not create an attorney-client relationship. 
+        No confidential information should be shared until a formal attorney-client relationship is established. 
+        For specific legal advice regarding your situation, please consult with a qualified attorney.
+      </div>
+    </div>
+  </div>
+)}
+
+{variant === 'footer' && (
+  <footer class={`bg-lexara-navy text-lexara-blue-gray py-6 ${className}`}>
+    <div class="container-responsive">
+      <div class="grid md:grid-cols-2 gap-6 text-sm">
+        <div>
+          <h3 class="text-white font-semibold mb-2">Legal Notice</h3>
+          <p class="leading-relaxed">
+            This AI-powered consultation tool is designed to gather preliminary information about your legal matter. 
+            It does not provide legal advice and does not establish an attorney-client relationship. 
+            All information shared will be reviewed by qualified attorneys who will contact you within 24 hours.
+          </p>
+        </div>
+        <div>
+          <h3 class="text-white font-semibold mb-2">Privacy & Security</h3>
+          <ul class="space-y-1 leading-relaxed">
+            <li>• Your information is encrypted and secure</li>
+            <li>• Conversations are confidential</li>
+            <li>• No legal advice is provided by this system</li>
+            <li>• Professional attorney review is required</li>
+          </ul>
+        </div>
+      </div>
+      <div class="border-t border-lexara-slate mt-6 pt-4 text-xs text-center">
+        <p>Powered by <strong>Engage</strong> - Professional Legal Intake Platform</p>
+        <p class="mt-1">© 2024 Lexara. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+)}
+
+{variant === 'modal' && (
+  <div id="disclaimer-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 hidden">
+    <div class="bg-white rounded-lg shadow-professional-lg max-w-lg w-full">
+      <div class="p-6">
+        <div class="flex items-center space-x-3 mb-4">
+          <div class="w-10 h-10 bg-lexara-navy rounded-full flex items-center justify-center">
+            <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+            </svg>
+          </div>
+          <h2 class="text-lg font-semibold text-lexara-navy">Important Legal Information</h2>
+        </div>
+        
+        <div class="text-sm text-lexara-slate space-y-3 mb-6">
+          <p>
+            <strong>No Attorney-Client Relationship:</strong> This consultation tool does not create an attorney-client relationship. 
+            You are not represented by our firm until you formally retain our services through a signed agreement.
+          </p>
+          
+          <p>
+            <strong>No Legal Advice:</strong> This system provides information gathering services only. 
+            It does not provide legal advice, medical advice, or professional recommendations specific to your situation.
+          </p>
+          
+          <p>
+            <strong>Confidentiality:</strong> While your information is secure, attorney-client privilege does not apply to this initial consultation. 
+            Please avoid sharing sensitive details until a formal relationship is established.
+          </p>
+          
+          <p>
+            <strong>Professional Review:</strong> All information gathered will be reviewed by qualified attorneys. 
+            You will be contacted within 24 hours to discuss your legal matter and potential representation.
+          </p>
+        </div>
+        
+        <div class="flex space-x-3">
+          <button id="disclaimer-accept" class="btn-primary flex-1">
+            I Understand and Agree
+          </button>
+          <button id="disclaimer-decline" class="btn-secondary">
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+)}
+
+<script>
+  function initializeDisclaimerModal() {
+    const modal = document.getElementById('disclaimer-modal');
+    const acceptBtn = document.getElementById('disclaimer-accept');
+    const declineBtn = document.getElementById('disclaimer-decline');
+    
+    if (!modal || !acceptBtn || !declineBtn) return;
+    
+    // Show modal on first visit
+    const hasAgreed = localStorage.getItem('engage-disclaimer-agreed');
+    if (!hasAgreed) {
+      modal.classList.remove('hidden');
+    }
+    
+    acceptBtn.addEventListener('click', () => {
+      localStorage.setItem('engage-disclaimer-agreed', 'true');
+      modal.classList.add('hidden');
+      
+      // Focus on chat input
+      const chatInput = document.getElementById('message-input') as HTMLTextAreaElement;
+      if (chatInput) {
+        chatInput.focus();
+      }
+    });
+    
+    declineBtn.addEventListener('click', () => {
+      // Redirect away or show alternative
+      window.history.back();
+    });
+    
+    // Close on backdrop click
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        declineBtn.click();
+      }
+    });
+  }
+  
+  // Initialize when DOM is loaded
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeDisclaimerModal);
+  } else {
+    initializeDisclaimerModal();
+  }
+</script>
+
+<style>
+  /* Modal animations */
+  #disclaimer-modal {
+    transition: opacity 0.3s ease;
+  }
+  
+  #disclaimer-modal.hidden {
+    opacity: 0;
+    pointer-events: none;
+  }
+  
+  #disclaimer-modal > div {
+    transform: translateY(-20px);
+    transition: transform 0.3s ease;
+  }
+  
+  #disclaimer-modal:not(.hidden) > div {
+    transform: translateY(0);
+  }
+</style>

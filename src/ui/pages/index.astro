@@ -1,0 +1,56 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import ChatWindow from '../components/ChatWindow.astro';
+import LegalDisclaimer from '../components/LegalDisclaimer.astro';
+import type { ChatSession } from '../types/chat';
+
+// Server-side logic
+let initialSession: ChatSession | undefined;
+let sessionId: string | undefined;
+
+// Check for session ID in query params
+if (Astro.url.searchParams.has('session')) {
+  sessionId = Astro.url.searchParams.get('session') || undefined;
+  
+  // In a real implementation, you would fetch the session from your backend
+  // For now, we'll let the client handle session loading
+  try {
+    // Example: const response = await fetch(`${API_BASE}/api/chat/session/${sessionId}`);
+    // initialSession = await response.json();
+  } catch (error) {
+    console.error('Failed to load session on server:', error);
+  }
+}
+
+// SEO and meta information
+const title = 'Legal Consultation - Engage';
+const description = 'Start your confidential legal consultation with our AI-powered intake system. Get professional legal guidance tailored to your needs.';
+---
+
+<BaseLayout title={title} description={description} bodyClass="overflow-hidden">
+  <!-- Import global styles -->
+  <style>
+    @import '../styles/global.css';
+  </style>
+  
+  <!-- Pass initial data to client -->
+  <script define:vars={{ initialSession, sessionId }}>
+    if (initialSession) {
+      window.__INITIAL_SESSION__ = initialSession;
+    }
+    if (sessionId) {
+      window.__SESSION_ID__ = sessionId;
+    }
+  </script>
+  
+  <!-- Legal Disclaimer Modal -->
+  <LegalDisclaimer variant="modal" />
+  
+  <!-- Main Chat Interface -->
+  <ChatWindow sessionId={sessionId} initialSession={initialSession} />
+  
+  <!-- Footer Disclaimer (Hidden on mobile, shown on larger screens) -->
+  <div class="hidden lg:block">
+    <LegalDisclaimer variant="footer" />
+  </div>
+</BaseLayout>

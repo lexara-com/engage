@@ -1,0 +1,79 @@
+name = "engage-legal-ai"
+main = "src/agent/main-worker.ts"
+compatibility_date = "2024-01-01"
+compatibility_flags = ["nodejs_compat"]
+
+# Remove build step for now - using TypeScript directly
+
+# Development environment
+[env.dev]
+workers_dev = true
+
+# Staging environment  
+[env.staging]
+name = "engage-legal-ai-staging"
+workers_dev = false
+
+# Production environment
+[env.production]
+name = "engage-legal-ai-production" 
+workers_dev = true
+
+# Production Durable Objects bindings
+[[env.production.durable_objects.bindings]]
+name = "CONVERSATION_SESSION"
+class_name = "ConversationSession"
+script_name = "engage-legal-ai-production"
+
+# Production Vectorize bindings
+[[env.production.vectorize]]
+binding = "SUPPORTING_DOCUMENTS"
+index_name = "supporting-documents"
+
+[[env.production.vectorize]]
+binding = "CONFLICT_DATABASE"
+index_name = "conflict-database"
+
+# Production Workers AI binding
+[env.production.ai]
+binding = "AI"
+
+# Durable Object migrations
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["ConversationSession"]
+
+# Durable Objects bindings
+[[durable_objects.bindings]]
+name = "CONVERSATION_SESSION"
+class_name = "ConversationSession"
+script_name = "engage-legal-ai"
+
+
+# Vectorize bindings for knowledge bases
+[[vectorize]]
+binding = "SUPPORTING_DOCUMENTS"
+index_name = "supporting-documents"
+
+[[vectorize]]
+binding = "CONFLICT_DATABASE"
+index_name = "conflict-database"
+
+# Workers AI binding for Claude
+[ai]
+binding = "AI"
+
+# Environment variables
+[vars]
+ENVIRONMENT = "development"
+LOG_LEVEL = "info"
+
+# Production-specific variables
+[env.production.vars]
+ENVIRONMENT = "production"
+LOG_LEVEL = "warn"
+
+# Staging-specific variables  
+[env.staging.vars]
+ENVIRONMENT = "staging"
+LOG_LEVEL = "debug"

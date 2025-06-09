@@ -1,0 +1,456 @@
+---
+import MessageBubble from './MessageBubble.astro';
+import InputArea from './InputArea.astro';
+import type { ChatSession } from '../types/chat';
+
+export interface Props {
+  sessionId?: string;
+  initialSession?: ChatSession;
+}
+
+const { sessionId, initialSession } = Astro.props;
+---
+
+<div class="flex flex-col h-screen bg-lexara-beige">
+  <!-- Header -->
+  <header class="chat-header">
+    <div class="container-responsive">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center space-x-2 sm:space-x-3">
+          <div class="w-8 h-8 bg-lexara-blue-gray rounded-full flex items-center justify-center">
+            <svg class="w-4 h-4 text-lexara-navy" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M18 3a1 1 0 00-1.447-.894L8.763 6H5a3 3 0 000 6h.28l1.771 5.316A1 1 0 008 18h1a1 1 0 001-1v-4.382l6.553 3.276A1 1 0 0018 15V3z" clip-rule="evenodd"/>
+            </svg>
+          </div>
+          <div>
+            <h1 class="text-base sm:text-lg font-semibold">Legal Consultation</h1>
+            <p class="text-lexara-blue-gray text-xs sm:text-sm hidden sm:block">Secure & Confidential</p>
+          </div>
+        </div>
+        
+        <div class="flex items-center space-x-2">
+          <div id="connection-status" class="flex items-center space-x-1">
+            <div class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+            <span class="text-lexara-blue-gray text-xs hidden sm:inline">Connected</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+  
+  <!-- Messages Area -->
+  <main class="flex-1 overflow-hidden">
+    <div class="h-full container-responsive">
+      <div class="chat-container">
+        <div id="messages-container" class="chat-messages">
+          <!-- Welcome message -->
+          <div class="flex justify-center mb-6">
+            <div class="text-center max-w-md">
+              <div class="w-16 h-16 bg-lexara-navy rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg class="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M3 5a2 2 0 012-2h10a2 2 0 012 2v8a2 2 0 01-2 2h-2.22l.123.489.804.804A1 1 0 0113 18H7a1 1 0 01-.707-1.707l.804-.804L7.22 15H5a2 2 0 01-2-2V5zm5.771 7H5V5h10v7H8.771z" clip-rule="evenodd"/>
+                </svg>
+              </div>
+              <h2 class="text-xl font-semibold text-lexara-navy mb-2">Welcome to Engage</h2>
+              <p class="text-lexara-slate text-sm leading-relaxed">
+                I'm here to help you with your legal consultation. Please share details about your situation, 
+                and I'll gather the information needed for our legal team to assist you effectively.
+              </p>
+            </div>
+          </div>
+          
+          <!-- Dynamic messages will be inserted here -->
+          <div id="messages-list">
+            {initialSession?.messages.map((message) => (
+              <MessageBubble message={message} />
+            ))}
+          </div>
+          
+          <!-- Typing indicator -->
+          <div id="typing-indicator" class="hidden">
+            <div class="flex justify-start">
+              <div class="message-bubble message-ai">
+                <div class="typing-indicator">
+                  <div class="typing-dot"></div>
+                  <div class="typing-dot" style="animation-delay: 0.2s;"></div>
+                  <div class="typing-dot" style="animation-delay: 0.4s;"></div>
+                  <span class="ml-2 text-lexara-slate">AI is typing...</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Input Area -->
+        <InputArea />
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+  import { EngageApiClient, createMessage, addMessageToSession, updateLastMessage, processStream, SessionStorage, createSession } from '../utils/chat';
+  import type { ChatSession, ChatMessage } from '../types/chat';
+  
+  class ChatWindowManager {
+    private apiClient: EngageApiClient;
+    private session: ChatSession;
+    private messagesContainer: HTMLElement;
+    private messagesList: HTMLElement;
+    private typingIndicator: HTMLElement;
+    private connectionStatus: HTMLElement;
+    
+    constructor(sessionId?: string, initialSession?: ChatSession) {
+      this.apiClient = new EngageApiClient();
+      this.session = initialSession || createSession();
+      
+      // Get DOM elements
+      this.messagesContainer = document.getElementById('messages-container')!;
+      this.messagesList = document.getElementById('messages-list')!;
+      this.typingIndicator = document.getElementById('typing-indicator')!;
+      this.connectionStatus = document.getElementById('connection-status')!;
+      
+      this.initializeChat(sessionId);
+      this.bindEvents();
+    }
+    
+    private async initializeChat(sessionId?: string) {
+      if (sessionId) {
+        // Try to load existing session
+        const response = await this.apiClient.getSession(sessionId);
+        if (response.success && response.data) {
+          this.session = response.data;
+          this.renderMessages();
+          return;
+        }
+      } else {
+        // Try to load from localStorage
+        const urlParams = new URLSearchParams(window.location.search);
+        const urlSessionId = urlParams.get('session');
+        
+        if (urlSessionId) {
+          const savedSession = SessionStorage.load(urlSessionId);
+          if (savedSession) {
+            this.session = savedSession;
+            this.renderMessages();
+            return;
+          }
+        }
+      }
+      
+      // If we get here, we need to create a new backend session
+      const createResponse = await this.apiClient.createSession();
+      if (createResponse.success && createResponse.sessionId) {
+        // Update our session with the real backend session ID
+        this.session = {
+          ...this.session,
+          id: createResponse.sessionId
+        };
+      } else {
+        console.error('Failed to create backend session:', createResponse.error);
+        // Fall back to client-generated session ID (will likely fail on message send)
+      }
+      
+      // Update URL with session ID
+      const url = new URL(window.location.href);
+      url.searchParams.set('session', this.session.id);
+      window.history.replaceState({}, '', url.toString());
+    }
+    
+    private bindEvents() {
+      // Listen for send message events from InputArea
+      document.addEventListener('send-message', (e: any) => {
+        this.handleSendMessage(e.detail.message);
+      });
+      
+      // Auto-save session periodically
+      setInterval(() => {
+        SessionStorage.save(this.session);
+      }, 30000); // Every 30 seconds
+      
+      // Save session on page unload
+      window.addEventListener('beforeunload', () => {
+        SessionStorage.save(this.session);
+      });
+    }
+    
+    private async handleSendMessage(content: string) {
+      try {
+        // Add user message to session
+        const userMessage = createMessage(content, 'user');
+        this.session = addMessageToSession(this.session, userMessage);
+        this.renderMessage(userMessage);
+        this.scrollToBottom();
+        
+        // Show typing indicator
+        this.showTypingIndicator();
+        this.updateConnectionStatus('connected');
+        
+        // Send to API and handle streaming response
+        const stream = await this.apiClient.sendMessage(this.session.id, content);
+        
+        if (!stream) {
+          throw new Error('Failed to get response stream');
+        }
+        
+        // Create placeholder AI message
+        const aiMessage = createMessage('', 'assistant', { isStreaming: true });
+        this.session = addMessageToSession(this.session, aiMessage);
+        this.hideTypingIndicator();
+        this.renderMessage(aiMessage);
+        
+        let accumulatedContent = '';
+        
+        // Process streaming response
+        await processStream(
+          stream,
+          (chunk: string) => {
+            // Update message content with new chunk
+            accumulatedContent += chunk;
+            this.session = updateLastMessage(this.session, accumulatedContent, { isStreaming: true });
+            this.updateLastMessage(accumulatedContent, true);
+          },
+          () => {
+            // Mark message as complete
+            this.session = updateLastMessage(this.session, accumulatedContent, { isComplete: true, isStreaming: false });
+            this.updateLastMessage(accumulatedContent, false);
+            this.resetInputArea();
+            SessionStorage.save(this.session);
+          },
+          (error: Error) => {
+            // Handle error
+            console.error('Streaming error:', error);
+            this.session = updateLastMessage(this.session, accumulatedContent || 'Sorry, I encountered an error processing your request.', {
+              isComplete: true,
+              isStreaming: false,
+              error: error.message
+            });
+            this.updateLastMessage(accumulatedContent || 'Sorry, I encountered an error processing your request.', false, error.message);
+            this.resetInputArea();
+            this.updateConnectionStatus('disconnected');
+          }
+        );
+        
+      } catch (error) {
+        console.error('Error sending message:', error);
+        this.hideTypingIndicator();
+        this.resetInputArea();
+        this.updateConnectionStatus('disconnected');
+        
+        // Show error message
+        const errorMessage = createMessage(
+          'I apologize, but I\'m having trouble connecting right now. Please try again in a moment.',
+          'system'
+        );
+        this.session = addMessageToSession(this.session, errorMessage);
+        this.renderMessage(errorMessage);
+      }
+    }
+    
+    private renderMessages() {
+      this.messagesList.innerHTML = '';
+      this.session.messages.forEach(message => this.renderMessage(message));
+      this.scrollToBottom();
+    }
+    
+    private renderMessage(message: ChatMessage) {
+      const messageElement = document.createElement('div');
+      messageElement.innerHTML = this.renderMessageHTML(message);
+      this.messagesList.appendChild(messageElement.firstElementChild!);
+      this.scrollToBottom();
+    }
+    
+    private updateLastMessage(content: string, isStreaming: boolean, error?: string) {
+      const lastMessageElement = this.messagesList.lastElementChild;
+      if (lastMessageElement) {
+        const contentElement = lastMessageElement.querySelector('.message-content');
+        const typingElement = lastMessageElement.querySelector('.typing-indicator');
+        const errorElement = lastMessageElement.querySelector('.text-red-600');
+        
+        if (contentElement) {
+          contentElement.innerHTML = content.replace(/\n/g, '<br>');
+        }
+        
+        if (typingElement) {
+          typingElement.style.display = isStreaming ? 'flex' : 'none';
+        }
+        
+        if (error && !errorElement) {
+          const errorDiv = document.createElement('div');
+          errorDiv.className = 'mt-2 text-xs text-red-600 bg-red-50 px-2 py-1 rounded';
+          errorDiv.textContent = `Error: ${error}`;
+          lastMessageElement.appendChild(errorDiv);
+        }
+        
+        this.scrollToBottom();
+      }
+    }
+    
+    private renderMessageHTML(message: ChatMessage): string {
+      const roleClass = message.role === 'user' ? 'justify-end' : message.role === 'system' ? 'justify-center' : 'justify-start';
+      const bubbleClass = message.role === 'user' ? 'message-user' : message.role === 'system' ? 'message-system' : 'message-ai';
+      
+      return `
+        <div class="flex ${roleClass}">
+          <div class="message-bubble ${bubbleClass} animate-slide-up">
+            ${message.role === 'assistant' ? `
+              <div class="flex items-center space-x-2 mb-1">
+                <div class="w-6 h-6 bg-lexara-navy rounded-full flex items-center justify-center">
+                  <svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                  </svg>
+                </div>
+                <span class="text-xs font-medium text-lexara-slate">Legal Assistant</span>
+              </div>
+            ` : ''}
+            
+            <div class="message-content whitespace-pre-wrap">
+              ${message.content.replace(/\n/g, '<br>')}
+            </div>
+            
+            ${message.metadata?.isStreaming ? `
+              <div class="typing-indicator mt-2" style="display: flex;">
+                <div class="typing-dot"></div>
+                <div class="typing-dot" style="animation-delay: 0.2s;"></div>
+                <div class="typing-dot" style="animation-delay: 0.4s;"></div>
+              </div>
+            ` : ''}
+            
+            ${message.metadata?.error ? `
+              <div class="mt-2 text-xs text-red-600 bg-red-50 px-2 py-1 rounded">
+                Error: ${message.metadata.error}
+              </div>
+            ` : ''}
+            
+            <div class="text-xs ${message.role === 'user' ? 'text-lexara-blue-gray' : 'text-lexara-gray-400'} mt-1">
+              ${this.formatTimestamp(message.timestamp)}
+            </div>
+          </div>
+        </div>
+      `;
+    }
+    
+    private formatTimestamp(date: Date): string {
+      const now = new Date();
+      const diff = now.getTime() - date.getTime();
+      const minutes = Math.floor(diff / 60000);
+      
+      if (minutes < 1) return 'Just now';
+      if (minutes < 60) return `${minutes}m ago`;
+      
+      const hours = Math.floor(minutes / 60);
+      if (hours < 24) return `${hours}h ago`;
+      
+      return date.toLocaleDateString();
+    }
+    
+    private showTypingIndicator() {
+      this.typingIndicator.classList.remove('hidden');
+      this.scrollToBottom();
+    }
+    
+    private hideTypingIndicator() {
+      this.typingIndicator.classList.add('hidden');
+    }
+    
+    private scrollToBottom() {
+      setTimeout(() => {
+        this.messagesContainer.scrollTop = this.messagesContainer.scrollHeight;
+      }, 100);
+    }
+    
+    private updateConnectionStatus(status: 'connected' | 'connecting' | 'disconnected') {
+      const statusDot = this.connectionStatus.querySelector('div');
+      const statusText = this.connectionStatus.querySelector('span');
+      
+      if (statusDot && statusText) {
+        statusDot.className = 'w-2 h-2 rounded-full';
+        
+        switch (status) {
+          case 'connected':
+            statusDot.classList.add('bg-green-400', 'animate-pulse');
+            statusText.textContent = 'Connected';
+            break;
+          case 'connecting':
+            statusDot.classList.add('bg-yellow-400', 'animate-pulse');
+            statusText.textContent = 'Connecting...';
+            break;
+          case 'disconnected':
+            statusDot.classList.add('bg-red-400');
+            statusText.textContent = 'Disconnected';
+            break;
+        }
+      }
+    }
+    
+    private resetInputArea() {
+      if ((window as any).resetInputArea) {
+        (window as any).resetInputArea();
+      }
+    }
+  }
+  
+  // Initialize chat when DOM is loaded
+  function initializeChatWindow() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const sessionId = urlParams.get('session');
+    
+    // Get initial session data if passed from server
+    const initialSessionData = (window as any).__INITIAL_SESSION__;
+    
+    new ChatWindowManager(sessionId || undefined, initialSessionData);
+  }
+  
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeChatWindow);
+  } else {
+    initializeChatWindow();
+  }
+</script>
+
+<style>
+  /* Smooth scrolling for messages */
+  .chat-messages {
+    scroll-behavior: smooth;
+  }
+  
+  /* Message animations */
+  @keyframes slideUp {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  .animate-slide-up {
+    animation: slideUp 0.3s ease-out;
+  }
+  
+  /* Typing indicator animation */
+  .typing-dot {
+    animation: typing 1.4s infinite ease-in-out;
+  }
+  
+  .typing-dot:nth-child(2) {
+    animation-delay: 0.2s;
+  }
+  
+  .typing-dot:nth-child(3) {
+    animation-delay: 0.4s;
+  }
+  
+  @keyframes typing {
+    0%, 60%, 100% {
+      transform: translateY(0);
+      opacity: 0.4;
+    }
+    30% {
+      transform: translateY(-10px);
+      opacity: 1;
+    }
+  }
+</style>

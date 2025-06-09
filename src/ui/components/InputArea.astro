@@ -1,0 +1,210 @@
+---
+export interface Props {
+  disabled?: boolean;
+  placeholder?: string;
+  maxLength?: number;
+}
+
+const { 
+  disabled = false, 
+  placeholder = "Type your message here...",
+  maxLength = 1000
+} = Astro.props;
+---
+
+<div class="chat-input-area">
+  <form id="chat-form" class="flex space-x-2 sm:space-x-3">
+    <div class="flex-1">
+      <textarea
+        id="message-input"
+        rows="1"
+        maxlength={maxLength}
+        placeholder={placeholder}
+        disabled={disabled}
+        class="form-input-mobile resize-none min-h-[44px] max-h-32 text-base"
+        style="overflow-y: hidden;"
+      ></textarea>
+      <div class="flex justify-between items-center mt-1">
+        <span id="char-count" class="text-xs text-lexara-gray-400">0 / {maxLength}</span>
+        <div class="text-xs text-lexara-gray-400 hidden sm:block">
+          Press Enter to send, Shift+Enter for new line
+        </div>
+        <div class="text-xs text-lexara-gray-400 sm:hidden">
+          Tap Send or Enter
+        </div>
+      </div>
+    </div>
+    
+    <div class="flex flex-col justify-end">
+      <button
+        type="submit"
+        id="send-button"
+        disabled={disabled}
+        class="btn-primary px-4 sm:px-6 py-3 touch-target disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        <span id="send-text" class="hidden sm:inline">Send</span>
+        <span id="send-text-mobile" class="sm:hidden">
+          <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+            <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z"/>
+          </svg>
+        </span>
+        <div id="send-spinner" class="loading-spinner hidden ml-2"></div>
+      </button>
+    </div>
+  </form>
+  
+  <!-- Legal Disclaimer -->
+  <div class="legal-disclaimer mt-4">
+    <strong>Important Notice:</strong> This conversation is for informational purposes only and does not create an attorney-client relationship. 
+    For specific legal advice, please consult with a qualified attorney.
+  </div>
+</div>
+
+<script>
+  // Auto-resize textarea
+  function autoResize(textarea: HTMLTextAreaElement) {
+    textarea.style.height = 'auto';
+    textarea.style.height = Math.min(textarea.scrollHeight, 128) + 'px';
+  }
+  
+  // Character count update
+  function updateCharCount(textarea: HTMLTextAreaElement, counter: HTMLElement, maxLength: number) {
+    const current = textarea.value.length;
+    counter.textContent = `${current} / ${maxLength}`;
+    
+    if (current > maxLength * 0.9) {
+      counter.classList.add('text-orange-500');
+    } else {
+      counter.classList.remove('text-orange-500');
+    }
+    
+    if (current >= maxLength) {
+      counter.classList.add('text-red-500');
+    } else {
+      counter.classList.remove('text-red-500');
+    }
+  }
+  
+  // Initialize input functionality
+  function initializeInputArea() {
+    const form = document.getElementById('chat-form') as HTMLFormElement;
+    const textarea = document.getElementById('message-input') as HTMLTextAreaElement;
+    const sendButton = document.getElementById('send-button') as HTMLButtonElement;
+    const sendText = document.getElementById('send-text') as HTMLSpanElement;
+    const sendSpinner = document.getElementById('send-spinner') as HTMLDivElement;
+    const charCounter = document.getElementById('char-count') as HTMLSpanElement;
+    
+    if (!form || !textarea || !sendButton || !sendText || !sendSpinner || !charCounter) {
+      return;
+    }
+    
+    const maxLength = parseInt(textarea.getAttribute('maxlength') || '1000');
+    
+    // Auto-resize textarea on input
+    textarea.addEventListener('input', () => {
+      autoResize(textarea);
+      updateCharCount(textarea, charCounter, maxLength);
+      
+      // Enable/disable send button based on content
+      const hasContent = textarea.value.trim().length > 0;
+      sendButton.disabled = !hasContent || textarea.disabled;
+    });
+    
+    // Handle Enter key (send) vs Shift+Enter (new line)
+    textarea.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        if (!sendButton.disabled) {
+          form.dispatchEvent(new Event('submit'));
+        }
+      }
+    });
+    
+    // Handle form submission
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const message = textarea.value.trim();
+      if (!message || sendButton.disabled) return;
+      
+      // Update UI to sending state
+      sendButton.disabled = true;
+      sendText.textContent = 'Sending...';
+      sendSpinner.classList.remove('hidden');
+      textarea.disabled = true;
+      
+      try {
+        // Dispatch custom event for parent component to handle
+        const sendEvent = new CustomEvent('send-message', {
+          detail: { message },
+          bubbles: true
+        });
+        form.dispatchEvent(sendEvent);
+        
+        // Clear the textarea
+        textarea.value = '';
+        autoResize(textarea);
+        updateCharCount(textarea, charCounter, maxLength);
+        
+      } catch (error) {
+        console.error('Error sending message:', error);
+        
+        // Show error state
+        sendText.textContent = 'Error';
+        setTimeout(() => {
+          sendText.textContent = 'Send';
+          sendButton.disabled = false;
+          textarea.disabled = false;
+          textarea.focus();
+        }, 2000);
+      } finally {
+        sendSpinner.classList.add('hidden');
+      }
+    });
+    
+    // Focus textarea on load
+    textarea.focus();
+    
+    // Initial character count
+    updateCharCount(textarea, charCounter, maxLength);
+  }
+  
+  // Initialize when DOM is loaded
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeInputArea);
+  } else {
+    initializeInputArea();
+  }
+  
+  // Export function for external access
+  (window as any).resetInputArea = function() {
+    const textarea = document.getElementById('message-input') as HTMLTextAreaElement;
+    const sendButton = document.getElementById('send-button') as HTMLButtonElement;
+    const sendText = document.getElementById('send-text') as HTMLSpanElement;
+    const sendSpinner = document.getElementById('send-spinner') as HTMLDivElement;
+    
+    if (textarea && sendButton && sendText && sendSpinner) {
+      textarea.disabled = false;
+      sendButton.disabled = false;
+      sendText.textContent = 'Send';
+      sendSpinner.classList.add('hidden');
+      textarea.focus();
+    }
+  };
+</script>
+
+<style>
+  /* Smooth transitions for loading states */
+  #send-button {
+    transition: all 0.2s ease;
+  }
+  
+  #send-button:disabled {
+    transform: scale(0.98);
+  }
+  
+  /* Textarea focus styles */
+  #message-input:focus {
+    box-shadow: 0 0 0 3px rgba(198, 216, 219, 0.2);
+  }
+</style>

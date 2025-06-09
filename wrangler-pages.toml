@@ -1,0 +1,14 @@
+name = "engage-ui"
+compatibility_date = "2024-01-01"
+pages_build_output_dir = "dist"
+
+[env.production]
+name = "engage-ui-production"
+
+[env.staging]
+name = "engage-ui-staging"
+
+# Environment variables for the UI
+[vars]
+ENGAGE_API_BASE = "https://engage-legal-ai-production.cloudswift.workers.dev"
+ENVIRONMENT = "production"
