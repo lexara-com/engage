@@ -130,6 +130,36 @@ export interface Message {
   metadata?: Record<string, unknown>;
 }
 
+// HIPAA-enhanced message with encryption support
+export interface EncryptedMessage extends Message {
+  // Content handling
+  content?: string;                 // Plain text (if not sensitive)
+  encryptedContent?: {
+    encryptedData: string;          // Base64 encoded
+    iv: string;                     // Base64 encoded initialization vector
+    authTag: string;                // Base64 encoded authentication tag
+    algorithm: 'AES-256-GCM';
+    keyId: string;                  // Reference to encryption key
+  };
+  isEncrypted: boolean;
+  
+  // HIPAA compliance
+  classification: {
+    containsPII: boolean;
+    containsePHI: boolean;
+    containsMedicalInfo: boolean;
+    sensitivityLevel: 'public' | 'internal' | 'confidential' | 'restricted';
+    requiresEncryption: boolean;
+  };
+  
+  // Data integrity
+  integrityHash: string;
+  
+  // Audit trail
+  encryptedBy?: string;             // System or user ID
+  encryptionTimestamp?: Date;
+}
+
 export interface Goal {
   id: string;
   description: string;
