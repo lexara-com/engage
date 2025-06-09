@@ -43,10 +43,19 @@ binding = "AI"
 tag = "v1"
 new_sqlite_classes = ["ConversationSession"]
 
+[[migrations]]
+tag = "v2"
+new_sqlite_classes = ["FirmRegistry"]
+
 # Durable Objects bindings
 [[durable_objects.bindings]]
 name = "CONVERSATION_SESSION"
 class_name = "ConversationSession"
+script_name = "engage-legal-ai"
+
+[[durable_objects.bindings]]
+name = "FIRM_REGISTRY"
+class_name = "FirmRegistry"
 script_name = "engage-legal-ai"
 
 
