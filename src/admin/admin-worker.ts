@@ -16,9 +16,10 @@ const logger = createLogger('AdminWorker');
 // Main admin worker implementation
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
-    // Add CORS headers for admin interface
+    // Add CORS headers for admin interface (environment-specific)
+    const corsOrigin = env.CORS_ORIGINS || 'https://lexara.app';
     const corsHeaders = {
-      'Access-Control-Allow-Origin': 'https://admin.engage.lexara.com',
+      'Access-Control-Allow-Origin': corsOrigin,
       'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
       'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Auth0-User-ID, X-User-Email, X-User-Role, X-Firm-ID',
       'Access-Control-Max-Age': '86400',

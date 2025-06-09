@@ -373,6 +373,20 @@ export interface Env {
   ENVIRONMENT: string;
   LOG_LEVEL: string;
   
+  // Domain and API configuration
+  API_BASE_URL?: string;
+  ADMIN_BASE_URL?: string;
+  CORS_ORIGINS?: string;
+  
+  // Auth0 configuration
+  AUTH0_DOMAIN?: string;
+  AUTH0_CLIENT_ID?: string;
+  AUTH0_CLIENT_SECRET?: string;
+  
+  // Rate limiting
+  RATE_LIMIT_PER_MINUTE?: string;
+  MAX_REQUEST_SIZE?: string;
+  
   // API Keys
   ANTHROPIC_API_KEY: string;
 }

@@ -3,19 +3,40 @@ name = "engage-admin-api"
 main = "src/admin/admin-worker.ts"
 compatibility_date = "2024-01-01"
 
-# Worker configuration
+# Worker configuration  
 workers_dev = false
-route = { pattern = "admin-api.engage.lexara.com/*", zone_name = "engage.lexara.com" }
+route = { pattern = "admin.lexara.app/*", zone_name = "lexara.app" }
 
 # Environment variables
-[env.development]
-vars = { ENVIRONMENT = "development", LOG_LEVEL = "debug" }
+[env.dev]
+name = "engage-admin-api-dev"
+route = { pattern = "admin.dev.lexara.app/*", zone_name = "lexara.app" }
+vars = { 
+  ENVIRONMENT = "development", 
+  LOG_LEVEL = "debug",
+  CORS_ORIGINS = "https://dev.lexara.app",
+  AUTH0_DOMAIN = "lexara-dev.us.auth0.com"
+}
 
-[env.staging] 
-vars = { ENVIRONMENT = "staging", LOG_LEVEL = "info" }
+[env.test] 
+name = "engage-admin-api-test"
+route = { pattern = "admin.test.lexara.app/*", zone_name = "lexara.app" }
+vars = { 
+  ENVIRONMENT = "test", 
+  LOG_LEVEL = "info",
+  CORS_ORIGINS = "https://test.lexara.app",
+  AUTH0_DOMAIN = "lexara-test.us.auth0.com"
+}
 
 [env.production]
-vars = { ENVIRONMENT = "production", LOG_LEVEL = "warn" }
+name = "engage-admin-api-production"
+route = { pattern = "admin.lexara.app/*", zone_name = "lexara.app" }
+vars = { 
+  ENVIRONMENT = "production", 
+  LOG_LEVEL = "warn",
+  CORS_ORIGINS = "https://lexara.app",
+  AUTH0_DOMAIN = "lexara.us.auth0.com"
+}
 
 # Durable Object bindings
 [[durable_objects.bindings]]
@@ -74,21 +95,7 @@ command = "npm run build:admin"
 cwd = "."
 watch_dir = "src"
 
-# Custom domains for different environments
-[env.development.route]
-pattern = "admin-api-dev.engage.lexara.com/*"
-zone_name = "engage.lexara.com"
-
-[env.staging.route]  
-pattern = "admin-api-staging.engage.lexara.com/*"
-zone_name = "engage.lexara.com"
-
-[env.production.route]
-pattern = "admin-api.engage.lexara.com/*"
-zone_name = "engage.lexara.com"
-
-# Security headers
-[env.production.vars]
-CORS_ORIGINS = "https://admin.engage.lexara.com"
+# Rate limiting and security (applied to all environments)
+[vars]
 RATE_LIMIT_PER_MINUTE = "60"
 MAX_REQUEST_SIZE = "10485760"  # 10MB for file uploads
