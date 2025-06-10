@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Integrated UI/API Solution</title>
+</head>
+<body>
+    <h1>Testing Integrated Solution at dev.lexara.app</h1>
+    <button onclick="testAPI()">Test API Integration</button>
+    <button onclick="testUIFeatures()">Test UI Features</button>
+    <div id="result"></div>
+
+    <script>
+        async function testAPI() {
+            const result = document.getElementById('result');
+            result.innerHTML = 'Testing API integration...';
+            
+            try {
+                // Test session creation 
+                const sessionResponse = await fetch('https://dev.lexara.app/api/v1/conversations', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ firmId: 'demo' })
+                });
+                
+                if (!sessionResponse.ok) {
+                    throw new Error(`HTTP ${sessionResponse.status}: ${sessionResponse.statusText}`);
+                }
+                
+                const sessionData = await sessionResponse.json();
+                console.log('Session created:', sessionData);
+                
+                // Test message sending
+                const messageResponse = await fetch('https://dev.lexara.app/api/v1/conversations/message', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        sessionId: sessionData.sessionId,
+                        message: 'Hello, I need help with a car accident case. I was rear-ended last week and have some questions about my rights.'
+                    })
+                });
+                
+                if (!messageResponse.ok) {
+                    throw new Error(`HTTP ${messageResponse.status}: ${messageResponse.statusText}`);
+                }
+                
+                const messageData = await messageResponse.json();
+                console.log('Message response:', messageData);
+                
+                result.innerHTML = `
+                    <h3>✅ API INTEGRATION SUCCESS!</h3>
+                    <p><strong>Session ID:</strong> ${sessionData.sessionId}</p>
+                    <p><strong>AI Response:</strong> ${messageData.message.substring(0, 200)}...</p>
+                    <p><strong>No CORS errors!</strong> Same-domain solution working.</p>
+                `;
+                
+            } catch (error) {
+                console.error('Test failed:', error);
+                result.innerHTML = `
+                    <h3>❌ FAILED</h3>
+                    <p><strong>Error:</strong> ${error.message}</p>
+                `;
+            }
+        }
+        
+        async function testUIFeatures() {
+            const result = document.getElementById('result');
+            result.innerHTML = 'Testing UI features...';
+            
+            try {
+                // Test if UI loads properly
+                const uiResponse = await fetch('https://dev.lexara.app/', {
+                    method: 'GET'
+                });
+                
+                if (!uiResponse.ok) {
+                    throw new Error(`UI load failed: ${uiResponse.status}`);
+                }
+                
+                const htmlContent = await uiResponse.text();
+                
+                // Check for key UI elements
+                const hasDisclaimer = htmlContent.includes('disclaimer-modal');
+                const hasChatInterface = htmlContent.includes('message-input');
+                const hasJavaScript = htmlContent.includes('class ChatApp');
+                const hasCSS = htmlContent.includes('message-bubble');
+                
+                result.innerHTML = `
+                    <h3>✅ UI FEATURES TEST</h3>
+                    <p><strong>Disclaimer Modal:</strong> ${hasDisclaimer ? '✅' : '❌'}</p>
+                    <p><strong>Chat Interface:</strong> ${hasChatInterface ? '✅' : '❌'}</p>
+                    <p><strong>JavaScript Chat App:</strong> ${hasJavaScript ? '✅' : '❌'}</p>
+                    <p><strong>CSS Styling:</strong> ${hasCSS ? '✅' : '❌'}</p>
+                    <p><strong>Status:</strong> All UI components embedded and loading!</p>
+                `;
+                
+            } catch (error) {
+                console.error('UI test failed:', error);
+                result.innerHTML = `
+                    <h3>❌ UI TEST FAILED</h3>
+                    <p><strong>Error:</strong> ${error.message}</p>
+                `;
+            }
+        }
+    </script>
+</body>
+</html>

@@ -49,7 +49,14 @@
       "Bash(git checkout:*)",
       "WebFetch(domain:blog.cloudflare.com)",
       "Bash(wrangler vectorize list:*)",
-      "Bash(nslookup:*)"
+      "Bash(nslookup:*)",
+      "Bash(dig:*)",
+      "Bash(rm:*)",
+      "Bash(wrangler pages domain:*)",
+      "Bash(wrangler pages project:*)",
+      "Bash(pip install:*)",
+      "Bash(timeout:*)",
+      "Bash(npx wrangler deploy:*)"
     ],
     "deny": []
   }

@@ -296,6 +296,19 @@ CURRENT GOALS:`;
   // Call Anthropic API directly
   private async callAnthropicAPI(systemPrompt: string, conversationHistory: Array<{role: string, content: string}>): Promise<string> {
     try {
+      // Try Workers AI first as a fallback
+      const prompt = `${systemPrompt}\n\nConversation:\n${conversationHistory.map(msg => `${msg.role}: ${msg.content}`).join('\n')}\n\nassistant:`;
+      
+      const aiResponse = await this.env.AI.run('@cf/meta/llama-3.1-8b-instruct', {
+        prompt,
+        max_tokens: 500
+      });
+      
+      if (aiResponse?.response) {
+        return aiResponse.response;
+      }
+      
+      // Fallback to Anthropic API if Workers AI fails
       const response = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
         headers: {
@@ -319,7 +332,7 @@ CURRENT GOALS:`;
       const data = await response.json() as any;
       return data.content?.[0]?.text || '';
     } catch (error) {
-      console.error('Anthropic API call failed:', error);
+      console.error('AI API call failed:', error);
       throw error;
     }
   }

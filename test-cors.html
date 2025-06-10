@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>CORS Test for Engage API</title>
+</head>
+<body>
+    <h1>Testing CORS from Pages to Workers</h1>
+    <button onclick="testAPI()">Test API Call</button>
+    <button onclick="clearDisclaimer()">Clear Disclaimer (Show Modal)</button>
+    <div id="result"></div>
+
+    <script>
+        async function testAPI() {
+            const result = document.getElementById('result');
+            result.innerHTML = 'Testing...';
+            
+            try {
+                // Test session creation
+                const sessionResponse = await fetch('https://dev.lexara.app/api/v1/conversations', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ firmId: 'demo' })
+                });
+                
+                if (!sessionResponse.ok) {
+                    throw new Error(`HTTP ${sessionResponse.status}: ${sessionResponse.statusText}`);
+                }
+                
+                const sessionData = await sessionResponse.json();
+                console.log('Session created:', sessionData);
+                
+                // Test message sending
+                const messageResponse = await fetch('https://dev.lexara.app/api/v1/conversations/message', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        sessionId: sessionData.sessionId,
+                        message: 'Test message from CORS test'
+                    })
+                });
+                
+                if (!messageResponse.ok) {
+                    throw new Error(`HTTP ${messageResponse.status}: ${messageResponse.statusText}`);
+                }
+                
+                const messageData = await messageResponse.json();
+                console.log('Message response:', messageData);
+                
+                result.innerHTML = `
+                    <h3>✅ SUCCESS!</h3>
+                    <p><strong>Session ID:</strong> ${sessionData.sessionId}</p>
+                    <p><strong>AI Response:</strong> ${messageData.message.substring(0, 100)}...</p>
+                `;
+                
+            } catch (error) {
+                console.error('Test failed:', error);
+                result.innerHTML = `
+                    <h3>❌ FAILED</h3>
+                    <p><strong>Error:</strong> ${error.message}</p>
+                `;
+            }
+        }
+        
+        function clearDisclaimer() {
+            localStorage.removeItem('engage-disclaimer-agreed');
+            alert('Disclaimer cleared! Reload the main UI to see the modal.');
+        }
+    </script>
+</body>
+</html>

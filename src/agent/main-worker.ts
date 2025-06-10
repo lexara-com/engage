@@ -11,9 +11,337 @@ import { ClaudeAgent } from './claude-agent';
 export { ConversationSession } from '../durable-objects/conversation-session';
 export { FirmRegistry } from '../durable-objects/firm-registry';
 
+// Static UI content
+const UI_HTML = `<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Legal Consultation - Engage</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .btn-primary { @apply bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors; }
+    .btn-secondary { @apply bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded-lg transition-colors; }
+    .message-bubble { @apply max-w-xs lg:max-w-md px-4 py-2 rounded-lg; }
+    .message-user { @apply bg-blue-600 text-white ml-auto; }
+    .message-ai { @apply bg-gray-100 text-gray-800; }
+    .chat-container { @apply flex flex-col h-full max-w-4xl mx-auto; }
+    .chat-messages { @apply flex-1 overflow-y-auto px-4 py-6 space-y-4; }
+  </style>
+</head>
+<body class="h-full bg-gray-50 font-sans">
+  <!-- Legal Disclaimer Modal -->
+  <div id="disclaimer-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 hidden">
+    <div class="bg-white rounded-lg shadow-lg max-w-lg w-full">
+      <div class="p-6">
+        <h2 class="text-lg font-semibold text-gray-900 mb-4">Important Legal Information</h2>
+        <div class="text-sm text-gray-600 space-y-3 mb-6">
+          <p><strong>No Attorney-Client Relationship:</strong> This consultation tool does not create an attorney-client relationship.</p>
+          <p><strong>No Legal Advice:</strong> This system provides information gathering services only.</p>
+          <p><strong>Professional Review:</strong> All information will be reviewed by qualified attorneys.</p>
+        </div>
+        <div class="flex space-x-3">
+          <button id="disclaimer-accept" class="btn-primary flex-1">I Understand and Agree</button>
+          <button id="disclaimer-decline" class="btn-secondary">Cancel</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Chat Interface -->
+  <div class="flex flex-col h-screen">
+    <!-- Header -->
+    <header class="bg-white shadow-sm border-b">
+      <div class="max-w-4xl mx-auto px-4 py-4">
+        <h1 class="text-xl font-semibold text-gray-900">Legal Consultation</h1>
+        <p class="text-sm text-gray-600">Secure & Confidential</p>
+      </div>
+    </header>
+
+    <!-- Chat Area -->
+    <main class="flex-1 overflow-hidden">
+      <div class="chat-container">
+        <div id="messages-container" class="chat-messages">
+          <!-- Welcome Message -->
+          <div class="text-center py-8">
+            <div class="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg class="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+            </div>
+            <h2 class="text-xl font-semibold text-gray-900 mb-2">Welcome to Engage</h2>
+            <p class="text-gray-600 max-w-md mx-auto">I'm here to help you with your legal consultation. Please share details about your situation.</p>
+          </div>
+          
+          <!-- Messages will be inserted here -->
+          <div id="messages-list"></div>
+          
+          <!-- Typing indicator -->
+          <div id="typing-indicator" class="hidden">
+            <div class="message-bubble message-ai">
+              <div class="flex items-center space-x-1">
+                <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
+                <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0.1s"></div>
+                <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
+                <span class="ml-2 text-gray-500">AI is typing...</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Input Area -->
+        <div class="bg-white border-t px-4 py-4">
+          <div class="max-w-4xl mx-auto">
+            <div class="flex space-x-3">
+              <textarea 
+                id="message-input" 
+                placeholder="Type your message here..."
+                class="flex-1 resize-none border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                rows="1"
+              ></textarea>
+              <button 
+                id="send-button" 
+                class="btn-primary"
+                disabled
+              >
+                Send
+              </button>
+            </div>
+            <div class="text-xs text-gray-500 mt-2 text-center">
+              Press Enter to send, Shift+Enter for new line
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+    
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-gray-300 py-4">
+      <div class="max-w-4xl mx-auto px-4 text-center text-sm">
+        <p><strong>Important Notice:</strong> This conversation is for informational purposes only and does not create an attorney-client relationship.</p>
+      </div>
+    </footer>
+  </div>
+
+  <script>
+    class ChatApp {
+      constructor() {
+        this.sessionId = null;
+        this.isLoading = false;
+        this.initializeElements();
+        this.bindEvents();
+        this.showDisclaimerIfNeeded();
+      }
+
+      initializeElements() {
+        this.messageInput = document.getElementById('message-input');
+        this.sendButton = document.getElementById('send-button');
+        this.messagesList = document.getElementById('messages-list');
+        this.typingIndicator = document.getElementById('typing-indicator');
+        this.messagesContainer = document.getElementById('messages-container');
+      }
+
+      bindEvents() {
+        this.sendButton.addEventListener('click', () => this.sendMessage());
+        this.messageInput.addEventListener('input', () => this.toggleSendButton());
+        this.messageInput.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            this.sendMessage();
+          }
+        });
+
+        // Disclaimer modal events
+        document.getElementById('disclaimer-accept').addEventListener('click', () => {
+          localStorage.setItem('engage-disclaimer-agreed', 'true');
+          document.getElementById('disclaimer-modal').classList.add('hidden');
+          this.messageInput.focus();
+        });
+
+        document.getElementById('disclaimer-decline').addEventListener('click', () => {
+          window.history.back();
+        });
+      }
+
+      showDisclaimerIfNeeded() {
+        const hasAgreed = localStorage.getItem('engage-disclaimer-agreed');
+        if (!hasAgreed) {
+          document.getElementById('disclaimer-modal').classList.remove('hidden');
+        } else {
+          this.messageInput.focus();
+        }
+      }
+
+      toggleSendButton() {
+        const hasText = this.messageInput.value.trim().length > 0;
+        this.sendButton.disabled = !hasText || this.isLoading;
+      }
+
+      async sendMessage() {
+        const message = this.messageInput.value.trim();
+        if (!message || this.isLoading) return;
+
+        this.isLoading = true;
+        this.toggleSendButton();
+
+        try {
+          // Create session if needed
+          if (!this.sessionId) {
+            await this.createSession();
+          }
+
+          // Add user message to UI
+          this.addMessage(message, 'user');
+          this.messageInput.value = '';
+          this.showTypingIndicator();
+
+          // Send to API
+          const response = await fetch('/api/v1/conversations/message', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              sessionId: this.sessionId,
+              message: message
+            })
+          });
+
+          if (!response.ok) throw new Error(\`HTTP \${response.status}\`);
+
+          const data = await response.json();
+          this.hideTypingIndicator();
+          this.addMessage(data.message, 'assistant');
+
+        } catch (error) {
+          console.error('Send message failed:', error);
+          this.hideTypingIndicator();
+          this.addMessage('I apologize, but I\\'m having trouble connecting right now. Please try again.', 'system');
+        } finally {
+          this.isLoading = false;
+          this.toggleSendButton();
+          this.messageInput.focus();
+        }
+      }
+
+      async createSession() {
+        const response = await fetch('/api/v1/conversations', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ firmId: 'demo' })
+        });
+
+        if (!response.ok) throw new Error(\`Failed to create session: \${response.status}\`);
+
+        const data = await response.json();
+        this.sessionId = data.sessionId;
+        console.log('Session created:', this.sessionId);
+      }
+
+      addMessage(content, role) {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = \`flex \${role === 'user' ? 'justify-end' : 'justify-start'}\`;
+        
+        const bubbleClass = role === 'user' ? 'message-user' : 'message-ai';
+        messageDiv.innerHTML = \`
+          <div class="message-bubble \${bubbleClass}">
+            \${role === 'assistant' ? '<div class="text-xs font-medium mb-1">Legal Assistant</div>' : ''}
+            <div>\${content}</div>
+            <div class="text-xs opacity-75 mt-1">Just now</div>
+          </div>
+        \`;
+
+        this.messagesList.appendChild(messageDiv);
+        this.scrollToBottom();
+      }
+
+      showTypingIndicator() {
+        this.typingIndicator.classList.remove('hidden');
+        this.scrollToBottom();
+      }
+
+      hideTypingIndicator() {
+        this.typingIndicator.classList.add('hidden');
+      }
+
+      scrollToBottom() {
+        setTimeout(() => {
+          this.messagesContainer.scrollTop = this.messagesContainer.scrollHeight;
+        }, 100);
+      }
+    }
+
+    // Initialize app when DOM is ready
+    document.addEventListener('DOMContentLoaded', () => new ChatApp());
+  </script>
+</body>
+</html>`;
+
+// Handle static UI requests
+async function handleStaticRequest(request: Request, env: Env): Promise<Response> {
+  const url = new URL(request.url);
+  
+  // Serve main UI for root path
+  if (url.pathname === '/') {
+    return new Response(UI_HTML, {
+      headers: {
+        'Content-Type': 'text/html; charset=utf-8',
+        'Cache-Control': 'public, max-age=300', // 5 minutes
+      },
+    });
+  }
+  
+  // Handle other static assets (favicon, etc.)
+  if (url.pathname === '/favicon.svg') {
+    return new Response(
+      '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">⚖️</text></svg>',
+      { headers: { 'Content-Type': 'image/svg+xml' } }
+    );
+  }
+  
+  // 404 for other static requests
+  return new Response('Not Found', { status: 404 });
+}
+
+// CORS headers for cross-origin requests from UI
+function getCorsHeaders(env: Env, origin?: string): Record<string, string> {
+  const allowedOrigins = [
+    'https://09dc6629.engage-ui-dev.pages.dev',
+    'https://0874d635.engage-ui-dev.pages.dev', 
+    'https://167bb54b.engage-ui-dev.pages.dev',
+    'https://engage-ui-dev.pages.dev',
+    'https://dev.lexara.app',
+    'https://ui-dev.lexara.app',
+    'http://localhost:4321'  // Local development
+  ];
+  
+  // Check if origin is in allowed list, or allow all .pages.dev subdomains
+  let allowOrigin = '*';
+  if (origin) {
+    if (allowedOrigins.includes(origin) || origin.endsWith('.engage-ui-dev.pages.dev')) {
+      allowOrigin = origin;
+    }
+  }
+  
+  return {
+    'Access-Control-Allow-Origin': allowOrigin,
+    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    'Access-Control-Max-Age': '86400',
+    'Access-Control-Allow-Credentials': 'false',
+  };
+}
+
 export default {
   async fetch(request: Request, env: Env, _ctx: ExecutionContext): Promise<Response> {
     const logger = createLogger(env, { operation: 'main-worker' });
+    
+    // Handle CORS preflight requests
+    if (request.method === 'OPTIONS') {
+      const origin = request.headers.get('Origin');
+      return new Response(null, {
+        status: 204,
+        headers: getCorsHeaders(env, origin)
+      });
+    }
     
     try {
       logger.info('Received request', { 
@@ -24,6 +352,11 @@ export default {
 
       const url = new URL(request.url);
       const agent = new ClaudeAgent(env);
+      
+      // Serve UI static files for root and static paths
+      if (url.pathname === '/' || url.pathname.startsWith('/_astro/') || url.pathname === '/favicon.svg') {
+        return handleStaticRequest(request, env);
+      }
       
       // Health check endpoint
       if (url.pathname === '/health') {
@@ -37,7 +370,10 @@ export default {
             ai: 'available'
           }
         }), {
-          headers: { 'Content-Type': 'application/json' }
+          headers: { 
+            'Content-Type': 'application/json',
+            ...getCorsHeaders(env, request.headers.get('Origin'))
+          }
         });
       }
 
@@ -54,7 +390,10 @@ export default {
             'auth0-integration'
           ]
         }), {
-          headers: { 'Content-Type': 'application/json' }
+          headers: { 
+            'Content-Type': 'application/json',
+            ...getCorsHeaders(env, request.headers.get('Origin'))
+          }
         });
       }
 
@@ -72,7 +411,10 @@ export default {
             userIdentity: 'binding-available'
           }
         }), {
-          headers: { 'Content-Type': 'application/json' }
+          headers: { 
+            'Content-Type': 'application/json',
+            ...getCorsHeaders(env, request.headers.get('Origin'))
+          }
         });
       }
 
@@ -202,7 +544,10 @@ export default {
         statusCode: engageError.statusCode
       }), {
         status: engageError.statusCode,
-        headers: { 'Content-Type': 'application/json' }
+        headers: { 
+          'Content-Type': 'application/json',
+          ...getCorsHeaders(env, request.headers.get('Origin'))
+        }
       });
     }
   }

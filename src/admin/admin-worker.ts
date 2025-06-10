@@ -10,6 +10,9 @@ import {
   UnauthorizedAccessError,
   EngageError 
 } from '@/utils/errors';
+import { adminAuthMiddleware, createAuthResponse } from '@/auth/middleware';
+import { AuthContext } from '@/auth/jwt-validator';
+import { handleAuth0Callback, generateLogoutUrl } from '@/auth/callback-handler';
 
 const logger = createLogger('AdminWorker');
 
@@ -59,14 +62,17 @@ export default {
         });
       }
 
-      // Authentication middleware
-      const authResult = await validateAuthentication(request);
-      if (!authResult.valid) {
+      // Auth0 callback endpoint (no auth required)
+      if (method === 'GET' && path === '/auth/callback') {
+        return handleAuth0Callback(request, env);
+      }
+
+      // Logout endpoint (no auth required)
+      if (method === 'POST' && path === '/auth/logout') {
+        const logoutUrl = generateLogoutUrl(env);
         return new Response(JSON.stringify({
-          error: 'AUTHENTICATION_REQUIRED',
-          message: authResult.error || 'Valid authentication required'
+          logoutUrl
         }), {
-          status: 401,
           headers: { 
             'Content-Type': 'application/json',
             ...corsHeaders 
@@ -74,28 +80,35 @@ export default {
         });
       }
 
-      // Route API requests
+      // Authentication middleware using Auth0 JWT validation
+      const authResult = await adminAuthMiddleware(request, env);
+      if (!authResult.valid) {
+        return createAuthResponse(env, authResult);
+      }
+
+      // Route API requests with auth context
       let response: Response;
+      const authContext = authResult.context!;
 
       // Firm management endpoints
       if (path.startsWith('/api/admin/firms')) {
-        response = await routeFirmRequests(request, env, method, path);
+        response = await routeFirmRequests(request, env, method, path, authContext);
       }
       // User management endpoints
       else if (path.includes('/users')) {
-        response = await routeUserRequests(request, env, method, path);
+        response = await routeUserRequests(request, env, method, path, authContext);
       }
       // Configuration endpoints
       else if (path.includes('/configuration')) {
-        response = await routeConfigurationRequests(request, env, method, path);
+        response = await routeConfigurationRequests(request, env, method, path, authContext);
       }
       // Analytics endpoints
       else if (path.includes('/analytics')) {
-        response = await routeAnalyticsRequests(request, env, method, path);
+        response = await routeAnalyticsRequests(request, env, method, path, authContext);
       }
       // Subscription endpoints
       else if (path.includes('/subscription')) {
-        response = await routeSubscriptionRequests(request, env, method, path);
+        response = await routeSubscriptionRequests(request, env, method, path, authContext);
       }
       else {
         response = new Response(JSON.stringify({
@@ -148,36 +161,14 @@ export default {
   }
 };
 
-// Authentication validation
-async function validateAuthentication(request: Request): Promise<{ valid: boolean; error?: string }> {
-  // Extract Auth0 JWT token
-  const authHeader = request.headers.get('authorization');
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return { valid: false, error: 'Missing or invalid authorization header' };
-  }
-
-  const token = authHeader.substring(7);
-  
-  // Validate required headers
-  const requiredHeaders = ['x-auth0-user-id', 'x-user-email', 'x-user-role', 'x-firm-id'];
-  for (const header of requiredHeaders) {
-    if (!request.headers.get(header)) {
-      return { valid: false, error: `Missing required header: ${header}` };
-    }
-  }
-
-  // TODO: Validate JWT token with Auth0
-  // For now, trust the headers (would be validated by auth middleware)
-  
-  return { valid: true };
-}
 
 // Firm management request routing
 async function routeFirmRequests(
   request: Request, 
   env: Env, 
   method: string, 
-  path: string
+  path: string,
+  authContext: AuthContext
 ): Promise<Response> {
   
   // POST /api/admin/firms - Register new firm
@@ -214,7 +205,8 @@ async function routeUserRequests(
   request: Request, 
   env: Env, 
   method: string, 
-  path: string
+  path: string,
+  authContext: AuthContext
 ): Promise<Response> {
   
   // GET /api/admin/firms/{firmId}/users - List users
@@ -245,7 +237,8 @@ async function routeConfigurationRequests(
   request: Request, 
   env: Env, 
   method: string, 
-  path: string
+  path: string,
+  authContext: AuthContext
 ): Promise<Response> {
   
   // TODO: Implement configuration endpoints
@@ -263,7 +256,8 @@ async function routeAnalyticsRequests(
   request: Request, 
   env: Env, 
   method: string, 
-  path: string
+  path: string,
+  authContext: AuthContext
 ): Promise<Response> {
   
   // TODO: Implement analytics endpoints
@@ -281,7 +275,8 @@ async function routeSubscriptionRequests(
   request: Request, 
   env: Env, 
   method: string, 
-  path: string
+  path: string,
+  authContext: AuthContext
 ): Promise<Response> {
   
   // TODO: Implement subscription endpoints

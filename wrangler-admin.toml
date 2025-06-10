@@ -10,23 +10,27 @@ route = { pattern = "admin.lexara.app/*", zone_name = "lexara.app" }
 # Environment variables
 [env.dev]
 name = "engage-admin-api-dev"
-route = { pattern = "admin.dev.lexara.app/*", zone_name = "lexara.app" }
+route = { pattern = "admin-dev.lexara.app/*", zone_name = "lexara.app" }
 
 [env.dev.vars]
 ENVIRONMENT = "development"
 LOG_LEVEL = "debug"
 CORS_ORIGINS = "https://dev.lexara.app"
 AUTH0_DOMAIN = "lexara-dev.us.auth0.com"
+AUTH0_CLIENT_ID = "TO_BE_SET"
+AUTH0_AUDIENCE = "https://api.dev.lexara.app"
 
 [env.test] 
 name = "engage-admin-api-test"
-route = { pattern = "admin.test.lexara.app/*", zone_name = "lexara.app" }
+route = { pattern = "admin-test.lexara.app/*", zone_name = "lexara.app" }
 
 [env.test.vars]
 ENVIRONMENT = "test"
 LOG_LEVEL = "info"
 CORS_ORIGINS = "https://test.lexara.app"
 AUTH0_DOMAIN = "lexara-test.us.auth0.com"
+AUTH0_CLIENT_ID = "TO_BE_SET"
+AUTH0_AUDIENCE = "https://api.test.lexara.app"
 
 [env.production]
 name = "engage-admin-api-production"
@@ -37,6 +41,8 @@ ENVIRONMENT = "production"
 LOG_LEVEL = "warn"
 CORS_ORIGINS = "https://lexara.app"
 AUTH0_DOMAIN = "lexara.us.auth0.com"
+AUTH0_CLIENT_ID = "TO_BE_SET"
+AUTH0_AUDIENCE = "https://api.lexara.app"
 
 # Durable Object bindings
 [[durable_objects.bindings]]
