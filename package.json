@@ -14,7 +14,7 @@
     "deploy": "wrangler deploy",
     "deploy:admin": "wrangler deploy --config wrangler-admin.toml",
     "deploy:dev": "wrangler deploy --env dev",
-    "deploy:test": "wrangler deploy --env test", 
+    "deploy:test": "wrangler deploy --env test",
     "deploy:production": "wrangler deploy --env production",
     "deploy:admin:dev": "wrangler deploy --config wrangler-admin.toml --env dev",
     "deploy:admin:test": "wrangler deploy --config wrangler-admin.toml --env test",
@@ -47,6 +47,8 @@
   },
   "dependencies": {
     "@astrojs/cloudflare": "^11.0.0",
+    "@microlabs/otel-cf-workers": "^1.0.0-rc.49",
+    "@opentelemetry/api": "^1.9.0",
     "ulid": "^2.3.0"
   },
   "keywords": [

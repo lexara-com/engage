@@ -56,7 +56,15 @@
       "Bash(wrangler pages project:*)",
       "Bash(pip install:*)",
       "Bash(timeout:*)",
-      "Bash(npx wrangler deploy:*)"
+      "Bash(npx wrangler deploy:*)",
+      "Bash(npx wrangler tail:*)",
+      "Bash(touch:*)",
+      "Bash(cat:*)",
+      "Bash(npx wrangler secret list:*)",
+      "WebFetch(domain:logfire.pydantic.dev)",
+      "Bash(npx wrangler:*)",
+      "WebFetch(domain:www.canva.com)",
+      "Bash(npx tsc:*)"
     ],
     "deny": []
   }

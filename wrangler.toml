@@ -127,6 +127,10 @@ binding = "AI"
 [vars]
 ENVIRONMENT = "development"
 LOG_LEVEL = "info"
+# OpenTelemetry configuration
+OTEL_EXPORTER_OTLP_PROTOCOL = "http/protobuf"
+OTEL_SERVICE_NAME = "engage-legal-ai"
+OTEL_SERVICE_VERSION = "0.1.0"
 
 # Development-specific variables
 [env.dev.vars]
@@ -136,6 +140,9 @@ API_BASE_URL = "https://api.dev.lexara.app"
 ADMIN_BASE_URL = "https://admin.dev.lexara.app"
 AUTH0_DOMAIN = "lexara-dev.us.auth0.com"
 AUTH0_CLIENT_ID = "dev_client_id_placeholder"
+# OpenTelemetry configuration - dev
+OTEL_EXPORTER_OTLP_ENDPOINT = "https://logfire-api.pydantic.dev"
+OTEL_SERVICE_NAME = "engage-legal-ai-dev"
 
 # Test/Staging-specific variables  
 [env.test.vars]
@@ -145,6 +152,9 @@ API_BASE_URL = "https://api.test.lexara.app"
 ADMIN_BASE_URL = "https://admin.test.lexara.app"
 AUTH0_DOMAIN = "lexara-test.us.auth0.com"
 AUTH0_CLIENT_ID = "test_client_id_placeholder"
+# OpenTelemetry configuration - test
+OTEL_EXPORTER_OTLP_ENDPOINT = "https://logfire-api.pydantic.dev"
+OTEL_SERVICE_NAME = "engage-legal-ai-test"
 
 # Production-specific variables
 [env.production.vars]
@@ -154,3 +164,6 @@ API_BASE_URL = "https://api.lexara.app"
 ADMIN_BASE_URL = "https://admin.lexara.app"
 AUTH0_DOMAIN = "lexara.us.auth0.com"
 AUTH0_CLIENT_ID = "prod_client_id_placeholder"
+# OpenTelemetry configuration - production
+OTEL_EXPORTER_OTLP_ENDPOINT = "https://logfire-api.pydantic.dev"
+OTEL_SERVICE_NAME = "engage-legal-ai-production"

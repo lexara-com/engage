@@ -390,4 +390,12 @@ export interface Env {
   
   // API Keys
   ANTHROPIC_API_KEY: string;
+  
+  // OpenTelemetry configuration
+  OTEL_EXPORTER_OTLP_ENDPOINT?: string;
+  OTEL_EXPORTER_OTLP_HEADERS?: string;
+  OTEL_EXPORTER_OTLP_PROTOCOL?: string;
+  OTEL_SERVICE_NAME?: string;
+  OTEL_SERVICE_VERSION?: string;
+  LOGFIRE_TOKEN?: string; // Pydantic Logfire authentication token
 }

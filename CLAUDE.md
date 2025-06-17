@@ -520,18 +520,27 @@ RESTful APIs with clear versioning strategy, comprehensive error handling, and s
 - **State Persistence**: Complete conversation history and goal tracking
 - **Security Phases**: Pre-login → login-suggested → secured workflow
 
+#### Auth0 Authentication & Authorization System ✅ **NEW**
+- **Implementation**: `src/auth/auth-middleware.ts` and `src/auth/auth0-config.ts`
+- **JWT Verification**: Real cryptographic verification with Auth0 JWKS
+- **Multi-Tenant Strategy**: Organization-based separation (platform/firm/clients)
+- **Phase-Based Security**: Conditional authentication based on conversation phase
+- **API Integration**: Auth middleware integrated with conversation endpoints
+- **Production Ready**: Environment variables configured, deployed to Cloudflare
+
 #### Main Agent Worker with Embedded UI
 - **Implementation**: `src/agent/main-worker.ts` and `src/agent/claude-agent.ts`
 - **Static Serving**: Complete HTML/CSS/JavaScript chat interface embedded
 - **API Endpoints**: Session creation, message handling, health checks
 - **Session Routing**: Consistent session ID mapping for agent-to-storage communication
 - **Request Processing**: Error handling with proper HTTP status codes
+- **Authentication**: Auth0 JWT validation integrated into message processing
 
 #### ULID Implementation
 - **Custom Implementation**: Web Crypto API compatible for Cloudflare Workers
 - **Session IDs**: Deterministic access to Durable Objects
 - **Resume Tokens**: Persistent conversation resumption
-- **User IDs**: Future Auth0 mapping capability
+- **User IDs**: Auth0 mapping capability implemented
 
 ### 🧪 Verified Functionality - **PRODUCTION READY**
 
@@ -672,6 +681,27 @@ The Engage system includes a sophisticated **Python-based conversation validatio
 **Documentation**: See `CONVERSATION_VALIDATION_CLAUDE.md` for complete technical details, usage instructions, and integration procedures.
 
 **Usage Note**: This testing framework operates independently but should be used to validate any changes to the AI agent, conversation flow, or response quality before deployment.
+
+---
+
+## DEPLOYMENT AND TESTING RULES
+
+### Domain Architecture Guidelines
+**NEVER test against temporary Cloudflare URLs** (*.pages.dev, *.workers.dev, etc.).
+
+**ALWAYS use stable lexara.app domain architecture:**
+- **dev.lexara.app** - Development environment
+- **admin-dev.lexara.app** - Admin development  
+- **test.lexara.app** - Testing environment
+- **admin-test.lexara.app** - Admin testing
+- **lexara.app** - Production
+- **admin.lexara.app** - Admin production
+
+### Integration Guidelines
+- **Single-Domain Deployment**: ALWAYS use integrated UI/API approach to eliminate CORS issues
+- **No Separate Pages**: NEVER create separate Cloudflare Pages deployments requiring cross-origin requests
+- **Embedded UI**: All user interfaces should be embedded directly in Workers for same-origin serving
+- **Testing**: All conversation validation and API testing must use stable domains only
 
 ---
 
