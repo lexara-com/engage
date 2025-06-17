@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Platform Administration - Lexara</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #f8fafc;
+            color: #334155;
+            line-height: 1.6;
+        }
+        
+        .platform-header {
+            background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+            color: white;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .logo-section h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+        
+        .logo-section p {
+            opacity: 0.9;
+            font-size: 0.875rem;
+        }
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .user-details {
+            text-align: right;
+        }
+        
+        .user-name {
+            font-weight: 600;
+        }
+        
+        .user-role {
+            font-size: 0.75rem;
+            opacity: 0.8;
+        }
+        
+        .logout-btn {
+            background: rgba(255,255,255,0.2);
+            border: 1px solid rgba(255,255,255,0.3);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            text-decoration: none;
+            font-size: 0.875rem;
+            transition: background-color 0.2s;
+        }
+        
+        .logout-btn:hover {
+            background: rgba(255,255,255,0.3);
+        }
+        
+        .dashboard-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .metric-card {
+            background: white;
+            border-radius: 8px;
+            padding: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            border: 1px solid #e2e8f0;
+        }
+        
+        .metric-card.primary {
+            border-left: 4px solid #3b82f6;
+        }
+        
+        .metric-icon {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .metric-content h3 {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: #64748b;
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        
+        .metric-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 0.25rem;
+        }
+        
+        .metric-trend {
+            font-size: 0.875rem;
+            color: #64748b;
+        }
+        
+        .trend-indicator {
+            font-weight: 600;
+        }
+        
+        .trend-indicator.up {
+            color: #10b981;
+        }
+        
+        .trend-indicator.down {
+            color: #ef4444;
+        }
+        
+        .metric-subtitle {
+            font-size: 0.875rem;
+            color: #64748b;
+        }
+        
+        .metric-status {
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+        
+        .metric-status.healthy {
+            color: #10b981;
+        }
+        
+        .quick-actions {
+            background: white;
+            border-radius: 8px;
+            padding: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            border: 1px solid #e2e8f0;
+            margin-bottom: 2rem;
+        }
+        
+        .quick-actions h2 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: #1e293b;
+        }
+        
+        .action-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+        
+        .action-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 1rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            background: white;
+            text-decoration: none;
+            color: #334155;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+        
+        .action-btn:hover {
+            border-color: #3b82f6;
+            background: #f8fafc;
+            transform: translateY(-1px);
+        }
+        
+        .action-btn.primary {
+            background: #3b82f6;
+            color: white;
+            border-color: #3b82f6;
+        }
+        
+        .action-btn.primary:hover {
+            background: #2563eb;
+        }
+        
+        .action-icon {
+            font-size: 1.25rem;
+        }
+        
+        .action-text {
+            font-weight: 500;
+        }
+        
+        .activity-feed {
+            background: white;
+            border-radius: 8px;
+            padding: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            border: 1px solid #e2e8f0;
+        }
+        
+        .activity-feed h2 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: #1e293b;
+        }
+        
+        .activity-list {
+            space-y: 1rem;
+        }
+        
+        .activity-item {
+            display: flex;
+            gap: 1rem;
+            padding: 1rem 0;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        
+        .activity-item:last-child {
+            border-bottom: none;
+        }
+        
+        .activity-icon {
+            width: 2.5rem;
+            height: 2.5rem;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            flex-shrink: 0;
+        }
+        
+        .activity-icon.firm {
+            background: #dbeafe;
+            color: #3b82f6;
+        }
+        
+        .activity-icon.user {
+            background: #dcfce7;
+            color: #16a34a;
+        }
+        
+        .activity-icon.billing {
+            background: #fef3c7;
+            color: #d97706;
+        }
+        
+        .activity-content {
+            flex: 1;
+        }
+        
+        .activity-title {
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 0.25rem;
+        }
+        
+        .activity-details {
+            font-size: 0.875rem;
+            color: #64748b;
+            margin-bottom: 0.5rem;
+        }
+        
+        .activity-meta {
+            display: flex;
+            gap: 1rem;
+            font-size: 0.75rem;
+            color: #94a3b8;
+        }
+        
+        .coming-soon {
+            background: white;
+            border-radius: 8px;
+            padding: 2rem;
+            text-align: center;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            border: 1px solid #e2e8f0;
+            margin-top: 2rem;
+        }
+        
+        .coming-soon h3 {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 0.5rem;
+        }
+        
+        .coming-soon p {
+            color: #64748b;
+        }
+    </style>
+</head>
+<body>
+    <header class="platform-header">
+        <div class="logo-section">
+            <h1>Lexara Platform Administration</h1>
+            <p>Manage law firm customers and platform operations</p>
+        </div>
+        <div class="user-info">
+            <div class="user-details">
+                <div class="user-name">{{userName}}</div>
+                <div class="user-role">{{userRole}}</div>
+            </div>
+            <a href="/logout" class="logout-btn">Logout</a>
+        </div>
+    </header>
+
+    <main class="dashboard-content">
+        <!-- Key Metrics Grid -->
+        <section class="metrics-grid">
+            <div class="metric-card primary">
+                <div class="metric-icon">🏢</div>
+                <div class="metric-content">
+                    <h3>Active Law Firms</h3>
+                    <div class="metric-value">{{activeFirms}}</div>
+                    <div class="metric-trend">
+                        <span class="trend-indicator up">+{{firmGrowth}}%</span>
+                        <span>vs last month</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="metric-card">
+                <div class="metric-icon">💬</div>
+                <div class="metric-content">
+                    <h3>Platform Conversations</h3>
+                    <div class="metric-value">{{totalConversations}}</div>
+                    <div class="metric-subtitle">{{monthlyConversations}} this month</div>
+                </div>
+            </div>
+            
+            <div class="metric-card">
+                <div class="metric-icon">💰</div>
+                <div class="metric-content">
+                    <h3>Monthly Revenue</h3>
+                    <div class="metric-value">${{monthlyRevenue}}</div>
+                    <div class="metric-trend">
+                        <span class="trend-indicator up">+{{revenueGrowth}}%</span>
+                        <span>vs last month</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="metric-card">
+                <div class="metric-icon">⚡</div>
+                <div class="metric-content">
+                    <h3>System Health</h3>
+                    <div class="metric-value">{{systemUptime}}%</div>
+                    <div class="metric-status healthy">All Systems Operational</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Quick Actions -->
+        <section class="quick-actions">
+            <h2>Quick Actions</h2>
+            <div class="action-grid">
+                <button class="action-btn primary" onclick="createFirm()">
+                    <span class="action-icon">➕</span>
+                    <span class="action-text">Create New Firm</span>
+                </button>
+                <a href="/firms" class="action-btn">
+                    <span class="action-icon">👥</span>
+                    <span class="action-text">Manage Firms</span>
+                </a>
+                <a href="/analytics" class="action-btn">
+                    <span class="action-icon">📊</span>
+                    <span class="action-text">View Analytics</span>
+                </a>
+                <button class="action-btn" onclick="systemHealth()">
+                    <span class="action-icon">🔧</span>
+                    <span class="action-text">System Health</span>
+                </button>
+            </div>
+        </section>
+
+        <!-- Recent Activity Feed -->
+        <section class="activity-feed">
+            <h2>Recent Activity</h2>
+            <div class="activity-list">
+                {{#each recentActivity}}
+                <div class="activity-item">
+                    <div class="activity-icon {{type}}">{{icon}}</div>
+                    <div class="activity-content">
+                        <div class="activity-title">{{title}}</div>
+                        <div class="activity-details">{{details}}</div>
+                        <div class="activity-meta">
+                            <span class="activity-time">{{timestamp}}</span>
+                            <span class="activity-user">by {{performedBy}}</span>
+                        </div>
+                    </div>
+                </div>
+                {{/each}}
+            </div>
+        </section>
+
+        <!-- Coming Soon Section -->
+        <section class="coming-soon">
+            <h3>Advanced Features Coming Soon</h3>
+            <p>Firm management interface, detailed analytics, and customer support tools are currently in development.</p>
+        </section>
+    </main>
+
+    <script>
+        function createFirm() {
+            alert('Create New Firm feature is coming soon!');
+        }
+        
+        function systemHealth() {
+            alert('System Health details are coming soon!');
+        }
+        
+        // Auto-refresh dashboard every 5 minutes
+        setTimeout(() => {
+            window.location.reload();
+        }, 300000);
+    </script>
+</body>
+</html>
