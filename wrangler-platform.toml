@@ -1,0 +1,80 @@
+# Wrangler configuration for Platform Admin Worker
+name = "engage-platform-admin"
+main = "src/platform/platform-worker.ts"
+compatibility_date = "2024-01-01"
+
+# Worker configuration  
+workers_dev = false
+route = { pattern = "platform.lexara.app/*", zone_name = "lexara.app" }
+
+# Environment variables
+[env.dev]
+name = "engage-platform-admin-dev"
+route = { pattern = "platform-dev.lexara.app/*", zone_name = "lexara.app" }
+
+[env.dev.vars]
+ENVIRONMENT = "development"
+LOG_LEVEL = "debug"
+AUTH0_DOMAIN = "lexara-dev.us.auth0.com"
+AUTH0_CLIENT_ID = "dev_platform_client_placeholder"
+AUTH0_AUDIENCE = "https://api.dev.lexara.app"
+
+[env.test] 
+name = "engage-platform-admin-test"
+route = { pattern = "platform-test.lexara.app/*", zone_name = "lexara.app" }
+
+[env.test.vars]
+ENVIRONMENT = "test"
+LOG_LEVEL = "info"
+AUTH0_DOMAIN = "lexara-test.us.auth0.com"
+AUTH0_CLIENT_ID = "dev_platform_client_placeholder"
+AUTH0_AUDIENCE = "https://api.test.lexara.app"
+
+[env.production]
+name = "engage-platform-admin-production"
+route = { pattern = "platform.lexara.app/*", zone_name = "lexara.app" }
+
+[env.production.vars]
+ENVIRONMENT = "production"
+LOG_LEVEL = "warn"
+AUTH0_DOMAIN = "lexara.us.auth0.com"
+AUTH0_CLIENT_ID = "dev_platform_client_placeholder"
+AUTH0_AUDIENCE = "https://api.lexara.app"
+
+# Durable Object bindings for platform admin
+[[durable_objects.bindings]]
+name = "PLATFORM_SESSION"
+class_name = "PlatformSession"
+script_name = "engage-platform-admin"
+
+[[durable_objects.bindings]]
+name = "PLATFORM_AUDIT_LOG"
+class_name = "PlatformAuditLog"
+script_name = "engage-platform-admin"
+
+# Firm registry binding to manage firms
+[[durable_objects.bindings]]
+name = "FIRM_REGISTRY"
+class_name = "FirmRegistry"
+script_name = "engage-firm-registry"
+
+# KV bindings for session storage and caching
+[[kv_namespaces]]
+binding = "PLATFORM_SESSIONS"
+id = "platform_sessions_kv"
+preview_id = "platform_sessions_kv_preview"
+
+[[kv_namespaces]]
+binding = "PLATFORM_CACHE"
+id = "platform_cache_kv"
+preview_id = "platform_cache_kv_preview"
+
+# Analytics Engine binding for platform metrics
+[[analytics_engine_datasets]]
+binding = "PLATFORM_ANALYTICS"
+dataset = "platform_admin_usage"
+
+# Rate limiting and security
+[vars]
+RATE_LIMIT_PER_MINUTE = "120"
+MAX_REQUEST_SIZE = "5242880"  # 5MB

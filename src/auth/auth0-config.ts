@@ -64,7 +64,8 @@ export function getAuth0Config(env: Env): Auth0Config {
   
   return {
     domain,
-    audience: env.AUTH0_AUDIENCE || 'https://api.lexara.app',
+    // audience: env.AUTH0_AUDIENCE || 'https://api.lexara.app', // Commented out as requested
+    audience: '', // Temporarily disabled for development
     adminClientId: env.AUTH0_CLIENT_ID || '', // Admin console SPA
     clientIntakeClientId: env.AUTH0_CLIENT_ID || '', // Client intake SPA (same for now)
     jwksUri: `https://${domain}/.well-known/jwks.json`,
@@ -149,9 +150,10 @@ export function validateAuth0Config(env: Env): { valid: boolean; errors: string[
     errors.push('AUTH0_CLIENT_ID environment variable is required');
   }
   
-  if (!env.AUTH0_AUDIENCE) {
-    errors.push('AUTH0_AUDIENCE environment variable is required');
-  }
+  // AUTH0_AUDIENCE is optional - required only for API access
+  // if (!env.AUTH0_AUDIENCE) {
+  //   errors.push('AUTH0_AUDIENCE environment variable is required');
+  // }
   
   // Validate domain format
   if (env.AUTH0_DOMAIN && !env.AUTH0_DOMAIN.includes('.auth0.com')) {
