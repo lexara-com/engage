@@ -80,7 +80,8 @@
       "Bash(npx husky:*)",
       "Bash(mv:*)",
       "Bash(true)",
-      "Bash(pnpm install:*)"
+      "Bash(pnpm install:*)",
+      "Bash(pnpm build:packages:*)"
     ],
     "deny": []
   }
