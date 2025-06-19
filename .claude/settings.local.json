@@ -77,7 +77,10 @@
       "Bash(done)",
       "Bash(./scripts/validate-config.sh:*)",
       "Bash(rg:*)",
-      "Bash(npx husky:*)"
+      "Bash(npx husky:*)",
+      "Bash(mv:*)",
+      "Bash(true)",
+      "Bash(pnpm install:*)"
     ],
     "deny": []
   }

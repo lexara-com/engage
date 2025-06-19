@@ -1,0 +1,23 @@
+{
+  "name": "goal-tracker-mcp",
+  "version": "0.1.0",
+  "description": "Goal tracking MCP server for AI agent interactions",
+  "main": "src/worker.ts",
+  "scripts": {
+    "dev": "wrangler dev",
+    "build": "wrangler build",
+    "deploy": "wrangler deploy",
+    "deploy:dev": "wrangler deploy --env dev",
+    "deploy:production": "wrangler deploy --env production",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@lexara/shared-types": "workspace:*",
+    "@lexara/shared-utils": "workspace:*"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20240909.0",
+    "typescript": "^5.5.0",
+    "wrangler": "^4.20.3"
+  }
+}
