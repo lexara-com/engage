@@ -74,7 +74,7 @@ export async function handleAuth0Callback(request: Request, env: Env): Promise<R
   } catch (error) {
     const err = error as Error;
     logger.error('Auth0 callback processing failed', { 
-      error: err.message, 
+      errorMessage: err.message, 
       stack: err.stack 
     });
     
@@ -135,7 +135,8 @@ export function validateSession(request: Request): { valid: boolean; user?: any;
     };
     
   } catch (error) {
-    logger.error('Session validation failed', { error: error.message });
+    const logger = createLogger({} as any, { service: 'session-validator' });
+    logger.error('Session validation failed', { errorMessage: error instanceof Error ? error.message : String(error) });
     return { valid: false };
   }
 }

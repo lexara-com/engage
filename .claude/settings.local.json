@@ -75,7 +75,9 @@
       "Bash(do echo \"=== $file ===\")",
       "Bash(head:*)",
       "Bash(done)",
-      "Bash(./scripts/validate-config.sh:*)"
+      "Bash(./scripts/validate-config.sh:*)",
+      "Bash(rg:*)",
+      "Bash(npx husky:*)"
     ],
     "deny": []
   }

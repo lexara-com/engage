@@ -411,8 +411,8 @@ CURRENT GOALS:`;
         const claudeErr = claudeError as Error;
         const workersErr = workersError as Error;
         logger.error('Both AI services failed', { 
-          claudeError: claudeErr.message,
-          workersError: workersErr.message
+          claudeErrorMessage: claudeErr.message,
+          workersErrorMessage: workersErr.message
         });
         
         // If both services fail, return fallback response with service info

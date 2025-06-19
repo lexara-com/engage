@@ -39,7 +39,12 @@
     "test:e2e:debug": "DEBUG_TESTS=true vitest run tests/e2e",
     "test:e2e:headed": "HEADLESS=false vitest run tests/e2e",
     "lint": "eslint src/**/*.ts",
-    "lint:fix": "eslint src/**/*.ts --fix"
+    "lint:fix": "eslint src/**/*.ts --fix",
+    "format": "prettier --write \"src/**/*.{ts,js,json}\"",
+    "format:check": "prettier --check \"src/**/*.{ts,js,json}\"",
+    "code:check": "npm run typecheck && npm run lint && npm run format:check",
+    "code:fix": "npm run lint:fix && npm run format",
+    "prepare": "husky"
   },
   "devDependencies": {
     "@astrojs/node": "^8.3.4",
@@ -51,6 +56,9 @@
     "@typescript-eslint/parser": "^7.18.0",
     "astro": "^4.16.7",
     "eslint": "^8.57.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.1.2",
+    "prettier": "^3.5.3",
     "puppeteer": "^24.10.0",
     "tailwindcss": "^3.4.14",
     "typescript": "^5.5.0",

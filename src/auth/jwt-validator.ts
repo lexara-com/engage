@@ -42,7 +42,7 @@ export async function validateAuth0Token(token: string, env: Env): Promise<AuthC
     return null;
     
   } catch (error) {
-    logger.error('Token validation failed', { error: error.message });
+    logger.error('Token validation failed', { errorMessage: error instanceof Error ? error.message : String(error) });
     return null;
   }
 }
@@ -101,7 +101,7 @@ async function validateJWTToken(token: string, env: Env): Promise<AuthContext | 
     };
     
   } catch (error) {
-    logger.error('JWT validation failed', { error: error.message });
+    logger.error('JWT validation failed', { errorMessage: error instanceof Error ? error.message : String(error) });
     return null;
   }
 }

@@ -58,10 +58,10 @@ export async function authMiddleware(
     }
 
     // Check role requirements
-    if (options.requiredRole && context.role !== options.requiredRole) {
+    if (options.requiredRole && !context.roles.includes(options.requiredRole)) {
       return {
         valid: false,
-        error: `Insufficient role: required ${options.requiredRole}, has ${context.role || 'none'}`
+        error: `Insufficient role: required ${options.requiredRole}, has ${context.roles.join(', ') || 'none'}`
       };
     }
 

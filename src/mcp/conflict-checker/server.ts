@@ -12,6 +12,9 @@ import {
   MCPResource,
   MCPResourceContent,
   MCPErrorCode,
+  MCPError
+} from '../goal-tracker/types';
+import {
   ConflictCheckRequest,
   ConflictCheckResult,
   ConflictMatch,

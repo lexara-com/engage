@@ -274,36 +274,99 @@ curl -H "Authorization: Bearer YOUR_JWT_TOKEN" \
 
 ### Common Issues
 
-1. **"Invalid State Parameter"**
-   - Check callback URL configuration
-   - Verify state parameter encoding/decoding
+1. **"Invalid State Parameter" / Error 1101**
+   - **Symptoms**: Error 1101, redirect to `/login?error=auth_failed`
+   - **Causes**: State parameter tampering, expired state (>10 minutes), missing state in callback URL
+   - **Debug**: Check state generation and validation in browser DevTools
+   - **Solution**: Verify state timestamp validation and base64 encoding/decoding
 
 2. **"Invalid Redirect URI"**
-   - Ensure exact match between configured and actual callback URLs
-   - Check for trailing slashes
+   - **Symptoms**: Auth0 error during login redirect
+   - **Causes**: Mismatch between configured callback URLs and actual request URLs
+   - **Solution**: Ensure exact match in Auth0 Dashboard > Applications > Settings
+   - **Note**: Check for trailing slashes, HTTP vs HTTPS, subdomain differences
 
-3. **JWT Validation Fails**
-   - Verify JWKS endpoint accessibility
-   - Check token expiry and clock skew
-   - Validate issuer and audience claims
+3. **"Token Exchange Failed" (403/401)**
+   - **Symptoms**: Error after successful Auth0 authentication
+   - **Causes**: Invalid client credentials, mismatched redirect_uri, expired authorization code
+   - **Debug**: Check Auth0 logs in Dashboard > Monitoring > Logs
+   - **Solution**: Verify CLIENT_SECRET matches, redirect_uri is identical in auth and token requests
 
-4. **CORS Errors**
-   - Update allowed origins in Auth0 application settings
-   - Check admin worker CORS configuration
+4. **JWT Validation Fails**
+   - **Symptoms**: Authentication fails despite valid Auth0 response
+   - **Causes**: Missing custom claims, expired tokens, invalid signature verification
+   - **Debug**: Decode JWT at https://jwt.io to inspect claims
+   - **Solution**: Verify Auth0 Action is setting custom claims correctly
+
+5. **Session Persistence Issues**
+   - **Symptoms**: User logged out on page refresh
+   - **Causes**: Missing secure cookie attributes, Durable Object storage issues
+   - **Debug**: Check cookies in browser DevTools (Application > Cookies)
+   - **Solution**: Verify HttpOnly, Secure, SameSite attributes are set
+
+6. **CORS Errors**
+   - **Symptoms**: Browser blocks Auth0 requests
+   - **Causes**: Missing allowed origins in Auth0 application settings
+   - **Solution**: Update allowed origins in Auth0 application settings
+   - **Note**: Check admin worker CORS configuration for API endpoints
 
 ### Debug Commands
 ```bash
 # Test Auth0 JWKS endpoint
-curl https://lexara-dev.us.auth0.com/.well-known/jwks.json
+curl https://dev-sv0pf6cz2530xz0o.us.auth0.com/.well-known/jwks.json
 
-# Test token endpoint
-curl -X POST https://lexara-dev.us.auth0.com/oauth/token \
-  -H "Content-Type: application/x-www-form-urlencoded" \
-  -d "grant_type=authorization_code&client_id=YOUR_CLIENT_ID&..."
+# Test platform admin health endpoint
+curl https://platform-dev.lexara.app/health
 
-# Test userinfo endpoint
-curl -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
-     https://lexara-dev.us.auth0.com/userinfo
+# Test authentication requirement (should redirect)
+curl -v https://platform-dev.lexara.app/dashboard 2>&1 | grep Location
+
+# Enable debug logging in Cloudflare
+wrangler tail --env dev --config wrangler-platform.toml
+
+# Generate manual auth URL for testing
+node -e "
+const state = btoa(JSON.stringify({returnTo: '/dashboard', timestamp: Date.now(), nonce: 'test'}));
+console.log('Auth URL:', \`https://dev-sv0pf6cz2530xz0o.us.auth0.com/authorize?client_id=QHexH0yTPx1xBZDIWrzltOjwGX86Bcx3&redirect_uri=https://platform-dev.lexara.app/callback&scope=openid+profile+email&response_type=code&state=\${state}\`);
+"
+```
+
+### Current Implementation Status (Development)
+
+#### Active Configuration
+- **Domain**: `dev-sv0pf6cz2530xz0o.us.auth0.com`
+- **Client ID**: `QHexH0yTPx1xBZDIWrzltOjwGX86Bcx3`  
+- **Platform Admin URL**: `https://platform-dev.lexara.app`
+- **Main Agent URL**: `https://dev.lexara.app`
+
+#### Test Accounts
+```bash
+# Test login flow manually:
+# 1. Visit: https://platform-dev.lexara.app/login
+# 2. Should redirect to Auth0 with proper parameters
+# 3. Use any Auth0-configured identity provider
+# 4. Should redirect back to /dashboard on success
+```
+
+#### Authentication Flow
+1. User accesses protected route (e.g., `/dashboard`)
+2. Platform worker detects missing session
+3. Redirects to `/login` with Auth0 authorization URL
+4. User authenticates via Auth0
+5. Auth0 redirects to `/callback` with authorization code
+6. Platform worker exchanges code for JWT token
+7. JWT validated and session created in Durable Object
+8. User redirected to originally requested page
+
+#### Integration Tests
+```bash
+# Run Auth0 integration test suite
+npm test tests/integration/auth0-flows.test.ts
+npm test tests/integration/auth0-callback-simulation.test.ts  
+npm test tests/integration/auth0-session-management.test.ts
+
+# Run unit tests for Auth0 components
+npm test tests/unit/auth/platform-auth-manager.test.ts
 ```
 
 ## Next Steps

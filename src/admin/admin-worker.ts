@@ -206,7 +206,7 @@ export default {
     } catch (error) {
       const err = error as Error;
       logger.error('Admin worker error', { 
-        error: err.message,
+        errorMessage: err.message,
         stack: err.stack 
       });
 

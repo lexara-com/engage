@@ -131,7 +131,7 @@ export interface Message {
 }
 
 // HIPAA-enhanced message with encryption support
-export interface EncryptedMessage extends Message {
+export interface EncryptedMessage extends Omit<Message, 'content'> {
   // Content handling
   content?: string;                 // Plain text (if not sensitive)
   encryptedContent?: {

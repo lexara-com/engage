@@ -12,6 +12,9 @@ import {
   MCPResource,
   MCPResourceContent,
   MCPErrorCode,
+  MCPError
+} from '../goal-tracker/types';
+import {
   SupportingDocumentRequest,
   SupportingDocumentResult,
   EnhanceGoalsRequest,
@@ -634,7 +637,14 @@ export class AdditionalGoalsMCPServer {
         relevanceScore: result.score,
         dataGatheringGoals: result.metadata.dataGatheringGoals || [],
         documentRequirements: result.metadata.documentRequirements || [],
-        guidelines: result.metadata.guidelines || []
+        guidelines: result.metadata.guidelines || [],
+        metadata: result.metadata.metadata || {
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          version: '1.0',
+          isActive: true,
+          priority: 'medium' as const
+        }
       }))
       .slice(0, 5); // Limit to top 5 most relevant documents
   }
