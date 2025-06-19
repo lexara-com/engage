@@ -23,11 +23,34 @@
 
 ### **🚧 PLANNED (Not Yet Implemented)**
 
+#### **Platform Admin Portal (Immediate Priority)**
+
 | Endpoint | Method | Authentication | Authorization | Security Level | Status |
 |----------|---------|---------------|---------------|----------------|--------|
-| `/admin/api/v1/firms` | `GET` | ✅ Required | `platform:admin` | **Protected** | Planned |
-| `/admin/api/v1/firms/{id}` | `GET` | ✅ Required | Firm access + `view:analytics` | **Protected** | Planned |
-| `/admin/api/v1/conversations` | `GET` | ✅ Required | Firm access + `view:conversations` | **Protected** | Planned |
+| `platform.lexara.app/login` | `GET` | ❌ None | ❌ None | **Public** | 🎯 **NEXT** |
+| `platform.lexara.app/callback` | `GET` | 🔄 Auth0 Flow | Auth0 callback | **Auth Flow** | 🎯 **NEXT** |
+| `platform.lexara.app/dashboard` | `GET` | ✅ Required | Lexara employees only | **Protected** | 🎯 **NEXT** |
+| `platform.lexara.app/firms` | `GET` | ✅ Required | Platform admin | **Protected** | 🎯 **NEXT** |
+| `platform.lexara.app/firms/{id}` | `GET` | ✅ Required | Platform admin | **Protected** | 🎯 **NEXT** |
+| `platform.lexara.app/analytics` | `GET` | ✅ Required | Platform admin | **Protected** | 🎯 **NEXT** |
+
+#### **Firm Admin Portal (Secondary Priority)**
+
+| Endpoint | Method | Authentication | Authorization | Security Level | Status |
+|----------|---------|---------------|---------------|----------------|--------|
+| `admin.lexara.app/signup` | `GET/POST` | ❌ None | ❌ None | **Public** | **Later** |
+| `admin.lexara.app/login` | `GET` | ❌ None | ❌ None | **Public** | **Later** |
+| `admin.lexara.app/callback` | `GET` | 🔄 Auth0 Flow | Auth0 callback | **Auth Flow** | **Later** |
+| `admin.lexara.app/dashboard` | `GET` | ✅ Required | Valid firm admin | **Protected** | **Later** |
+| `admin.lexara.app/settings` | `GET/POST` | ✅ Required | Own firm only | **Protected** | **Later** |
+
+#### **Future API Endpoints**
+
+| Endpoint | Method | Authentication | Authorization | Security Level | Status |
+|----------|---------|---------------|---------------|----------------|--------|
+| `/platform/api/v1/firms` | `GET` | ✅ Required | `platform:admin` | **Protected** | Future |
+| `/platform/api/v1/system/analytics` | `GET` | ✅ Required | `platform:admin` | **Protected** | Future |
+| `/admin/api/v1/conversations` | `GET` | ✅ Required | Firm access + `view:conversations` | **Protected** | Future |
 
 ---
 

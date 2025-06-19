@@ -6,6 +6,18 @@ import { AuthContext, verifyJWT, JWTPayload } from '@/auth/auth-middleware';
 import { getAuth0Config } from '@/auth/auth0-config';
 import { generateULID } from '@/utils/ulid';
 import { PlatformAuditLogger } from '../audit/platform-audit-logger';
+import { 
+  Auth0TokenExchangeError,
+  JWTValidationError,
+  StateValidationError,
+  PlatformAdminAccessError,
+  ConfigurationError,
+  asyncErrorHandler,
+  captureErrorContext,
+  logStructuredError,
+  validateEnvironment,
+  handleJWTError
+} from '@/utils/errors';
 
 export interface PlatformAuthResult {
   success: boolean;
@@ -34,6 +46,13 @@ export class PlatformAuthManager {
   private auditLogger: PlatformAuditLogger;
   
   constructor(env: Env, auditLogger: PlatformAuditLogger) {
+    // Validate required environment variables
+    validateEnvironment([
+      'AUTH0_DOMAIN',
+      'AUTH0_CLIENT_ID', 
+      'AUTH0_CLIENT_SECRET'
+    ], env);
+    
     this.env = env;
     this.auditLogger = auditLogger;
   }
@@ -78,7 +97,13 @@ export class PlatformAuthManager {
       // 1. Validate state parameter
       const stateData = this.validateState(state);
       if (!stateData) {
-        return { success: false, error: 'Invalid state parameter' };
+        const stateError = new StateValidationError('State parameter validation failed', {
+          stateLength: state?.length,
+          hasState: !!state,
+          timestamp: new Date().toISOString()
+        });
+        logStructuredError(stateError, 'oauth_state_validation');
+        return { success: false, error: stateError.message };
       }
       
       // 2. Exchange authorization code for tokens
@@ -94,10 +119,25 @@ export class PlatformAuthManager {
         auth0_domain: this.env.AUTH0_DOMAIN
       });
       
-      const jwtPayload = await verifyJWT(tokens.id_token, this.env.AUTH0_DOMAIN);
+      let jwtPayload: JWTPayload;
+      try {
+        jwtPayload = await verifyJWT(tokens.id_token, this.env.AUTH0_DOMAIN!);
+      } catch (originalError) {
+        const jwtError = handleJWTError(originalError as Error, {
+          idTokenLength: tokens.id_token.length,
+          auth0Domain: this.env.AUTH0_DOMAIN
+        });
+        logStructuredError(jwtError, 'jwt_validation');
+        return { success: false, error: jwtError.message };
+      }
+      
       if (!jwtPayload) {
-        console.log('JWT validation failed');
-        return { success: false, error: 'Invalid JWT token' };
+        const jwtError = new JWTValidationError('JWT verification returned null', {
+          idTokenLength: tokens.id_token.length,
+          auth0Domain: this.env.AUTH0_DOMAIN
+        });
+        logStructuredError(jwtError, 'jwt_validation');
+        return { success: false, error: jwtError.message };
       }
       
       // Convert JWT payload to AuthContext
@@ -222,7 +262,12 @@ export class PlatformAuthManager {
     return response;
   }
   
-  private async exchangeCodeForTokens(code: string): Promise<any> {
+  private async exchangeCodeForTokens(code: string): Promise<{
+    access_token: string;
+    id_token: string;
+    token_type: string;
+    expires_in: number;
+  } | null> {
     const auth0Config = getAuth0Config(this.env);
     
     const tokenRequest = {
@@ -251,12 +296,21 @@ export class PlatformAuthManager {
     
     if (!response.ok) {
       const errorText = await response.text();
-      console.log('Token exchange error details:', {
-        status: response.status,
-        statusText: response.statusText,
-        error: errorText
-      });
-      throw new Error(`Token exchange failed: ${response.status} - ${errorText}`);
+      
+      // Create structured error with full context
+      const error = new Auth0TokenExchangeError(
+        response.status,
+        errorText,
+        {
+          domain: auth0Config.domain,
+          clientId: auth0Config.adminClientId,
+          redirectUri: tokenRequest.redirect_uri,
+          codeLength: code.length
+        }
+      );
+      
+      logStructuredError(error, 'auth0_token_exchange');
+      return null;
     }
     
     return response.json();

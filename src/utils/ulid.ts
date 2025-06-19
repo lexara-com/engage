@@ -1,7 +1,7 @@
 // ULID utilities for generating unique identifiers using Web Crypto API
 
 // Simple ULID-like implementation using Web Crypto API for Cloudflare Workers
-function generateULID(): string {
+export function generateULID(): string {
   // Generate timestamp part (first 10 characters)
   const timestamp = Date.now().toString(36).padStart(10, '0');
   

@@ -358,6 +358,12 @@ export class PlatformAuditLogger {
   
   private async storeAuditLog(logEntry: PlatformAuditLog): Promise<void> {
     try {
+      // Check if Durable Object binding exists
+      if (!this.env.PLATFORM_AUDIT_LOG) {
+        this.logger.warn('PLATFORM_AUDIT_LOG binding not available, skipping audit storage');
+        return;
+      }
+      
       // Store in PlatformAuditLog Durable Object
       const auditLogId = `platform:${logEntry.logId}`;
       const auditLogDO = this.env.PLATFORM_AUDIT_LOG.get(

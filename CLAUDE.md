@@ -626,11 +626,31 @@ AI -> Cloudflare Workers AI binding
 
 ### 🔮 Next Development Phase
 
-#### Immediate Priorities
+#### **Immediate Priority: Platform Admin Portal** 🎯
+1. **Platform Admin Portal** - `platform.lexara.app` for Lexara employees
+2. **Firm Management Dashboard** - View, create, suspend law firms 
+3. **Customer Support Tools** - Account levels, billing, authorized users
+4. **System Analytics** - Platform health and usage metrics (anonymized)
+5. **Audit Logging System** - All platform actions logged for compliance
+
+#### **Secondary Priority: Firm Admin Portal** 
+1. **Firm Admin Portal** - `admin.lexara.app` for law firm users
+2. **MVP Firm Signup Flow** - Self-service firm registration
+3. **Firm Dashboard** - Protected page for firm management
+4. **Session Management** - Secure cookie-based sessions for firm users
+
+#### **Technical Implementation Plan**
+- **Separate Portals**: `platform.lexara.app` (Lexara) + `admin.lexara.app` (firms)
+- **Data Isolation**: Platform admins see firm metadata, never client data
+- **Audit Everything**: Complete logging of all platform admin actions
+- **Auth0 Organizations**: `lexara-platform` vs `firm-{firmId}` separation
+- **Server-Side Rendering**: HTML with embedded CSS/JavaScript for both portals
+
+#### **Post-Admin System Priorities**
 1. **UserIdentity Durable Object** - Cross-session user tracking and Auth0 mapping
 2. **GoalTracker MCP Server** - Centralized goal management and completion tracking
 3. **ConflictChecker MCP Server** - Conflict detection with Vectorize integration
-4. **Auth0 Integration** - Authentication flow and secured conversation phase
+4. **Enhanced Conversation Security** - Full secured phase implementation
 
 #### MCP Server Architecture (Planned)
 - Individual Cloudflare Workers for each MCP server

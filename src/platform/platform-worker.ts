@@ -9,6 +9,17 @@ import { PlatformAuthManager, PlatformAuthResult } from './auth/platform-auth-ma
 import { PlatformAuditLogger } from './audit/platform-audit-logger';
 import { PlatformSecurityGuard, SecurityValidationResult } from './security/platform-security-guard';
 import { AuthContext } from '@/auth/auth-middleware';
+import { 
+  EngageError,
+  AuthCallbackError,
+  PlatformAdminAccessError,
+  ConfigurationError,
+  formatErrorResponse,
+  logStructuredError,
+  asyncErrorHandler,
+  captureErrorContext,
+  handleError
+} from '@/utils/errors';
 
 // Import and alias Durable Object classes to avoid naming conflicts
 import { PlatformSession as PlatformSessionDO } from './durable-objects/platform-session';
@@ -464,25 +475,48 @@ const handler = {
       
       console.log('URL parsed, path:', path);
       
-      // Initialize logger first
+      // Initialize logger first with error handling
       console.log('Initializing logger...');
-      const logger = createLogger(env, {
-        operation: 'platform-admin',
-        service: 'platform-worker'
+      const logger = await asyncErrorHandler(async () => {
+        return createLogger(env, {
+          operation: 'platform-admin',
+          service: 'platform-worker'
+        });
+      }, {
+        operation: 'logger_initialization',
+        defaultError: 'Failed to initialize logger'
       });
       console.log('Logger initialized');
       
-      // Initialize services
+      // Initialize services with structured error handling
       console.log('Initializing audit logger...');
-      const auditLogger = new PlatformAuditLogger(env, logger);
+      const auditLogger = await asyncErrorHandler(async () => {
+        return new PlatformAuditLogger(env, logger);
+      }, {
+        operation: 'audit_logger_initialization',
+        defaultError: 'Failed to initialize audit logger',
+        logger
+      });
       console.log('Audit logger initialized');
       
       console.log('Initializing auth manager...');
-      const authManager = new PlatformAuthManager(env, auditLogger);
+      const authManager = await asyncErrorHandler(async () => {
+        return new PlatformAuthManager(env, auditLogger);
+      }, {
+        operation: 'auth_manager_initialization',
+        defaultError: 'Failed to initialize auth manager',
+        logger
+      });
       console.log('Auth manager initialized');
       
       console.log('Initializing security guard...');
-      const securityGuard = new PlatformSecurityGuard(env, auditLogger);
+      const securityGuard = await asyncErrorHandler(async () => {
+        return new PlatformSecurityGuard(env, auditLogger);
+      }, {
+        operation: 'security_guard_initialization',
+        defaultError: 'Failed to initialize security guard',
+        logger
+      });
       console.log('Security guard initialized');
       
       logger.info('Platform admin request', {
@@ -493,7 +527,7 @@ const handler = {
       });
       
       // 1. Security validation (except for public routes)
-      const publicRoutes = ['/health', '/', '/login', '/callback'];
+      const publicRoutes = ['/health', '/', '/login', '/callback', '/logout'];
       if (!publicRoutes.includes(path)) {
         const securityResult = await securityGuard.validateRequest(request);
         if (!securityResult.valid) {
@@ -537,7 +571,7 @@ const handler = {
           }
           
         case '/logout':
-          return handleLogout(request, authManager, auditLogger);
+          return handleLogout(request, authManager, auditLogger, env);
           
         case '/':
           // Redirect root to login page
@@ -559,38 +593,36 @@ const handler = {
     } catch (error) {
       console.error('Platform worker error:', error);
       
+      // Convert to EngageError for structured handling
+      const engageError = handleError(error, 'Platform worker request failed');
+      
       // Try to use logger if it was initialized
       try {
-        logger.error('Platform worker error', error as Error, {
-          path,
-          method,
-          errorName: (error as Error).name,
-          errorMessage: (error as Error).message
-        });
+        if (typeof logger !== 'undefined') {
+          logStructuredError(engageError, 'platform_worker_request', logger);
+        }
         
         // Log error to audit trail
-        await auditLogger.logSecurityEvent({
-          event: 'request_error',
-          reason: `Unhandled error: ${(error as Error).message}`,
-          severity: 'high',
-          request,
-          metadata: {
-            errorName: (error as Error).name,
-            errorStack: (error as Error).stack?.substring(0, 500)
-          }
-        });
+        if (typeof auditLogger !== 'undefined') {
+          await auditLogger.logSecurityEvent({
+            event: 'request_error',
+            reason: `Unhandled error: ${engageError.message}`,
+            severity: 'high',
+            request,
+            metadata: {
+              errorCode: engageError.code,
+              errorContext: engageError.context,
+              errorStack: engageError.stack?.substring(0, 500)
+            }
+          });
+        }
       } catch (loggingError) {
         // Don't throw on logging errors
         console.error('Logging error:', loggingError);
       }
       
-      return new Response(JSON.stringify({
-        error: 'INTERNAL_ERROR',
-        message: 'An unexpected error occurred'
-      }), {
-        status: 500,
-        headers: { 'Content-Type': 'application/json' }
-      });
+      // Return structured error response
+      return formatErrorResponse(engageError, false);
     }
   }
 };
@@ -609,11 +641,16 @@ function handleHealthCheck(): Response {
 
 // Login page
 async function handleLogin(authManager: PlatformAuthManager): Promise<Response> {
-  const authUrl = await authManager.generateAuthUrl('/dashboard');
-  const html = LOGIN_TEMPLATE.replace('{{authUrl}}', authUrl);
-  
-  return new Response(html, {
-    headers: { 'Content-Type': 'text/html' }
+  return await asyncErrorHandler(async () => {
+    const authUrl = await authManager.generateAuthUrl('/dashboard');
+    const html = LOGIN_TEMPLATE.replace('{{authUrl}}', authUrl);
+    
+    return new Response(html, {
+      headers: { 'Content-Type': 'text/html' }
+    });
+  }, {
+    operation: 'login_page_generation',
+    defaultError: 'Failed to generate login page'
   });
 }
 
@@ -649,11 +686,19 @@ async function handleCallback(
   
   // Handle Auth0 errors
   if (error) {
+    const authError = new AuthCallbackError(
+      `Auth0 error: ${error} - ${errorDescription}`,
+      captureErrorContext(request, { auth0Error: error, auth0Description: errorDescription })
+    );
+    
+    logStructuredError(authError, 'auth0_callback_error');
+    
     await auditLogger.logSecurityEvent({
       event: 'auth_callback_error',
-      reason: `Auth0 error: ${error} - ${errorDescription}`,
+      reason: authError.message,
       severity: 'medium',
-      request
+      request,
+      metadata: { errorCode: authError.code, auth0Error: error }
     });
     
     return Response.redirect('https://platform-dev.lexara.app/login?error=' + encodeURIComponent(error), 302);
@@ -661,27 +706,42 @@ async function handleCallback(
   
   // Validate required parameters
   if (!code || !state) {
+    const validationError = new AuthCallbackError(
+      'Missing required callback parameters',
+      captureErrorContext(request, { hasCode: !!code, hasState: !!state })
+    );
+    
+    logStructuredError(validationError, 'auth_callback_validation');
+    
     await auditLogger.logSecurityEvent({
       event: 'auth_callback_invalid',
-      reason: 'Missing required callback parameters',
+      reason: validationError.message,
       severity: 'high',
       request,
-      metadata: { hasCode: !!code, hasState: !!state }
+      metadata: { errorCode: validationError.code, hasCode: !!code, hasState: !!state }
     });
     
     return Response.redirect('https://platform-dev.lexara.app/login?error=invalid_callback', 302);
   }
   
-  try {
+  return await asyncErrorHandler(async () => {
     // Process callback
     const authResult = await authManager.handleCallback(code, state, request);
     
     if (!authResult.success) {
+      const authFailedError = new AuthCallbackError(
+        authResult.error || 'Authentication failed',
+        captureErrorContext(request, { authResultReason: authResult.reason })
+      );
+      
+      logStructuredError(authFailedError, 'auth_callback_failed');
+      
       await auditLogger.logSecurityEvent({
         event: 'auth_callback_failed',
-        reason: authResult.error || 'Authentication failed',
+        reason: authFailedError.message,
         severity: 'high',
-        request
+        request,
+        metadata: { errorCode: authFailedError.code }
       });
       
       return Response.redirect('https://platform-dev.lexara.app/login?error=auth_failed', 302);
@@ -713,43 +773,77 @@ async function handleCallback(
     
     return redirectResponse;
     
-  } catch (error) {
-    await auditLogger.logSecurityEvent({
-      event: 'auth_callback_exception',
-      reason: `Callback processing error: ${(error as Error).message}`,
-      severity: 'critical',
-      request,
-      metadata: {
-        errorName: (error as Error).name,
-        errorMessage: (error as Error).message
+  }, {
+    operation: 'auth_callback_processing',
+    defaultError: 'Authentication callback processing failed',
+    logger: { 
+      error: (message: string, context?: Record<string, unknown>) => {
+        console.error('Callback error:', message, context);
+        auditLogger.logSecurityEvent({
+          event: 'auth_callback_exception',
+          reason: message,
+          severity: 'critical',
+          request,
+          metadata: context
+        });
       }
-    });
-    
+    }
+  }).catch((error) => {
+    // Final fallback - return redirect with system error
     return Response.redirect('https://platform-dev.lexara.app/login?error=system_error', 302);
-  }
+  });
 }
 
 // Logout handler
 async function handleLogout(
   request: Request,
   authManager: PlatformAuthManager,
-  auditLogger: PlatformAuditLogger
+  auditLogger: PlatformAuditLogger,
+  env: Env
 ): Promise<Response> {
-  // Extract user info for audit log before logout
-  const authResult = await authManager.requirePlatformAuth(request);
-  
-  if (authResult.success && authResult.authContext) {
-    await auditLogger.logAction({
-      action: 'platform_logout',
-      description: 'Platform admin logout',
-      platformUser: authResult.authContext,
-      targetType: 'system',
-      request,
-      riskLevel: 'low'
+  try {
+    console.log('=== LOGOUT HANDLER STARTING ===');
+    
+    // Debug environment variables
+    console.log('Environment check:', {
+      hasAuth0Domain: !!env.AUTH0_DOMAIN,
+      hasAuth0ClientId: !!env.AUTH0_CLIENT_ID,
+      auth0Domain: env.AUTH0_DOMAIN?.substring(0, 20) + '...',
+      auth0ClientId: env.AUTH0_CLIENT_ID?.substring(0, 10) + '...'
     });
+    
+    // Try direct Auth0 logout without session cleanup to isolate the issue
+    console.log('Creating direct Auth0 logout URL...');
+    
+    const auth0Domain = env.AUTH0_DOMAIN;
+    const auth0ClientId = env.AUTH0_CLIENT_ID;
+    
+    if (!auth0Domain || !auth0ClientId) {
+      console.error('Missing Auth0 config:', { auth0Domain: !!auth0Domain, auth0ClientId: !!auth0ClientId });
+      throw new Error('Missing Auth0 configuration');
+    }
+    
+    const logoutUrl = `https://${auth0Domain}/v2/logout?` + new URLSearchParams({
+      client_id: auth0ClientId,
+      returnTo: 'https://platform-dev.lexara.app/login'
+    });
+    
+    console.log('Auth0 logout URL created:', logoutUrl.substring(0, 100) + '...');
+    
+    const response = Response.redirect(logoutUrl, 302);
+    
+    // Add cookie clearing header
+    response.headers.set('Set-Cookie', 'platform_session=; HttpOnly; Secure; SameSite=Strict; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT');
+    
+    console.log('Logout response created successfully');
+    return response;
+    
+  } catch (error) {
+    console.error('Logout handler error:', error);
+    
+    // Fallback - redirect to login page
+    return Response.redirect('https://platform-dev.lexara.app/login?logged_out=true', 302);
   }
-  
-  return authManager.handleLogout(request);
 }
 
 // Dashboard handler
@@ -758,32 +852,43 @@ async function handleDashboard(
   authManager: PlatformAuthManager,
   auditLogger: PlatformAuditLogger
 ): Promise<Response> {
-  // Require authentication
-  const authResult = await authManager.requirePlatformAuth(request);
-  if (!authResult.success) {
-    return redirectToLogin();
-  }
-  
-  // Generate dashboard with sample data
-  const dashboardData = {
-    userName: authResult.authContext!.name || authResult.authContext!.email || 'Platform Admin',
-    userRole: 'Platform Administrator',
-    activeFirms: '12',
-    firmGrowth: '8',
-    totalConversations: '1,247',
-    monthlyConversations: '342',
-    monthlyRevenue: '$24,500',
-    revenueGrowth: '15',
-    systemUptime: '99.9'
-  };
-  
-  let html = DASHBOARD_TEMPLATE;
-  Object.entries(dashboardData).forEach(([key, value]) => {
-    html = html.replace(new RegExp(`{{${key}}}`, 'g'), value);
-  });
-  
-  return new Response(html, {
-    headers: { 'Content-Type': 'text/html' }
+  return await asyncErrorHandler(async () => {
+    // Require authentication
+    const authResult = await authManager.requirePlatformAuth(request);
+    if (!authResult.success) {
+      const accessError = new PlatformAdminAccessError(
+        'unknown',
+        'unknown',
+        captureErrorContext(request, { authFailureReason: authResult.reason })
+      );
+      logStructuredError(accessError, 'dashboard_access_denied');
+      return redirectToLogin();
+    }
+    
+    // Generate dashboard with sample data
+    const dashboardData = {
+      userName: authResult.authContext!.name || authResult.authContext!.email || 'Platform Admin',
+      userRole: 'Platform Administrator',
+      activeFirms: '12',
+      firmGrowth: '8',
+      totalConversations: '1,247',
+      monthlyConversations: '342',
+      monthlyRevenue: '$24,500',
+      revenueGrowth: '15',
+      systemUptime: '99.9'
+    };
+    
+    let html = DASHBOARD_TEMPLATE;
+    Object.entries(dashboardData).forEach(([key, value]) => {
+      html = html.replace(new RegExp(`{{${key}}}`, 'g'), value);
+    });
+    
+    return new Response(html, {
+      headers: { 'Content-Type': 'text/html' }
+    });
+  }, {
+    operation: 'dashboard_generation',
+    defaultError: 'Failed to generate dashboard'
   });
 }
 

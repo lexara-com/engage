@@ -351,21 +351,30 @@ interface ConversationSecurity {
 
 ## Implementation Roadmap
 
-### **Phase 1: Core Auth Infrastructure** (2-3 weeks)
-- [ ] Auth0 tenant setup with multi-organization structure
-- [ ] JWT validation middleware implementation
-- [ ] Basic role and permission system
-- [ ] API authorization guards
+### **Phase 1: Core Auth Infrastructure** ✅ **COMPLETED**
+- [x] Auth0 tenant setup with multi-organization structure
+- [x] JWT validation middleware implementation
+- [x] Basic role and permission system
+- [x] API authorization guards
 
-### **Phase 2: Admin Authentication** (1-2 weeks)
-- [ ] Admin console Auth0 integration
-- [ ] Firm admin user management
-- [ ] Platform admin super-user functionality
-- [ ] Audit logging system
+### **Phase 2A: Platform Admin Portal** 🎯 **IMMEDIATE PRIORITY**
+- [x] Admin console Auth0 integration (JWT validation)
+- [ ] **Platform Admin Portal** - `platform.lexara.app` for Lexara employees
+- [ ] **Firm Management Dashboard** - View, create, suspend law firms
+- [ ] **Customer Support Tools** - Account levels, billing, authorized users
+- [ ] **System Analytics** - Platform health and usage metrics
+- [ ] **Audit Logging System** - All platform actions logged for compliance
+
+### **Phase 2B: Firm Admin Portal** 🚧 **SECONDARY PRIORITY**  
+- [ ] **Firm Admin Portal** - `admin.lexara.app` for law firm users
+- [ ] **MVP Firm Signup Flow** - Self-service firm registration
+- [ ] **Firm Dashboard** - Protected page for firm management
+- [ ] Firm user management and team invitations
+- [ ] Firm settings and branding customization
 
 ### **Phase 3: Client Authentication** (1-2 weeks)  
-- [ ] Optional Auth0 login for conversations
-- [ ] Secure conversation transition
+- [x] Optional Auth0 login for conversations
+- [ ] Secure conversation transition (enhanced)
 - [ ] Resume token security enhancement
 - [ ] Cross-device conversation access
 
@@ -374,6 +383,729 @@ interface ConversationSecurity {
 - [ ] Session management and timeout
 - [ ] IP restrictions for admin users
 - [ ] Advanced audit logging and monitoring
+
+---
+
+## 🏢 **Platform Admin Portal Architecture** (Immediate Priority)
+
+### **Separate Portal Strategy**
+- **Platform Portal**: `platform.lexara.app` (Lexara employees only)
+- **Firm Portal**: `admin.lexara.app` (Law firm users only)  
+- **Client Intake**: `{slug}.lexara.app` (Potential clients)
+- **Data Isolation**: Complete separation of platform vs firm admin functionality
+
+### **Platform Admin Portal (`platform.lexara.app`)**
+
+#### **Target Users: Lexara Employees**
+- **Platform Administrators**: Full system access and firm management
+- **Customer Support**: Firm account support without client data access
+- **Billing Team**: Subscription and payment management
+- **Technical Support**: System health monitoring and troubleshooting
+
+#### **Platform Admin Data Access Model**
+
+**✅ ALLOWED ACCESS (Customer Support)**
+```typescript
+interface PlatformAdminAccess {
+  // Firm Management
+  firms: {
+    firmId: string;
+    name: string;
+    slug: string;
+    contactEmail: string;
+    contactPhone?: string;
+    website?: string;
+    practiceAreas: string[];
+    createdAt: Date;
+    lastActive: Date;
+    isActive: boolean;
+  }[];
+  
+  // Account & Subscription
+  subscription: {
+    tier: SubscriptionTier;
+    status: SubscriptionStatus;
+    trialEndsAt?: Date;
+    monthlyConversationLimit: number;
+    currentUsage: number;
+    billingCycle: string;
+  };
+  
+  // Authorized Users (for support)
+  authorizedUsers: {
+    auth0UserId: string;
+    email: string;
+    name: string;
+    role: FirmRole;
+    lastLogin?: Date;
+    isActive: boolean;
+  }[];
+  
+  // Billing & Payments
+  billing: {
+    stripeCustomerId?: string;
+    paymentMethod?: string;
+    invoiceHistory: Invoice[];
+    paymentHistory: Payment[];
+    currentBalance: number;
+  };
+  
+  // Usage Analytics (Anonymized)
+  analytics: {
+    totalConversations: number;
+    monthlyConversations: number;
+    avgResponseTime: number;
+    systemUptime: number;
+    // No client-specific data
+  };
+}
+```
+
+**❌ FORBIDDEN ACCESS (Client Data Protection)**
+```typescript
+interface ForbiddenAccess {
+  // Client Conversations - NEVER accessible
+  conversations?: never;
+  messages?: never;
+  clientPII?: never;
+  
+  // Firm Internal Data - Not for platform admins
+  conflictDatabase?: never;
+  supportingDocuments?: never;
+  firmInternalSettings?: never;
+  
+  // Legal Content - Firm-specific only
+  legalGuidance?: never;
+  caseTemplates?: never;
+  practiceSpecificData?: never;
+}
+```
+
+#### **Platform Admin Dashboard Features**
+
+**1. Firm Management Overview**
+```html
+<div class="platform-dashboard">
+  <header class="platform-header">
+    <h1>Lexara Platform Administration</h1>
+    <p>Manage law firm customers and platform operations</p>
+  </header>
+  
+  <div class="metrics-grid">
+    <div class="metric-card">
+      <h3>Active Law Firms</h3>
+      <span class="metric-number">{{totalActiveFirms}}</span>
+      <span class="metric-trend">+{{newFirmsThisMonth}} this month</span>
+    </div>
+    
+    <div class="metric-card">
+      <h3>Platform Conversations</h3>
+      <span class="metric-number">{{totalConversations}}</span>
+      <span class="metric-trend">{{conversationGrowth}}% growth</span>
+    </div>
+    
+    <div class="metric-card">
+      <h3>System Health</h3>
+      <span class="metric-number">{{systemUptime}}%</span>
+      <span class="metric-status healthy">All Systems Operational</span>
+    </div>
+  </div>
+  
+  <div class="firm-management-section">
+    <h2>Firm Management</h2>
+    <div class="firm-actions">
+      <button class="btn-primary">Create New Firm</button>
+      <button class="btn-secondary">Import Firms</button>
+      <input type="search" placeholder="Search firms...">
+    </div>
+    
+    <table class="firms-table">
+      <thead>
+        <tr>
+          <th>Firm Name</th>
+          <th>Subdomain</th>
+          <th>Subscription</th>
+          <th>Usage</th>
+          <th>Last Active</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{#each firms}}
+        <tr>
+          <td>
+            <div class="firm-info">
+              <strong>{{name}}</strong>
+              <small>{{contactEmail}}</small>
+            </div>
+          </td>
+          <td>
+            <code>{{slug}}.lexara.app</code>
+          </td>
+          <td>
+            <span class="subscription-badge {{subscription.status}}">
+              {{subscription.tier}}
+            </span>
+          </td>
+          <td>
+            <div class="usage-bar">
+              <div class="usage-fill" style="width: {{usagePercent}}%"></div>
+              <span>{{currentUsage}}/{{limit}}</span>
+            </div>
+          </td>
+          <td>{{formatDate lastActive}}</td>
+          <td>
+            <button onclick="viewFirm('{{firmId}}')">View</button>
+            <button onclick="supportFirm('{{firmId}}')">Support</button>
+          </td>
+        </tr>
+        {{/each}}
+      </tbody>
+    </table>
+  </div>
+</div>
+```
+
+**2. Firm Detail View (Support Interface)**
+```html
+<div class="firm-detail-view">
+  <header class="firm-header">
+    <h1>{{firm.name}}</h1>
+    <div class="firm-status">
+      <span class="status-badge {{firm.subscription.status}}">
+        {{firm.subscription.tier}}
+      </span>
+      <span class="activity-indicator {{firm.isActive ? 'active' : 'inactive'}}">
+        {{firm.isActive ? 'Active' : 'Inactive'}}
+      </span>
+    </div>
+  </header>
+  
+  <div class="support-sections">
+    <!-- Account Information -->
+    <section class="account-info">
+      <h3>Account Information</h3>
+      <div class="info-grid">
+        <div class="info-item">
+          <label>Firm Name</label>
+          <span>{{firm.name}}</span>
+        </div>
+        <div class="info-item">
+          <label>Intake URL</label>
+          <span>https://{{firm.slug}}.lexara.app</span>
+        </div>
+        <div class="info-item">
+          <label>Contact Email</label>
+          <span>{{firm.contactEmail}}</span>
+        </div>
+        <div class="info-item">
+          <label>Practice Areas</label>
+          <span>{{join firm.practiceAreas ", "}}</span>
+        </div>
+        <div class="info-item">
+          <label>Created</label>
+          <span>{{formatDate firm.createdAt}}</span>
+        </div>
+        <div class="info-item">
+          <label>Last Active</label>
+          <span>{{formatDate firm.lastActive}}</span>
+        </div>
+      </div>
+    </section>
+    
+    <!-- Authorized Users -->
+    <section class="authorized-users">
+      <h3>Authorized Users</h3>
+      <table class="users-table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Role</th>
+            <th>Last Login</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {{#each authorizedUsers}}
+          <tr>
+            <td>{{name}}</td>
+            <td>{{email}}</td>
+            <td>
+              <span class="role-badge {{role}}">{{role}}</span>
+            </td>
+            <td>{{formatDate lastLogin}}</td>
+            <td>
+              <span class="status-indicator {{isActive ? 'active' : 'inactive'}}">
+                {{isActive ? 'Active' : 'Inactive'}}
+              </span>
+            </td>
+          </tr>
+          {{/each}}
+        </tbody>
+      </table>
+    </section>
+    
+    <!-- Subscription & Billing -->
+    <section class="billing-info">
+      <h3>Subscription & Billing</h3>
+      <div class="billing-grid">
+        <div class="billing-card">
+          <h4>Current Plan</h4>
+          <div class="plan-info">
+            <span class="plan-name">{{subscription.tier}}</span>
+            <span class="plan-status">{{subscription.status}}</span>
+          </div>
+          <div class="plan-limits">
+            <p>{{subscription.monthlyConversationLimit}} conversations/month</p>
+            <p>Current usage: {{subscription.currentUsage}}</p>
+          </div>
+        </div>
+        
+        <div class="billing-card">
+          <h4>Payment Information</h4>
+          <p>Stripe Customer: {{billing.stripeCustomerId}}</p>
+          <p>Payment Method: {{billing.paymentMethod}}</p>
+          <p>Current Balance: ${{billing.currentBalance}}</p>
+        </div>
+      </div>
+      
+      <!-- Recent Invoices -->
+      <div class="invoice-history">
+        <h4>Recent Invoices</h4>
+        <table class="invoices-table">
+          <thead>
+            <tr>
+              <th>Invoice #</th>
+              <th>Date</th>
+              <th>Amount</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {{#each billing.invoiceHistory}}
+            <tr>
+              <td>{{invoiceNumber}}</td>
+              <td>{{formatDate date}}</td>
+              <td>${{amount}}</td>
+              <td>
+                <span class="payment-status {{status}}">{{status}}</span>
+              </td>
+              <td>
+                <button onclick="viewInvoice('{{id}}')">View</button>
+              </td>
+            </tr>
+            {{/each}}
+          </tbody>
+        </table>
+      </div>
+    </section>
+    
+    <!-- Usage Analytics (Anonymized) -->
+    <section class="usage-analytics">
+      <h3>Usage Analytics</h3>
+      <div class="analytics-grid">
+        <div class="analytics-card">
+          <h4>Conversations</h4>
+          <div class="metric-large">{{analytics.totalConversations}}</div>
+          <p>Total conversations processed</p>
+        </div>
+        
+        <div class="analytics-card">
+          <h4>Monthly Activity</h4>
+          <div class="metric-large">{{analytics.monthlyConversations}}</div>
+          <p>Conversations this month</p>
+        </div>
+        
+        <div class="analytics-card">
+          <h4>Response Time</h4>
+          <div class="metric-large">{{analytics.avgResponseTime}}s</div>
+          <p>Average AI response time</p>
+        </div>
+      </div>
+      
+      <!-- Usage Chart (No Client Data) -->
+      <div class="usage-chart">
+        <canvas id="usageChart" data-usage="{{analyticsData}}"></canvas>
+      </div>
+    </section>
+    
+    <!-- Support Actions -->
+    <section class="support-actions">
+      <h3>Support Actions</h3>
+      <div class="action-buttons">
+        <button class="btn-primary">Reset User Password</button>
+        <button class="btn-secondary">Suspend Account</button>
+        <button class="btn-secondary">Upgrade Subscription</button>
+        <button class="btn-warning">Extend Trial</button>
+      </div>
+      
+      <!-- Support Log -->
+      <div class="support-log">
+        <h4>Support History</h4>
+        <div class="log-entries">
+          {{#each supportHistory}}
+          <div class="log-entry">
+            <div class="log-header">
+              <span class="log-action">{{action}}</span>
+              <span class="log-date">{{formatDate timestamp}}</span>
+              <span class="log-user">by {{performedBy}}</span>
+            </div>
+            <div class="log-details">{{details}}</div>
+          </div>
+          {{/each}}
+        </div>
+      </div>
+    </section>
+  </div>
+</div>
+```
+
+#### **Audit Logging Requirements**
+
+**All Platform Admin Actions Must Be Logged:**
+```typescript
+interface PlatformAuditLog {
+  logId: string;                    // Unique log entry ID
+  timestamp: Date;                  // When action occurred
+  platformUserId: string;           // Which Lexara employee
+  platformUserEmail: string;       // Employee email for reference
+  action: PlatformAction;           // What action was performed
+  targetFirmId?: string;            // Which firm was affected
+  targetUserId?: string;            // Which user was affected
+  details: Record<string, any>;     // Action-specific details
+  ipAddress: string;                // Source IP for security
+  userAgent: string;                // Browser/client info
+  result: 'success' | 'failure';    // Action outcome
+  errorMessage?: string;            // If action failed
+}
+
+type PlatformAction = 
+  | 'firm_created'
+  | 'firm_suspended'
+  | 'firm_reactivated'
+  | 'firm_deleted'
+  | 'firm_viewed'
+  | 'user_password_reset'
+  | 'subscription_upgraded'
+  | 'subscription_downgraded'
+  | 'trial_extended'
+  | 'invoice_viewed'
+  | 'support_ticket_created'
+  | 'analytics_accessed'
+  | 'system_settings_changed';
+
+// Example audit log entries
+const auditExamples = [
+  {
+    logId: "01HXXX...",
+    timestamp: new Date(),
+    platformUserId: "auth0|platform_admin_123",
+    platformUserEmail: "sarah@lexara.com",
+    action: "firm_viewed",
+    targetFirmId: "01HYYY...",
+    details: {
+      firmName: "Smith & Associates",
+      viewedSections: ["account_info", "billing", "users"]
+    },
+    ipAddress: "192.168.1.100",
+    userAgent: "Mozilla/5.0...",
+    result: "success"
+  },
+  {
+    logId: "01HZZZ...",
+    timestamp: new Date(),
+    platformUserId: "auth0|support_staff_456", 
+    platformUserEmail: "john@lexara.com",
+    action: "user_password_reset",
+    targetFirmId: "01HYYY...",
+    targetUserId: "auth0|firm_user_789",
+    details: {
+      userEmail: "admin@smithlaw.com",
+      resetMethod: "auth0_management_api"
+    },
+    ipAddress: "192.168.1.101",
+    userAgent: "Mozilla/5.0...",
+    result: "success"
+  }
+];
+```
+
+#### **Platform Admin Authentication**
+
+**Separate Auth0 Organization for Lexara Employees:**
+```typescript
+// Platform admin login flow
+async function handlePlatformLogin(request: Request, env: Env) {
+  const auth0Config = getAuth0Config(env);
+  
+  const authUrl = `https://${auth0Config.domain}/authorize?` + new URLSearchParams({
+    response_type: 'code',
+    client_id: auth0Config.platformClientId,  // Different client ID
+    redirect_uri: 'https://platform.lexara.app/callback',
+    scope: 'openid profile email',
+    audience: auth0Config.audience,
+    organization: 'lexara-platform',  // Platform org only
+    state: generateSecureState()
+  });
+  
+  return Response.redirect(authUrl);
+}
+
+// Platform admin authorization check
+function requirePlatformAdmin(authContext: AuthContext): void {
+  // Must be Lexara employee
+  if (!authContext.userType.startsWith('lexara_')) {
+    throw new Error('Platform admin access required');
+  }
+  
+  // Must belong to platform organization
+  if (authContext.orgId !== 'lexara-platform') {
+    throw new Error('Invalid organization for platform access');
+  }
+  
+  // Log access attempt
+  auditLog.record({
+    action: 'platform_access_attempt',
+    platformUserId: authContext.userId,
+    result: 'success'
+  });
+}
+```
+
+---
+
+## 🎯 **MVP Firm Admin Portal Architecture** (Secondary Priority)
+
+### **Phase 2A: Simple Self-Signup Flow** (Next Implementation)
+
+#### **Architecture Decision: Separate Admin Worker**
+- **Admin Domain**: `admin.lexara.app` (separate from client intake)
+- **Implementation**: New Cloudflare Worker (`src/admin/admin-worker.ts`)
+- **UI Framework**: Server-side rendered HTML with embedded forms
+- **Data Storage**: FirmRegistry Durable Object + Auth0 user creation
+
+#### **Signup Flow (`admin.lexara.app/signup`)**
+
+**Step 1: Registration Form**
+```html
+<!-- Self-service firm registration -->
+<form action="/signup" method="POST">
+  <h2>Create Your Law Firm Account</h2>
+  
+  <!-- Firm Information -->
+  <input name="firmName" placeholder="Smith & Associates Law" required>
+  <input name="subdomain" placeholder="smith-associates" required>
+  <select name="practiceArea">
+    <option>Personal Injury</option>
+    <option>Employment Law</option>
+    <option>Corporate Law</option>
+  </select>
+  
+  <!-- Admin User -->
+  <input name="adminName" placeholder="John Smith" required>
+  <input name="adminEmail" placeholder="john@smithlaw.com" required>
+  <input name="phone" placeholder="+1 (555) 123-4567">
+  
+  <!-- Legal -->
+  <label>
+    <input type="checkbox" required>
+    I agree to Terms of Service and Privacy Policy
+  </label>
+  
+  <button type="submit">Create Account</button>
+</form>
+```
+
+**Step 2: Server Processing**
+```typescript
+// POST /signup handler
+async function handleSignup(request: Request, env: Env) {
+  const formData = await request.formData();
+  
+  // 1. Validate input data
+  const validation = validateSignupData(formData);
+  if (!validation.valid) return showErrors(validation.errors);
+  
+  // 2. Check subdomain availability
+  const subdomainAvailable = await checkSubdomainAvailability(formData.get('subdomain'));
+  if (!subdomainAvailable) return showError('Subdomain already taken');
+  
+  // 3. Create Auth0 user (simplified - single organization for MVP)
+  const auth0User = await createAuth0User({
+    email: formData.get('adminEmail'),
+    password: generateTempPassword(),
+    userType: 'firm_admin'
+  });
+  
+  // 4. Create firm in FirmRegistry
+  const firmId = await createFirmRecord({
+    name: formData.get('firmName'),
+    slug: formData.get('subdomain'),
+    adminAuth0UserId: auth0User.user_id,
+    practiceAreas: [formData.get('practiceArea')]
+  });
+  
+  // 5. Send welcome email with Auth0 password reset
+  await sendWelcomeEmail(auth0User.email, firmId);
+  
+  // 6. Redirect to success page
+  return Response.redirect('/signup/success');
+}
+```
+
+**Step 3: Welcome & First Login**
+- User receives email with Auth0 password setup link
+- Redirects to `admin.lexara.app/login` after password creation
+- First login redirects to onboarding dashboard
+
+#### **Login Flow (`admin.lexara.app/login`)**
+
+**Auth0 Integration**
+```typescript
+// GET /login - Redirect to Auth0
+async function handleLogin(request: Request, env: Env) {
+  const auth0Config = getAuth0Config(env);
+  const state = generateSecureState();
+  
+  const authUrl = `https://${auth0Config.domain}/authorize?` + new URLSearchParams({
+    response_type: 'code',
+    client_id: auth0Config.adminClientId,
+    redirect_uri: 'https://admin.lexara.app/callback',
+    scope: 'openid profile email',
+    audience: auth0Config.audience,
+    state
+  });
+  
+  return Response.redirect(authUrl);
+}
+
+// GET /callback - Handle Auth0 callback
+async function handleCallback(request: Request, env: Env) {
+  const url = new URL(request.url);
+  const code = url.searchParams.get('code');
+  const state = url.searchParams.get('state');
+  
+  // Validate state and exchange code for tokens
+  const tokens = await exchangeAuthCodeForTokens(code, env);
+  const userInfo = await validateJWT(tokens.id_token, env);
+  
+  // Set secure session cookie
+  const sessionCookie = await createSecureSession(userInfo);
+  
+  return new Response('', {
+    status: 302,
+    headers: {
+      'Location': '/dashboard',
+      'Set-Cookie': `session=${sessionCookie}; HttpOnly; Secure; SameSite=Strict; Path=/`
+    }
+  });
+}
+```
+
+#### **Protected Dashboard (`admin.lexara.app/dashboard`)**
+
+**Authentication Middleware**
+```typescript
+// Dashboard route protection
+async function requireAuth(request: Request, env: Env): Promise<AuthContext | Response> {
+  const sessionCookie = getCookie(request, 'session');
+  if (!sessionCookie) {
+    return Response.redirect('/login');
+  }
+  
+  const authContext = await validateSession(sessionCookie, env);
+  if (!authContext) {
+    return Response.redirect('/login');
+  }
+  
+  return authContext;
+}
+
+// GET /dashboard
+async function handleDashboard(request: Request, env: Env) {
+  const authResult = await requireAuth(request, env);
+  if (authResult instanceof Response) return authResult; // Redirect to login
+  
+  const authContext = authResult as AuthContext;
+  
+  // Get firm data
+  const firm = await getFirmByAuth0UserId(authContext.userId, env);
+  
+  return renderDashboard({
+    user: authContext,
+    firm,
+    features: {
+      conversations: 'coming_soon',
+      conflicts: 'coming_soon',
+      analytics: 'coming_soon',
+      settings: 'basic'
+    }
+  });
+}
+```
+
+#### **MVP Dashboard Features**
+
+**Initial Dashboard Content**
+```html
+<div class="admin-dashboard">
+  <header>
+    <h1>Welcome, {{firm.name}}</h1>
+    <p>Manage your legal client intake system</p>
+  </header>
+  
+  <div class="quick-stats">
+    <div class="stat-card">
+      <h3>Client Intake URL</h3>
+      <code>https://{{firm.slug}}.lexara.app</code>
+      <button onclick="copyToClipboard()">Copy Link</button>
+    </div>
+    
+    <div class="stat-card">
+      <h3>Conversations This Month</h3>
+      <span class="number">{{stats.conversations}}</span>
+    </div>
+  </div>
+  
+  <div class="feature-grid">
+    <div class="feature-card coming-soon">
+      <h4>Client Conversations</h4>
+      <p>View and manage client intake conversations</p>
+      <span class="badge">Coming Soon</span>
+    </div>
+    
+    <div class="feature-card coming-soon">
+      <h4>Conflict Management</h4>
+      <p>Manage your conflict of interest database</p>
+      <span class="badge">Coming Soon</span>
+    </div>
+    
+    <div class="feature-card available">
+      <h4>Firm Settings</h4>
+      <p>Update firm information and branding</p>
+      <a href="/settings">Configure</a>
+    </div>
+  </div>
+</div>
+```
+
+### **MVP Limitations & Future Enhancements**
+
+#### **MVP Simplifications**
+- **Single Auth0 Organization**: All firms in one org initially (vs per-firm orgs)
+- **Basic Validation**: Email format + subdomain availability only
+- **No Domain Verification**: Skip email domain verification for MVP
+- **Temporary Passwords**: Auth0 generates, user resets on first login
+- **Limited Customization**: Basic firm settings only
+
+#### **Post-MVP Enhancements**
+- **Multi-Organization Setup**: Migrate to per-firm Auth0 organizations
+- **Enhanced Validation**: Business verification, phone confirmation
+- **Custom Domains**: `intake.smithlaw.com` support
+- **Team Management**: Invite additional firm users
+- **Advanced Security**: MFA, IP restrictions, audit logs
 
 ## Security Compliance
 

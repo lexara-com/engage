@@ -64,7 +64,13 @@
       "WebFetch(domain:logfire.pydantic.dev)",
       "Bash(npx wrangler:*)",
       "WebFetch(domain:www.canva.com)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Bash(wrangler whoami:*)",
+      "Bash(wrangler subdomain:*)",
+      "Bash(wrangler tail:*)",
+      "Bash(./deploy-platform.sh:*)",
+      "Bash(npm test:*)",
+      "Bash(git commit:*)"
     ],
     "deny": []
   }
