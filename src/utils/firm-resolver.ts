@@ -5,7 +5,7 @@ import { Firm, FirmContext, Env } from '@/types/shared';
 import { createLogger } from '@/utils/logger';
 import { FirmNotFoundError } from '@/utils/errors';
 
-const logger = createLogger('FirmResolver');
+// Logger will be initialized per-request with proper environment context
 
 export interface FirmResolutionResult {
   firmContext: FirmContext | null;

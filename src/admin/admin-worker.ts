@@ -14,11 +14,14 @@ import { adminAuthMiddleware, createAuthResponse } from '@/auth/middleware';
 import { AuthContext, validateSessionAuth } from '@/auth/jwt-validator';
 import { handleAuth0Callback, generateLogoutUrl } from '@/auth/callback-handler';
 
-const logger = createLogger('AdminWorker');
+// Logger will be initialized per-request with proper environment context
 
 // Main admin worker implementation
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
+    // Initialize logger with environment context
+    const logger = createLogger(env, { service: 'admin-worker' });
+    
     // Add CORS headers for admin interface (environment-specific)
     const corsOrigin = env.CORS_ORIGINS || 'https://lexara.app';
     const corsHeaders = {
@@ -201,9 +204,10 @@ export default {
       });
 
     } catch (error) {
+      const err = error as Error;
       logger.error('Admin worker error', { 
-        error: error.message,
-        stack: error.stack 
+        error: err.message,
+        stack: err.stack 
       });
 
       return new Response(JSON.stringify({

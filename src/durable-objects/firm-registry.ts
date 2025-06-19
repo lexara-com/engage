@@ -179,11 +179,12 @@ export class FirmRegistry implements DurableObject {
   private state: DurableObjectState;
   private env: Env;
   private registryState: FirmRegistryState | null = null;
-  private logger = createLogger('FirmRegistry');
+  private logger;
 
   constructor(state: DurableObjectState, env: Env) {
     this.state = state;
     this.env = env;
+    this.logger = createLogger(env, { service: 'firm-registry' });
   }
 
   // Initialize enhanced registry state from storage

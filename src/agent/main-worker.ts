@@ -714,7 +714,7 @@ async function resolveFirmId(request: Request, env: Env): Promise<string> {
       }));
       
       if (response.ok) {
-        const firm = await response.json();
+        const firm = await response.json() as { firmId: string };
         return firm.firmId;
       }
     } catch (error) {
@@ -730,7 +730,7 @@ async function resolveFirmId(request: Request, env: Env): Promise<string> {
     }));
     
     if (response.ok) {
-      const firm = await response.json();
+      const firm = await response.json() as { firmId: string };
       return firm.firmId;
     }
   } catch (error) {
@@ -1151,7 +1151,7 @@ const handler = {
               
               if (anthropicResponse.ok) {
                 results.anthropic.available = true;
-                const data = await anthropicResponse.json();
+                const data = await anthropicResponse.json() as { content?: { text?: string }[] };
                 results.anthropic.response = data.content?.[0]?.text || '';
               } else {
                 results.anthropic.error = `HTTP ${anthropicResponse.status}: ${anthropicResponse.statusText}`;

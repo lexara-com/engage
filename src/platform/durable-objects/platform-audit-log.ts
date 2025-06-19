@@ -89,7 +89,18 @@ export class PlatformAuditLog {
       return new Response('Method Not Allowed', { status: 405 });
     }
     
-    const query = await request.json();
+    const query = await request.json() as {
+      action?: string;
+      platformUserId?: string;
+      targetId?: string;
+      startDate?: string;
+      endDate?: string;
+      dateFrom?: string;
+      dateTo?: string;
+      riskLevel?: string;
+      limit?: number;
+      offset?: number;
+    };
     
     // Load current state
     await this.loadAuditState();

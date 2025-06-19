@@ -252,7 +252,7 @@ export interface ExecutedQuery {
 }
 
 // Re-export common MCP types
-export { 
+export type { 
   MCPRequest, 
   MCPResponse, 
   MCPNotification,

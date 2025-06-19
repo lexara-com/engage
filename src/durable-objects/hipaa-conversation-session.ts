@@ -246,7 +246,7 @@ export class HIPAAConversationSession implements DurableObject {
 
   // Create new HIPAA-compliant session
   async createSession(request: Request): Promise<Response> {
-    const logger = createLogger('HIPAAConversationSession', { operation: 'createSession' });
+    const logger = createLogger(this.env, { service: 'hipaa-conversation-session', operation: 'createSession' });
     
     try {
       await this.initializeState(request);
@@ -401,7 +401,7 @@ export class HIPAAConversationSession implements DurableObject {
 
   // Add message with HIPAA compliance
   async addMessage(request: Request): Promise<Response> {
-    const logger = createLogger('HIPAAConversationSession', { operation: 'addMessage' });
+    const logger = createLogger(this.env, { service: 'hipaa-conversation-session', operation: 'addMessage' });
     
     try {
       await this.initializeState(request);

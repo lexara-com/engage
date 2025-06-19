@@ -3,7 +3,7 @@
 
 import { createLogger } from '@/utils/logger';
 
-const logger = createLogger('HIPAAEncryption');
+// Logger will be initialized per-request with proper environment context
 
 // Encryption result interface
 export interface EncryptionResult {

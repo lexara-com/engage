@@ -19,7 +19,7 @@ import {
   EngageError 
 } from '@/utils/errors';
 
-const logger = createLogger('AdminAPI');
+// Logger will be initialized per-request with proper environment context
 
 // Enhanced admin API handlers
 export class AdminAPIService {

@@ -5,7 +5,7 @@ import { createLogger } from '@/utils/logger';
 import { HIPAAEncryption } from '@/utils/hipaa-encryption';
 import { ConversationPhase, FirmRole } from '@/types/shared';
 
-const logger = createLogger('HIPAAAudit');
+// Logger will be initialized per-request with proper environment context
 
 // Audit action types
 export type AuditAction = 

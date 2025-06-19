@@ -5,7 +5,7 @@ import { Env } from '@/types/shared';
 import { createLogger } from '@/utils/logger';
 import { validateSession } from './callback-handler';
 
-const logger = createLogger('JWTValidator');
+// Logger will be initialized per-request with proper environment context
 
 export interface AuthContext {
   user: {
@@ -25,6 +25,8 @@ export interface AuthContext {
  * Validate Auth0 JWT token or session cookie
  */
 export async function validateAuth0Token(token: string, env: Env): Promise<AuthContext | null> {
+  const logger = createLogger(env, { service: 'jwt-validator', operation: 'validate-token' });
+  
   try {
     // For development, we'll use session-based authentication instead of JWT validation
     // This is simpler and avoids complex JWT verification in workers
@@ -49,6 +51,8 @@ export async function validateAuth0Token(token: string, env: Env): Promise<AuthC
  * Validate JWT token (simplified version for demo)
  */
 async function validateJWTToken(token: string, env: Env): Promise<AuthContext | null> {
+  const logger = createLogger(env, { service: 'jwt-validator', operation: 'validate-jwt' });
+  
   try {
     // In production, this would properly validate the JWT signature
     // For development, we'll do basic validation
@@ -135,7 +139,7 @@ export function validateSessionAuth(request: Request): AuthContext | null {
     };
     
   } catch (error) {
-    logger.error('Session validation failed', { error: error.message });
+    console.error('Session validation failed:', error);
     return null;
   }
 }

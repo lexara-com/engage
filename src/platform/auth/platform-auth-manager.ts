@@ -383,7 +383,18 @@ export class PlatformAuthManager {
         return null;
       }
       
-      const sessionData = await response.json();
+      const sessionData = await response.json() as {
+        sessionId: string;
+        auth0UserId: string;
+        userEmail: string;
+        userName: string;
+        userType: string;
+        createdAt: string;
+        lastActivity: string;
+        expiresAt: string;
+        ipAddress: string;
+        userAgent: string;
+      };
       return {
         ...sessionData,
         createdAt: new Date(sessionData.createdAt),

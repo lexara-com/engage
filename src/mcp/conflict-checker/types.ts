@@ -136,7 +136,7 @@ export interface ConflictResolutionStrategy {
   timelineRecommendation: string;
 }
 
-export { 
+export type { 
   MCPRequest, 
   MCPResponse, 
   MCPNotification,

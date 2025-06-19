@@ -4,12 +4,12 @@
 import { Env } from '@/types/shared';
 import { createLogger } from '@/utils/logger';
 
-const logger = createLogger('Auth0CallbackHandler');
-
 /**
  * Handle Auth0 OAuth callback
  */
 export async function handleAuth0Callback(request: Request, env: Env): Promise<Response> {
+  const logger = createLogger(env, { service: 'auth0-callback-handler' });
+  
   try {
     const url = new URL(request.url);
     const code = url.searchParams.get('code');
@@ -72,9 +72,10 @@ export async function handleAuth0Callback(request: Request, env: Env): Promise<R
     return redirectResponse;
 
   } catch (error) {
+    const err = error as Error;
     logger.error('Auth0 callback processing failed', { 
-      error: error.message, 
-      stack: error.stack 
+      error: err.message, 
+      stack: err.stack 
     });
     
     return createErrorResponse('server_error', 'Authentication processing failed');
