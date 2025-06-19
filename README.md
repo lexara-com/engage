@@ -2,6 +2,26 @@
 
 AI-powered legal client intake platform built on Cloudflare Workers.
 
+## 🚀 Quick Start
+
+```bash
+# Validate configuration
+npm run validate:config
+
+# Deploy to development
+npm run deploy:all:dev
+
+# Verify deployment
+curl https://dev.lexara.app/health
+curl https://platform-dev.lexara.app/health
+```
+
+## 📚 Documentation
+
+- **[DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md)** - Complete deployment procedures
+- **[CONFIGURATION_REFERENCE.md](./CONFIGURATION_REFERENCE.md)** - Configuration files reference
+- **[CLAUDE.md](./CLAUDE.md)** - System architecture and specifications
+
 ## Project Structure
 
 ```

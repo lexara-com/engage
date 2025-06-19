@@ -70,7 +70,12 @@
       "Bash(wrangler tail:*)",
       "Bash(./deploy-platform.sh:*)",
       "Bash(npm test:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(for file in wrangler*.toml)",
+      "Bash(do echo \"=== $file ===\")",
+      "Bash(head:*)",
+      "Bash(done)",
+      "Bash(./scripts/validate-config.sh:*)"
     ],
     "deny": []
   }
