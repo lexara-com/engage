@@ -18,7 +18,7 @@ import { PlatformAuditLog as PlatformAuditLogDO } from './durable-objects/platfo
 export class PlatformSession extends PlatformSessionDO {}
 export class PlatformAuditLog extends PlatformAuditLogDO {}
 
-const logger = createLogger('PlatformWorker');
+// Logger will be initialized per-request to include proper context
 
 // Dashboard template with placeholder replacement
 const DASHBOARD_TEMPLATE = `<!DOCTYPE html>
@@ -293,7 +293,7 @@ const DASHBOARD_TEMPLATE = `<!DOCTYPE html>
                 <div class="metric-icon">💰</div>
                 <div class="metric-content">
                     <h3>Monthly Revenue</h3>
-                    <div class="metric-value">${{monthlyRevenue}}</div>
+                    <div class="metric-value">{{monthlyRevenue}}</div>
                     <div class="metric-trend">
                         <span class="trend-indicator up">+{{revenueGrowth}}%</span>
                         <span>vs last month</span>
@@ -455,16 +455,36 @@ const LOGIN_TEMPLATE = `<!DOCTYPE html>
 // Main platform admin worker implementation
 const handler = {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
-    const url = new URL(request.url);
-    const path = url.pathname;
-    const method = request.method;
-    
-    // Initialize services
-    const auditLogger = new PlatformAuditLogger(env, logger);
-    const authManager = new PlatformAuthManager(env, auditLogger);
-    const securityGuard = new PlatformSecurityGuard(env, auditLogger);
-    
     try {
+      console.log('Platform worker starting...');
+      
+      const url = new URL(request.url);
+      const path = url.pathname;
+      const method = request.method;
+      
+      console.log('URL parsed, path:', path);
+      
+      // Initialize logger first
+      console.log('Initializing logger...');
+      const logger = createLogger(env, {
+        operation: 'platform-admin',
+        service: 'platform-worker'
+      });
+      console.log('Logger initialized');
+      
+      // Initialize services
+      console.log('Initializing audit logger...');
+      const auditLogger = new PlatformAuditLogger(env, logger);
+      console.log('Audit logger initialized');
+      
+      console.log('Initializing auth manager...');
+      const authManager = new PlatformAuthManager(env, auditLogger);
+      console.log('Auth manager initialized');
+      
+      console.log('Initializing security guard...');
+      const securityGuard = new PlatformSecurityGuard(env, auditLogger);
+      console.log('Security guard initialized');
+      
       logger.info('Platform admin request', {
         method,
         path,
@@ -472,8 +492,9 @@ const handler = {
         userAgent: request.headers.get('user-agent')?.substring(0, 100)
       });
       
-      // 1. Security validation (except for health checks)
-      if (path !== '/health') {
+      // 1. Security validation (except for public routes)
+      const publicRoutes = ['/health', '/', '/login', '/callback'];
+      if (!publicRoutes.includes(path)) {
         const securityResult = await securityGuard.validateRequest(request);
         if (!securityResult.valid) {
           await auditLogger.logSecurityEvent({
@@ -507,12 +528,21 @@ const handler = {
           return handleLogin(authManager);
           
         case '/callback':
-          return handleCallback(request, authManager, auditLogger);
+          console.log('=== CALLBACK HANDLER STARTING ===');
+          try {
+            return await handleCallback(request, authManager, auditLogger);
+          } catch (error) {
+            console.error('Callback handler error:', error);
+            throw error;
+          }
           
         case '/logout':
           return handleLogout(request, authManager, auditLogger);
           
         case '/':
+          // Redirect root to login page
+          return redirectToLogin();
+          
         case '/dashboard':
           return handleDashboard(request, authManager, auditLogger);
           
@@ -527,15 +557,18 @@ const handler = {
       }
       
     } catch (error) {
-      logger.error('Platform worker error', error as Error, {
-        path,
-        method,
-        errorName: (error as Error).name,
-        errorMessage: (error as Error).message
-      });
+      console.error('Platform worker error:', error);
       
-      // Log error to audit trail
+      // Try to use logger if it was initialized
       try {
+        logger.error('Platform worker error', error as Error, {
+          path,
+          method,
+          errorName: (error as Error).name,
+          errorMessage: (error as Error).message
+        });
+        
+        // Log error to audit trail
         await auditLogger.logSecurityEvent({
           event: 'request_error',
           reason: `Unhandled error: ${(error as Error).message}`,
@@ -546,8 +579,9 @@ const handler = {
             errorStack: (error as Error).stack?.substring(0, 500)
           }
         });
-      } catch (auditError) {
-        // Don't throw on audit errors
+      } catch (loggingError) {
+        // Don't throw on logging errors
+        console.error('Logging error:', loggingError);
       }
       
       return new Response(JSON.stringify({
@@ -589,11 +623,29 @@ async function handleCallback(
   authManager: PlatformAuthManager,
   auditLogger: PlatformAuditLogger
 ): Promise<Response> {
+  console.log('=== HANDLE CALLBACK FUNCTION ENTERED ===');
+  
   const url = new URL(request.url);
+  console.log('Callback URL parsed:', {
+    pathname: url.pathname,
+    search: url.search,
+    searchParams: Array.from(url.searchParams.entries())
+  });
+  
   const code = url.searchParams.get('code');
   const state = url.searchParams.get('state');
   const error = url.searchParams.get('error');
   const errorDescription = url.searchParams.get('error_description');
+  
+  console.log('Callback parameters:', {
+    hasCode: !!code,
+    codeLength: code?.length,
+    hasState: !!state,
+    stateLength: state?.length,
+    hasError: !!error,
+    error,
+    errorDescription
+  });
   
   // Handle Auth0 errors
   if (error) {
@@ -604,7 +656,7 @@ async function handleCallback(
       request
     });
     
-    return Response.redirect('/login?error=' + encodeURIComponent(error), 302);
+    return Response.redirect('https://platform-dev.lexara.app/login?error=' + encodeURIComponent(error), 302);
   }
   
   // Validate required parameters
@@ -617,7 +669,7 @@ async function handleCallback(
       metadata: { hasCode: !!code, hasState: !!state }
     });
     
-    return Response.redirect('/login?error=invalid_callback', 302);
+    return Response.redirect('https://platform-dev.lexara.app/login?error=invalid_callback', 302);
   }
   
   try {
@@ -632,12 +684,22 @@ async function handleCallback(
         request
       });
       
-      return Response.redirect('/login?error=auth_failed', 302);
+      return Response.redirect('https://platform-dev.lexara.app/login?error=auth_failed', 302);
     }
     
     // Successful authentication - redirect to dashboard
-    const redirectResponse = Response.redirect(authResult.returnTo || '/dashboard', 302);
-    redirectResponse.headers.set('Set-Cookie', authResult.sessionCookie!);
+    const returnUrl = authResult.returnTo?.startsWith('http') 
+      ? authResult.returnTo 
+      : `https://platform-dev.lexara.app${authResult.returnTo || '/dashboard'}`;
+    
+    // Create redirect response with cookie header
+    const redirectResponse = new Response(null, {
+      status: 302,
+      headers: {
+        'Location': returnUrl,
+        'Set-Cookie': authResult.sessionCookie!
+      }
+    });
     
     // Log successful login
     await auditLogger.logAction({
@@ -663,7 +725,7 @@ async function handleCallback(
       }
     });
     
-    return Response.redirect('/login?error=system_error', 302);
+    return Response.redirect('https://platform-dev.lexara.app/login?error=system_error', 302);
   }
 }
 
@@ -710,7 +772,7 @@ async function handleDashboard(
     firmGrowth: '8',
     totalConversations: '1,247',
     monthlyConversations: '342',
-    monthlyRevenue: '24,500',
+    monthlyRevenue: '$24,500',
     revenueGrowth: '15',
     systemUptime: '99.9'
   };
@@ -775,7 +837,7 @@ async function handleProtectedRoute(
 
 // Helper function for login redirects
 function redirectToLogin(): Response {
-  return Response.redirect('/login', 302);
+  return Response.redirect('https://platform-dev.lexara.app/login', 302);
 }
 
 export default handler;

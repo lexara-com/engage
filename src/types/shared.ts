@@ -362,6 +362,10 @@ export interface Env {
   USER_IDENTITY: DurableObjectNamespace;
   FIRM_REGISTRY: DurableObjectNamespace;
   
+  // Platform Admin Durable Object bindings
+  PLATFORM_SESSION: DurableObjectNamespace;
+  PLATFORM_AUDIT_LOG: DurableObjectNamespace;
+  
   // Vectorize bindings
   SUPPORTING_DOCUMENTS: VectorizeIndex;
   CONFLICT_DATABASE: VectorizeIndex;
@@ -376,6 +380,7 @@ export interface Env {
   // Domain and API configuration
   API_BASE_URL?: string;
   ADMIN_BASE_URL?: string;
+  PLATFORM_BASE_URL?: string;
   CORS_ORIGINS?: string;
   
   // Auth0 configuration
