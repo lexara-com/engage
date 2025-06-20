@@ -4,24 +4,7 @@ import path from 'path';
 export default defineConfig({
   test: {
     globals: true,
-    environment: 'miniflare',
-    environmentOptions: {
-      // Miniflare configuration for Cloudflare Workers environment
-      modules: true,
-      scriptPath: './dist/api-worker.js',
-      durableObjects: {
-        CONVERSATION_SESSION: 'ConversationSession',
-        USER_IDENTITY: 'UserIdentity'
-      },
-      d1Databases: {
-        FIRM_INDEX_DB: 'firm-indexes',
-        PLATFORM_DB: 'platform-data'
-      },
-      kvNamespaces: {
-        API_CACHE: 'api-cache'
-      }
-    },
-    setupFiles: ['./tests/setup.ts'],
+    environment: 'node',
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
