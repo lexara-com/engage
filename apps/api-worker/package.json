@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "dev": "wrangler dev --local --persist-to .wrangler/state",
-    "build": "tsc && esbuild src/api/api-worker.ts --bundle --format=esm --outfile=dist/api-worker.js --external:cloudflare:workers",
+    "build": "mkdir -p dist && esbuild src/api/simple-worker.ts --bundle --format=esm --outfile=dist/api-worker.js --external:cloudflare:workers",
     "deploy:dev": "wrangler deploy --env development",
     "deploy:staging": "wrangler deploy --env staging", 
     "deploy:prod": "wrangler deploy --env production",

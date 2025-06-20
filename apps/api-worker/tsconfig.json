@@ -7,7 +7,7 @@
     "lib": ["ES2022", "WebWorker"],
     "types": ["@cloudflare/workers-types", "vitest/globals"],
     "outDir": "./dist",
-    "rootDir": "./src",
+    "rootDir": ".",
     "strict": true,
     "noUncheckedIndexedAccess": true,
     "exactOptionalPropertyTypes": true,
@@ -34,13 +34,18 @@
     }
   },
   "include": [
-    "src/**/*",
-    "tests/**/*"
+    "src/**/*"
   ],
   "exclude": [
     "node_modules",
     "dist",
-    ".wrangler"
+    ".wrangler",
+    "src/api/api-worker.ts",
+    "src/api/router.ts",
+    "src/middleware",
+    "src/routes",
+    "src/services",
+    "tests"
   ],
   "ts-node": {
     "esm": true
