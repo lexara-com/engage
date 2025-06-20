@@ -1,0 +1,26 @@
+{
+  "name": "homepage",
+  "version": "0.1.0",
+  "description": "Lexara.app homepage - Law firm signup and marketing site",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "deploy:dev": "wrangler deploy --env dev",
+    "deploy:staging": "wrangler deploy --env staging",
+    "deploy:production": "wrangler deploy --env production"
+  },
+  "dependencies": {
+    "@astrojs/cloudflare": "^11.0.0",
+    "@astrojs/tailwind": "^5.1.2",
+    "@lexara/shared-types": "workspace:*",
+    "@lexara/shared-utils": "workspace:*",
+    "astro": "^4.16.7",
+    "tailwindcss": "^3.4.14"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20240909.0",
+    "typescript": "^5.5.0",
+    "wrangler": "^4.20.3"
+  }
+}

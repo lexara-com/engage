@@ -1,13 +1,12 @@
 // JWT validation for Auth0 tokens in Cloudflare Workers
 // Handles token validation and user context extraction
 
-import { Env } from '@/types/shared';
-import { createLogger } from '@/utils/logger';
-import { validateSession } from './callback-handler';
+import { Env } from '@lexara/shared-types';
+import { createLogger } from '@lexara/shared-utils';
 
 // Logger will be initialized per-request with proper environment context
 
-export interface AuthContext {
+export interface JwtAuthContext {
   user: {
     sub: string;
     email: string;
@@ -24,7 +23,7 @@ export interface AuthContext {
 /**
  * Validate Auth0 JWT token or session cookie
  */
-export async function validateAuth0Token(token: string, env: Env): Promise<AuthContext | null> {
+export async function validateAuth0Token(token: string, env: Env): Promise<JwtAuthContext | null> {
   const logger = createLogger(env, { service: 'jwt-validator', operation: 'validate-token' });
   
   try {
@@ -42,7 +41,7 @@ export async function validateAuth0Token(token: string, env: Env): Promise<AuthC
     return null;
     
   } catch (error) {
-    logger.error('Token validation failed', { errorMessage: error instanceof Error ? error.message : String(error) });
+    logger.error('Token validation failed', error instanceof Error ? error : new Error(String(error)));
     return null;
   }
 }
@@ -50,7 +49,7 @@ export async function validateAuth0Token(token: string, env: Env): Promise<AuthC
 /**
  * Validate JWT token (simplified version for demo)
  */
-async function validateJWTToken(token: string, env: Env): Promise<AuthContext | null> {
+async function validateJWTToken(token: string, env: Env): Promise<JwtAuthContext | null> {
   const logger = createLogger(env, { service: 'jwt-validator', operation: 'validate-jwt' });
   
   try {
@@ -101,7 +100,7 @@ async function validateJWTToken(token: string, env: Env): Promise<AuthContext | 
     };
     
   } catch (error) {
-    logger.error('JWT validation failed', { errorMessage: error instanceof Error ? error.message : String(error) });
+    logger.error('JWT validation failed', error instanceof Error ? error : new Error(String(error)));
     return null;
   }
 }
@@ -109,34 +108,11 @@ async function validateJWTToken(token: string, env: Env): Promise<AuthContext | 
 /**
  * Validate session-based authentication using cookies
  */
-export function validateSessionAuth(request: Request): AuthContext | null {
+export function validateSessionAuth(request: Request): JwtAuthContext | null {
   try {
-    const sessionData = validateSession(request);
-    
-    if (!sessionData.valid || !sessionData.user) {
-      return null;
-    }
-
-    const user = sessionData.user;
-    const roles = user['https://engage.lexara.app/roles'] || [];
-    const firmId = user['https://engage.lexara.app/firm_id'];
-
-    // Generate permissions based on roles
-    const permissions = generatePermissionsFromRoles(roles);
-
-    return {
-      user: {
-        sub: user.sub,
-        email: user.email,
-        name: user.name,
-        email_verified: user.email_verified
-      },
-      roles,
-      permissions,
-      firmId,
-      tokenType: 'session',
-      isValid: true
-    };
+    // Placeholder for session validation - would integrate with actual session store
+    // For now, this always returns null since session validation is not implemented
+    return null;
     
   } catch (error) {
     console.error('Session validation failed:', error);
@@ -189,21 +165,21 @@ function generatePermissionsFromRoles(roles: string[]): Record<string, boolean> 
 /**
  * Check if auth context has specific permission
  */
-export function hasPermission(context: AuthContext, permission: string): boolean {
+export function hasPermission(context: JwtAuthContext, permission: string): boolean {
   return context.permissions[permission] === true;
 }
 
 /**
  * Check if auth context has specific role
  */
-export function hasRole(context: AuthContext, role: string): boolean {
+export function hasRole(context: JwtAuthContext, role: string): boolean {
   return context.roles.includes(role);
 }
 
 /**
  * Check if user can access specific firm
  */
-export function canAccessFirm(context: AuthContext, firmId: string): boolean {
+export function canAccessFirm(context: JwtAuthContext, firmId: string): boolean {
   // Super admins can access any firm
   if (hasRole(context, 'super_admin')) {
     return true;
@@ -216,7 +192,7 @@ export function canAccessFirm(context: AuthContext, firmId: string): boolean {
 /**
  * Extract Auth context from request (JWT or session)
  */
-export async function extractAuthContext(request: Request, env: Env): Promise<AuthContext | null> {
+export async function extractAuthContext(request: Request, env: Env): Promise<JwtAuthContext | null> {
   // Try JWT from Authorization header first
   const authHeader = request.headers.get('authorization');
   if (authHeader && authHeader.startsWith('Bearer ')) {
@@ -234,7 +210,7 @@ export async function extractAuthContext(request: Request, env: Env): Promise<Au
 /**
  * Create mock admin context for development/testing
  */
-export function createMockAdminContext(role: 'super_admin' | 'firm_admin' | 'firm_user' = 'super_admin'): AuthContext {
+export function createMockAdminContext(role: 'super_admin' | 'firm_admin' | 'firm_user' = 'super_admin'): JwtAuthContext {
   const roles = [role];
   const permissions = generatePermissionsFromRoles(roles);
   

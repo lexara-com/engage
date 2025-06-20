@@ -8,32 +8,32 @@ import {
   Message, 
   Env,
   FirmContext 
-} from '@/types/shared';
+} from '@lexara/shared-types';
 import { 
   generateSessionId, 
   generateUserId, 
   generateResumeToken, 
   generateMessageId 
-} from '@/utils/ulid';
-import { createLogger } from '@/utils/logger';
+} from '@lexara/shared-utils';
+import { createLogger } from '@lexara/shared-utils';
 import { 
   SessionNotFoundError, 
   UnauthorizedAccessError, 
   InvalidResumeTokenError,
   EngageError 
-} from '@/utils/errors';
+} from '@lexara/shared-utils';
 import { 
   HIPAAEncryption, 
   EncryptionResult, 
   EncryptedMessage, 
   EncryptedUserIdentity,
   FirmKeyManager 
-} from '@/utils/hipaa-encryption';
+} from '@lexara/shared-utils';
 import { 
   HIPAAAuditLogger, 
   createAuditLogger 
-} from '@/utils/hipaa-audit';
-import { resolveFirmContext } from '@/utils/firm-resolver';
+} from '@lexara/shared-utils';
+import { resolveFirmContext } from '@lexara/shared-utils';
 
 // HIPAA-enhanced conversation state
 export interface HIPAAConversationState extends ConversationState {

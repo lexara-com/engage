@@ -8,6 +8,7 @@ This repository is organized as a monorepo with independent applications and sha
 
 ### Applications (`apps/`)
 
+- **`homepage/`** - Law firm marketing and signup site (`lexara.app`)
 - **`chat-interface/`** - AI-powered client intake chat (`dev.lexara.app`)
 - **`platform-admin/`** - Lexara platform administration (`platform-dev.lexara.app`)
 - **`mcp-servers/`** - Microservices for AI agent functionality

@@ -2,14 +2,10 @@
 
 /// <reference types="@cloudflare/workers-types" />
 
-import { Env } from '@/types/shared';
-import { createLogger } from '@/utils/logger';
-import { EngageError, handleError } from '@/utils/errors';
+import { Env } from '@lexara/shared-types';
+import { createLogger, EngageError, handleError, telemetry, trackAIServiceCall, trackConversationFlow, sendTestTelemetryData, generateMessageId, generateSessionId } from '@lexara/shared-utils';
 import { ClaudeAgent } from './claude-agent';
-import { telemetry, trackAIServiceCall, trackConversationFlow } from '@/utils/simple-telemetry';
-import { sendTestTelemetryData } from '@/utils/telemetry';
-import { validateJWT, createAuthMiddleware, validateConversationAccess, AuthContext } from '@/auth/auth-middleware';
-import { getAuth0Config, validateAuth0Config } from '@/auth/auth0-config';
+import { validateJWT, createAuthMiddleware, validateConversationAccess, AuthContext, getAuth0Config, validateAuth0Config } from '@lexara/auth-lib';
 
 // Export Durable Object classes
 export { ConversationSession } from '../durable-objects/conversation-session';

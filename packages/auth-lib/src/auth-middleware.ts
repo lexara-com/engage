@@ -3,9 +3,9 @@
 
 /// <reference types="@cloudflare/workers-types" />
 
-import { Env } from '@/types/shared';
-import { createLogger } from '@/utils/logger';
-import { EngageError } from '@/utils/errors';
+import { Env } from '@lexara/shared-types';
+import { createLogger } from '@lexara/shared-utils';
+import { EngageError } from '@lexara/shared-utils';
 
 // Auth context types
 export interface AuthContext {
@@ -439,7 +439,7 @@ export function createAuthMiddleware(options: {
       }
     }
     
-    return { authContext };
+    return { authContext: authContext || undefined };
   };
 }
 

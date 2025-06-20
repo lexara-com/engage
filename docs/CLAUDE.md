@@ -89,18 +89,187 @@ Entity Relationships
 * As Engage learns about the client it will associate identifying details such as email address, phone number, name, address, OAuth user identify with the Engage unique identity.
 
 Technical Overview
-Engage is built using Cloudflare components:
-1. Durable Objects store client conversations.  
-2. Workers presenting MCP servers to serve key components of the architecture such as the conflict list, conversation goals, and other utilities
-3. Pages host the front end.
-4. Cloudflare Vectorize is used to store a vector version of client conversations
-5. Vectorize is used to store supplemental information from a law firm on how the agent should interact with a user and what additional data should be gathered from the user.
-6. All databases, including the vector stores are presented to the agent as MCP servers
-7. Each MCP server will be deployed in an individual worker.
-8. Cloudflare Workers AI operate the agent, introducing the MCP servers that front each component of Engage.
+Engage uses a hybrid Cloudflare architecture optimizing for both real-time performance and analytical queries:
+### Primary Data Layer (Durable Objects)
+1. **Durable Objects** store all active legal conversations and user sessions
+2. **Colocated compute + storage** provides millisecond response times for real-time legal work
+3. **Strong consistency** ensures immediate conflict detection and audit compliance
+4. **Geographic auto-migration** optimizes performance for global law firm access
+
+### Query and Analytics Layer (D1 + Vectorize)
+5. **D1 SQLite databases** provide indexed access for datagrid queries and firm analytics
+6. **Eventually consistent indexes** sync from Durable Objects for "all conversations for firm X" queries
+7. **Vectorize databases** store firm knowledge bases and conflict detection data
+8. **Cross-conversation analytics** powered by D1's relational query capabilities
+
+### Service Architecture
+9. **Workers** present MCP servers for conflict checking, goal tracking, and knowledge search
+10. **Individual MCP Workers** provide modular, scalable service architecture
+11. **Claude AI integration** via Workers AI for intelligent legal conversation management
 9. The web front end is and Astro based website that uses Astro’s SSR capabilities for an optimal user experience.
-10. Users will be authenticated via Auth0
-11. We will eventually build an administrative console and a set of screens and functional components for law firms to use.
+12. **Astro SSR frontend** provides optimal user experience with embedded UI/API architecture
+
+### Authentication & Administration
+13. **Auth0 OAuth2** handles multi-tenant authentication with organization-based separation
+14. **Administrative portals** for both Lexara platform management and law firm configuration
+15. **Audit logging** across both Durable Objects (real-time) and D1 (reporting) layers
+
+## Hybrid Data Architecture: Durable Objects + D1
+
+### Architecture Overview
+
+Engage uses a **hybrid approach** that combines the strengths of Durable Objects for real-time operations with D1 for analytical queries:
+
+**Primary Data Layer (Durable Objects)**:
+- **Source of Truth**: All active legal conversations and user sessions
+- **Strong Consistency**: Immediate conflict detection and audit compliance
+- **Real-time Performance**: Sub-millisecond response times for live legal work
+- **Geographic Distribution**: Auto-migrates to optimize user latency globally
+
+**Query and Analytics Layer (D1)**:
+- **Index Tables**: "All conversations for firm X" style queries for datagrids
+- **Eventually Consistent**: Synced from Durable Objects for reporting
+- **SQL Analytics**: Cross-conversation reporting and firm analytics
+- **Relational Queries**: Complex joins and aggregations for legal insights
+
+### Data Flow Strategy
+
+```typescript
+// Write Flow: DO → D1 Index
+class ConversationSession {
+  async addMessage(message: Message) {
+    // 1. Update primary state (immediate, strongly consistent)
+    this.state.messages.push(message);
+    this.state.lastActivity = new Date();
+    
+    // 2. Update D1 indexes (async, eventually consistent)
+    this.env.ctx.waitUntil(this.updateIndexes());
+    
+    return this.state;
+  }
+  
+  private async updateIndexes() {
+    await this.env.FIRM_INDEX_DB.prepare(`
+      INSERT OR REPLACE INTO conversation_index 
+      (firmId, sessionId, clientName, status, lastActivity, ...)
+      VALUES (?, ?, ?, ?, ?, ...)
+    `).bind(/* index data */).run();
+  }
+}
+
+// Read Flow: D1 for Lists, DO for Details
+async function getFirmConversations(firmId: string) {
+  // Fast SQL query for datagrid
+  const conversations = await db.prepare(`
+    SELECT sessionId, clientName, status, lastActivity
+    FROM conversation_index 
+    WHERE firmId = ? AND isDeleted = FALSE
+    ORDER BY lastActivity DESC
+  `).bind(firmId).all();
+  
+  return conversations; // No need to query DOs for list view
+}
+
+async function getConversationDetails(sessionId: string) {
+  // Full details from Durable Object (source of truth)
+  const conversation = await env.CONVERSATION_SESSION
+    .get(env.CONVERSATION_SESSION.idFromName(sessionId));
+  return await conversation.getState();
+}
+```
+
+### D1 Index Tables for Legal Platform
+
+The following D1 tables provide indexed access for all datagrid/list functionality:
+
+#### **conversation_index**
+```sql
+CREATE TABLE conversation_index (
+  firmId TEXT NOT NULL,
+  sessionId TEXT NOT NULL,
+  userId TEXT,
+  clientName TEXT,
+  clientEmail TEXT,
+  practiceArea TEXT,
+  status TEXT, -- 'active', 'completed', 'terminated'  
+  phase TEXT,  -- 'pre_login', 'secured', etc.
+  assignedTo TEXT,
+  conflictStatus TEXT,
+  goalsCompleted INTEGER,
+  goalsTotal INTEGER,
+  dataQualityScore INTEGER,
+  createdAt TEXT,
+  lastActivity TEXT,
+  isDeleted BOOLEAN DEFAULT FALSE,
+  
+  PRIMARY KEY (firmId, sessionId)
+);
+
+CREATE INDEX idx_firm_status ON conversation_index(firmId, status);
+CREATE INDEX idx_firm_assigned ON conversation_index(firmId, assignedTo);
+CREATE INDEX idx_firm_activity ON conversation_index(firmId, lastActivity);
+```
+
+#### **user_index**
+```sql
+CREATE TABLE user_index (
+  firmId TEXT NOT NULL,
+  userId TEXT NOT NULL,
+  auth0UserId TEXT,
+  email TEXT,
+  name TEXT,
+  role TEXT,
+  status TEXT, -- 'active', 'inactive', 'suspended'
+  lastLogin TEXT,
+  conversationCount INTEGER DEFAULT 0,
+  createdAt TEXT,
+  
+  PRIMARY KEY (firmId, userId)
+);
+
+CREATE INDEX idx_firm_role ON user_index(firmId, role);
+CREATE INDEX idx_firm_email ON user_index(firmId, email);
+```
+
+#### **audit_log_index**
+```sql
+CREATE TABLE audit_log_index (
+  firmId TEXT NOT NULL,
+  auditId TEXT NOT NULL,
+  userId TEXT,
+  action TEXT,
+  resourceType TEXT,
+  resourceId TEXT,
+  timestamp TEXT,
+  ipAddress TEXT,
+  details TEXT, -- JSON blob
+  
+  PRIMARY KEY (firmId, auditId)
+);
+
+CREATE INDEX idx_firm_audit_time ON audit_log_index(firmId, timestamp);
+CREATE INDEX idx_firm_audit_user ON audit_log_index(firmId, userId, timestamp);
+```
+
+### Benefits of Hybrid Approach
+
+**✅ Best of Both Worlds**:
+- **Real-time Legal Work**: Strong consistency from Durable Objects for active cases
+- **Fast Analytics**: SQL queries from D1 for firm dashboards and reporting
+- **Legal Compliance**: Immediate audit trails in DOs, reportable summaries in D1
+- **Performance**: Hot data in DOs (milliseconds), query layer in D1 (sub-second)
+
+**✅ Scalability**:
+- **Per-Conversation Isolation**: Each legal matter scales independently
+- **Firm-Wide Analytics**: D1 provides cross-conversation insights
+- **Geographic Distribution**: DOs migrate globally, D1 provides consistent query performance
+
+**✅ Data Integrity**:
+- **Source of Truth**: Durable Objects maintain authoritative legal records
+- **Index Consistency**: D1 indexes are eventually consistent and repairable
+- **Audit Compliance**: Critical legal data never depends on eventually consistent indexes
+
+**📚 Complete Implementation Details**: See [HYBRID_DATA_ARCHITECTURE.md](./HYBRID_DATA_ARCHITECTURE.md) for comprehensive technical specifications, query examples, and implementation guidelines.
 
 ## Durable Objects Architecture
 
@@ -265,13 +434,15 @@ interface UserIdentityState {
 
 ### Component Overview
 ```
-Engage Legal AI System - Cloudflare Infrastructure
+Engage Legal AI System - Hybrid Cloudflare Architecture
 
-Frontend (Future)
-├── Astro SSR Website (Auth0 + Chat Interface)
+Frontend Applications
+├── Astro SSR Chat Interface (dev.lexara.app)
+├── Platform Admin Portal (platform.lexara.app) 
+└── Firm Admin Portal (admin.lexara.app)
 
 Main Agent Worker
-├── Claude AI Model (Workers AI)
+├── Claude AI Model (Workers AI + Anthropic API)
 ├── MCP Client Orchestrator
 ├── Session Router & Authentication
 └── Error Handling & Circuit Breakers
@@ -282,20 +453,38 @@ MCP Server Workers (Individual Workers)
 ├── AdditionalGoals MCP - Supporting Documents search (Vectorize)
 ├── ConflictChecker MCP - Conflict detection (Vectorize)
 
-Durable Objects (Auto-scaling, Geo-distributed)
+Primary Data Layer (Durable Objects - Source of Truth)
 ├── ConversationSession DO (firmId:userId:sessionId)
 │   ├── Security phases (pre-login → login-suggested → secured)
-│   ├── Goal tracking and progress
+│   ├── Real-time conversation state
 │   ├── User identity aggregation
 │   ├── Conflict detection results
-│   └── Complete conversation history
+│   └── Complete message history
 └── UserIdentity DO (firmId:userId)
     ├── Auth0 mapping
     ├── Cross-session identity aggregation
     ├── Conflict status caching
     └── Session history
 
-Vectorize Databases
+Query & Analytics Layer (D1 - Eventually Consistent Indexes)
+├── conversation_index (per firm)
+│   ├── Datagrid queries: "all conversations for firm X"
+│   ├── Status, assignment, and priority filtering
+│   └── Analytics and reporting data
+├── user_index (per firm)
+│   ├── User management dashboards
+│   ├── Role and permission queries
+│   └── Activity tracking
+├── audit_log_index (per firm)
+│   ├── Compliance reporting
+│   ├── Action history tracking
+│   └── Security audit trails
+└── case_assignment_index (per firm)
+    ├── Attorney workload management
+    ├── Case priority and deadlines
+    └── Assignment history
+
+Knowledge & Conflict Detection (Vectorize)
 ├── Supporting Documents (per firm)
 │   ├── Case type templates
 │   ├── Additional goals definitions

@@ -2,12 +2,8 @@
 
 /// <reference types="@cloudflare/workers-types" />
 
-import { Env, AgentResponse, Message } from '@/types/shared';
-import { createLogger } from '@/utils/logger';
-import { EngageError } from '@/utils/errors';
-import { generateMessageId, generateSessionId } from '@/utils/ulid';
-import { MCPClient, createGoalTrackerClient, createConflictCheckerClient, createAdditionalGoalsClient } from '@/utils/mcp-client';
-import { trackAIServiceCall, trackConversationFlow, telemetry } from '@/utils/simple-telemetry';
+import { Env, AgentResponse, Message } from '@lexara/shared-types';
+import { createLogger, EngageError, generateMessageId, generateSessionId, MCPClient, createGoalTrackerClient, createConflictCheckerClient, createAdditionalGoalsClient, trackAIServiceCall, trackConversationFlow, telemetry } from '@lexara/shared-utils';
 
 export interface AgentContext {
   sessionId: string;

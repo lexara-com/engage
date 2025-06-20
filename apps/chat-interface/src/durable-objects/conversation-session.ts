@@ -7,20 +7,18 @@ import {
   ConflictStatus, 
   Message, 
   Env 
-} from '@/types/shared';
+} from '@lexara/shared-types';
 import { 
   generateSessionId, 
   generateUserId, 
   generateResumeToken, 
-  generateMessageId 
-} from '@/utils/ulid';
-import { createLogger } from '@/utils/logger';
-import { 
+  generateMessageId,
+  createLogger,
   SessionNotFoundError, 
   UnauthorizedAccessError, 
   InvalidResumeTokenError,
   EngageError 
-} from '@/utils/errors';
+} from '@lexara/shared-utils';
 
 export class ConversationSession implements DurableObject {
   private state: DurableObjectState;

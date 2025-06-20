@@ -36,7 +36,8 @@
     "forceConsistentCasingInFileNames": true
   },
   "include": [
-    "src/**/*"
+    "src/**/*",
+    "apps/*/src/**/*"
   ],
   "exclude": [
     "node_modules",

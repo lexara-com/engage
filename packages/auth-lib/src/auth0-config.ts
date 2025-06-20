@@ -3,7 +3,7 @@
 
 /// <reference types="@cloudflare/workers-types" />
 
-import { Env } from '@/types/shared';
+import { Env } from '@lexara/shared-types';
 
 export interface Auth0Config {
   domain: string;

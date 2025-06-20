@@ -16,6 +16,7 @@
     "lint": "turbo run lint",
     "test": "turbo run test",
     "clean": "turbo run clean",
+    "dev:homepage": "turbo run dev --filter=homepage",
     "dev:chat": "turbo run dev --filter=chat-interface",
     "dev:platform": "turbo run dev --filter=platform-admin",
     "dev:mcp": "turbo run dev --filter='*-mcp'",
