@@ -1,0 +1,13 @@
+name = "lexara-api-demo"
+main = "simple-api-worker.js"
+compatibility_date = "2024-12-20"
+compatibility_flags = ["nodejs_compat"]
+
+[env.dev]
+name = "lexara-api-demo"
+
+[env.staging]
+name = "lexara-api-staging"
+
+[env.production]
+name = "lexara-api-prod"

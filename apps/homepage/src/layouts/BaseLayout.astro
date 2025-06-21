@@ -3,9 +3,10 @@ interface Props {
   title: string;
   description?: string;
   image?: string;
+  showNavigation?: boolean;
 }
 
-const { title, description = "AI-powered legal client intake platform", image = "/lexara-og.jpg" } = Astro.props;
+const { title, description = "AI-powered legal client intake platform", image = "/lexara-og.jpg", showNavigation = true } = Astro.props;
 ---
 
 <!DOCTYPE html>
@@ -39,44 +40,46 @@ const { title, description = "AI-powered legal client intake platform", image = 
   <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&family=Open+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,300;1,400;1,500;1,600;1,700;1,800&display=swap" rel="stylesheet">
 </head>
 <body class="font-body antialiased bg-lexara-whiteSmoke text-lexara-darkNavy">
-  <header class="fixed top-0 w-full z-50 bg-lexara-pureWhite/95 backdrop-blur-sm border-b border-lexara-skyBlue/30">
-    <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="flex justify-between items-center py-4">
-        <div class="flex items-center">
-          <a href="/" class="flex items-center">
-            <img src="/lexara-logo.svg" alt="Lexara" class="h-8 w-auto">
-          </a>
-        </div>
-        
-        <div class="hidden md:flex items-center space-x-8">
-          <a href="/features" class="text-lexara-lightNavy hover:text-lexara-darkNavy transition-colors font-semibold">Features</a>
-          <a href="/pricing" class="text-lexara-lightNavy hover:text-lexara-darkNavy transition-colors font-semibold">Pricing</a>
-          <a href="/demo" class="text-lexara-lightNavy hover:text-lexara-darkNavy transition-colors font-semibold">Demo</a>
-          <a href="/contact" class="text-lexara-lightNavy hover:text-lexara-darkNavy transition-colors font-semibold">Contact</a>
-        </div>
+  {showNavigation && (
+    <header class="fixed top-0 w-full z-50 bg-lexara-pureWhite/95 backdrop-blur-sm border-b border-lexara-skyBlue/30">
+      <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center py-4">
+          <div class="flex items-center">
+            <a href="/" class="flex items-center">
+              <img src="/lexara-logo.svg" alt="Lexara" class="h-8 w-auto">
+            </a>
+          </div>
+          
+          <div class="hidden md:flex items-center space-x-8">
+            <a href="/features" class="text-lexara-lightNavy hover:text-lexara-darkNavy transition-colors font-semibold">Features</a>
+            <a href="/pricing" class="text-lexara-lightNavy hover:text-lexara-darkNavy transition-colors font-semibold">Pricing</a>
+            <a href="/demo" class="text-lexara-lightNavy hover:text-lexara-darkNavy transition-colors font-semibold">Demo</a>
+            <a href="/contact" class="text-lexara-lightNavy hover:text-lexara-darkNavy transition-colors font-semibold">Contact</a>
+          </div>
 
-        <div class="flex items-center space-x-4">
-          <a href="/login" class="text-lexara-lightNavy hover:text-lexara-darkNavy transition-colors font-semibold">
-            Sign In
-          </a>
-          <a href="/signup" class="bg-lexara-darkNavy text-lexara-pureWhite px-6 py-2.5 rounded-lg hover:bg-lexara-lightNavy transition-colors font-semibold">
-            Get Started
-          </a>
-        </div>
+          <div class="flex items-center space-x-4">
+            <a href="/firm/login" class="text-lexara-lightNavy hover:text-lexara-darkNavy transition-colors font-semibold">
+              Sign In
+            </a>
+            <a href="/firm/signup" class="bg-lexara-darkNavy text-lexara-pureWhite px-6 py-2.5 rounded-lg hover:bg-lexara-lightNavy transition-colors font-semibold">
+              Get Started
+            </a>
+          </div>
 
-        <!-- Mobile menu button -->
-        <div class="md:hidden">
-          <button type="button" class="text-lexara-gray hover:text-lexara-primary">
-            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
-          </button>
+          <!-- Mobile menu button -->
+          <div class="md:hidden">
+            <button type="button" class="text-lexara-gray hover:text-lexara-primary">
+              <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
+          </div>
         </div>
-      </div>
-    </nav>
-  </header>
+      </nav>
+    </header>
+  )}
 
-  <main class="pt-16">
+  <main class={showNavigation ? "pt-16" : ""}>
     <slot />
   </main>
 

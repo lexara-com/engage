@@ -85,7 +85,11 @@
       "Bash(pnpm build:*)",
       "Bash(pnpm deploy:dev:*)",
       "WebFetch(domain:framerusercontent.com)",
-      "Bash(sed:*)"
+      "Bash(sed:*)",
+      "Bash(npm run test:*)",
+      "Bash(pnpm test:*)",
+      "Bash(pnpm run:*)",
+      "Bash(git remote set-url:*)"
     ],
     "deny": []
   }

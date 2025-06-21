@@ -37,13 +37,14 @@
   },
   "include": [
     "src/**/*",
-    "apps/*/src/**/*"
+    "apps/*/src/**/*",
+    "apps/*/tests/**/*",
+    "packages/*/src/**/*",
+    "packages/*/tests/**/*"
   ],
   "exclude": [
     "node_modules",
-    "dist",
-    "**/*.test.ts",
-    "**/*.spec.ts"
+    "dist"
   ],
   "types": [
     "@cloudflare/workers-types"

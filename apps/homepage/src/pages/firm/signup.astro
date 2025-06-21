@@ -1,0 +1,477 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+---
+
+<BaseLayout 
+  title="Sign Up - Lexara Firm Portal" 
+  description="Create your law firm account and start using Lexara's AI-powered client intake platform"
+  showNavigation={false}
+>
+  <div class="min-h-screen bg-gradient-to-br from-lexara-light to-blue-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-4xl w-full space-y-8">
+      <!-- Header -->
+      <div class="text-center">
+        <div class="flex justify-center items-center space-x-3 mb-6">
+          <div class="w-12 h-12 bg-lexara-primary rounded-xl flex items-center justify-center">
+            <span class="text-white font-bold text-xl">L</span>
+          </div>
+          <h1 class="text-3xl font-bold text-lexara-secondary">Lexara</h1>
+        </div>
+        <h2 class="text-2xl font-bold text-lexara-secondary mb-2">
+          Start Your Free Trial
+        </h2>
+        <p class="text-lexara-gray">
+          Set up your law firm account in minutes. No credit card required for 14-day trial.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <!-- Signup Form -->
+        <div class="bg-white rounded-2xl shadow-lg p-8">
+          <h3 class="text-xl font-semibold text-lexara-secondary mb-6">Create Your Firm Account</h3>
+          
+          <!-- Auth0 Login Button -->
+          <div class="mb-6">
+            <button 
+              id="auth0-signup-button"
+              class="w-full bg-lexara-primary text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-800 transition-colors flex items-center justify-center space-x-2"
+            >
+              <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 0C5.374 0 0 5.373 0 12s5.374 12 12 12 12-5.373 12-12S18.626 0 12 0zm5.568 7.875c.216 1.125.216 2.25 0 3.375-.216 1.125-.648 2.124-1.296 3.002-.648.878-1.512 1.58-2.592 2.106-1.08.526-2.304.792-3.68.792s-2.6-.266-3.68-.792c-1.08-.526-1.944-1.228-2.592-2.106-.648-.878-1.08-1.877-1.296-3.002-.216-1.125-.216-2.25 0-3.375.216-1.125.648-2.124 1.296-3.002.648-.878 1.512-1.58 2.592-2.106C9.4 2.766 10.624 2.5 12 2.5s2.6.266 3.68.792c1.08.526 1.944 1.228 2.592 2.106.648.878 1.08 1.877 1.296 3.002z"/>
+              </svg>
+              <span>Sign Up with Auth0</span>
+            </button>
+          </div>
+
+          <div class="relative mb-6">
+            <div class="absolute inset-0 flex items-center">
+              <div class="w-full border-t border-gray-300"></div>
+            </div>
+            <div class="relative flex justify-center text-sm">
+              <span class="px-2 bg-white text-lexara-gray">Or fill out firm details below</span>
+            </div>
+          </div>
+
+          <!-- Manual Signup Form -->
+          <form id="manual-signup-form" class="space-y-6">
+            <!-- Plan Selection -->
+            <div>
+              <label class="block text-sm font-medium text-lexara-secondary mb-3">Select Plan</label>
+              <div class="grid grid-cols-3 gap-3">
+                <label class="relative">
+                  <input type="radio" name="plan" value="starter" class="sr-only">
+                  <div class="plan-option border-2 border-gray-200 rounded-lg p-3 text-center cursor-pointer transition-all hover:border-lexara-primary">
+                    <div class="text-sm font-semibold text-lexara-secondary">Starter</div>
+                    <div class="text-xs text-lexara-gray">$149/mo</div>
+                  </div>
+                </label>
+                
+                <label class="relative">
+                  <input type="radio" name="plan" value="professional" class="sr-only" checked>
+                  <div class="plan-option border-2 border-gray-200 rounded-lg p-3 text-center cursor-pointer transition-all hover:border-lexara-primary">
+                    <div class="text-sm font-semibold text-lexara-secondary">Professional</div>
+                    <div class="text-xs text-lexara-gray">$349/mo</div>
+                    <div class="text-xs bg-lexara-primary text-white px-2 py-1 rounded-full mt-1">Popular</div>
+                  </div>
+                </label>
+                
+                <label class="relative">
+                  <input type="radio" name="plan" value="enterprise" class="sr-only">
+                  <div class="plan-option border-2 border-gray-200 rounded-lg p-3 text-center cursor-pointer transition-all hover:border-lexara-primary">
+                    <div class="text-sm font-semibold text-lexara-secondary">Enterprise</div>
+                    <div class="text-xs text-lexara-gray">Custom</div>
+                  </div>
+                </label>
+              </div>
+            </div>
+
+            <!-- Firm Information -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label for="firm-name" class="block text-sm font-medium text-lexara-secondary mb-2">
+                  Law Firm Name *
+                </label>
+                <input type="text" id="firm-name" name="firm-name" required
+                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-lexara-primary focus:border-transparent">
+              </div>
+              
+              <div>
+                <label for="firm-size" class="block text-sm font-medium text-lexara-secondary mb-2">
+                  Firm Size
+                </label>
+                <select id="firm-size" name="firm-size"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-lexara-primary focus:border-transparent">
+                  <option value="1">Solo practitioner</option>
+                  <option value="2-5">2-5 attorneys</option>
+                  <option value="6-20">6-20 attorneys</option>
+                  <option value="21-50">21-50 attorneys</option>
+                  <option value="50+">50+ attorneys</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Practice Areas -->
+            <div>
+              <label class="block text-sm font-medium text-lexara-secondary mb-2">
+                Primary Practice Areas
+              </label>
+              <div class="grid grid-cols-2 gap-2">
+                <label class="flex items-center space-x-2">
+                  <input type="checkbox" name="practice-areas" value="personal_injury"
+                         class="rounded border-gray-300 text-lexara-primary focus:ring-lexara-primary">
+                  <span class="text-sm text-lexara-gray">Personal Injury</span>
+                </label>
+                <label class="flex items-center space-x-2">
+                  <input type="checkbox" name="practice-areas" value="family_law"
+                         class="rounded border-gray-300 text-lexara-primary focus:ring-lexara-primary">
+                  <span class="text-sm text-lexara-gray">Family Law</span>
+                </label>
+                <label class="flex items-center space-x-2">
+                  <input type="checkbox" name="practice-areas" value="business_law"
+                         class="rounded border-gray-300 text-lexara-primary focus:ring-lexara-primary">
+                  <span class="text-sm text-lexara-gray">Business Law</span>
+                </label>
+                <label class="flex items-center space-x-2">
+                  <input type="checkbox" name="practice-areas" value="criminal_law"
+                         class="rounded border-gray-300 text-lexara-primary focus:ring-lexara-primary">
+                  <span class="text-sm text-lexara-gray">Criminal Law</span>
+                </label>
+              </div>
+            </div>
+
+            <!-- Personal Information -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label for="first-name" class="block text-sm font-medium text-lexara-secondary mb-2">
+                  First Name *
+                </label>
+                <input type="text" id="first-name" name="first-name" required
+                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-lexara-primary focus:border-transparent">
+              </div>
+              
+              <div>
+                <label for="last-name" class="block text-sm font-medium text-lexara-secondary mb-2">
+                  Last Name *
+                </label>
+                <input type="text" id="last-name" name="last-name" required
+                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-lexara-primary focus:border-transparent">
+              </div>
+            </div>
+
+            <div>
+              <label for="email" class="block text-sm font-medium text-lexara-secondary mb-2">
+                Email Address *
+              </label>
+              <input type="email" id="email" name="email" required
+                     class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-lexara-primary focus:border-transparent">
+            </div>
+
+            <!-- Terms and Privacy -->
+            <div class="flex items-start space-x-3">
+              <input type="checkbox" id="terms" name="terms" required
+                     class="mt-1 rounded border-gray-300 text-lexara-primary focus:ring-lexara-primary">
+              <label for="terms" class="text-sm text-lexara-gray">
+                I agree to the <a href="/terms" class="text-lexara-primary hover:underline">Terms of Service</a> 
+                and <a href="/privacy" class="text-lexara-primary hover:underline">Privacy Policy</a>
+              </label>
+            </div>
+
+            <!-- Status Messages -->
+            <div id="signup-status" class="hidden">
+              <div id="signup-success" class="hidden bg-green-50 border border-green-200 rounded-lg p-4">
+                <div class="flex items-center">
+                  <svg class="w-5 h-5 text-green-600 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                  </svg>
+                  <span id="signup-success-text" class="text-sm text-green-800"></span>
+                </div>
+              </div>
+              
+              <div id="signup-error" class="hidden bg-red-50 border border-red-200 rounded-lg p-4">
+                <div class="flex items-center">
+                  <svg class="w-5 h-5 text-red-600 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>
+                  </svg>
+                  <span id="signup-error-text" class="text-sm text-red-800"></span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Submit Button -->
+            <button type="submit" id="submit-button"
+                    class="w-full bg-lexara-secondary text-white py-3 rounded-lg font-medium hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+              <span class="flex items-center justify-center">
+                <svg id="loading-spinner" class="hidden animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <span id="submit-text">Create Account</span>
+              </span>
+            </button>
+
+            <p class="text-center text-sm text-lexara-gray">
+              Already have an account? <a href="/firm/login" class="text-lexara-primary hover:underline">Sign in</a>
+            </p>
+          </form>
+        </div>
+
+        <!-- Benefits & Process -->
+        <div class="space-y-6">
+          <!-- What's Included -->
+          <div class="bg-white rounded-xl shadow-lg p-6">
+            <h3 class="text-lg font-semibold text-lexara-secondary mb-4">What's Included</h3>
+            <ul class="space-y-3">
+              <li class="flex items-center space-x-3">
+                <svg class="w-5 h-5 text-lexara-accent" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                </svg>
+                <span class="text-sm text-lexara-gray">AI-powered client conversations</span>
+              </li>
+              <li class="flex items-center space-x-3">
+                <svg class="w-5 h-5 text-lexara-accent" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                </svg>
+                <span class="text-sm text-lexara-gray">Automatic conflict detection</span>
+              </li>
+              <li class="flex items-center space-x-3">
+                <svg class="w-5 h-5 text-lexara-accent" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                </svg>
+                <span class="text-sm text-lexara-gray">Real-time analytics dashboard</span>
+              </li>
+              <li class="flex items-center space-x-3">
+                <svg class="w-5 h-5 text-lexara-accent" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                </svg>
+                <span class="text-sm text-lexara-gray">Custom practice area setup</span>
+              </li>
+              <li class="flex items-center space-x-3">
+                <svg class="w-5 h-5 text-lexara-accent" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                </svg>
+                <span class="text-sm text-lexara-gray">Priority support</span>
+              </li>
+            </ul>
+          </div>
+
+          <!-- Getting Started -->
+          <div class="bg-lexara-primary rounded-xl p-6 text-white">
+            <h3 class="text-lg font-semibold mb-4">Getting Started</h3>
+            <div class="space-y-3">
+              <div class="flex items-center space-x-3">
+                <div class="w-6 h-6 bg-white/20 rounded-full flex items-center justify-center">
+                  <span class="text-xs font-bold">1</span>
+                </div>
+                <span class="text-sm">Sign up in 2 minutes</span>
+              </div>
+              <div class="flex items-center space-x-3">
+                <div class="w-6 h-6 bg-white/20 rounded-full flex items-center justify-center">
+                  <span class="text-xs font-bold">2</span>
+                </div>
+                <span class="text-sm">Customize for your practice</span>
+              </div>
+              <div class="flex items-center space-x-3">
+                <div class="w-6 h-6 bg-white/20 rounded-full flex items-center justify-center">
+                  <span class="text-xs font-bold">3</span>
+                </div>
+                <span class="text-sm">Start capturing leads</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Support -->
+          <div class="text-center">
+            <p class="text-lexara-gray text-sm mb-2">Need help getting started?</p>
+            <a href="/contact" class="text-lexara-primary hover:underline font-medium text-sm">
+              Contact our team for a guided demo
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</BaseLayout>
+
+<script>
+  import { initializeAuth, signup } from '../../utils/auth';
+  
+  document.addEventListener('DOMContentLoaded', async () => {
+    await initializeAuth();
+    setupEventListeners();
+  });
+
+  function setupEventListeners() {
+    // Auth0 signup button
+    const auth0SignupButton = document.getElementById('auth0-signup-button');
+    if (auth0SignupButton) {
+      auth0SignupButton.addEventListener('click', async () => {
+        try {
+          await signup('/firm/dashboard');
+        } catch (error) {
+          console.error('Auth0 signup failed:', error);
+          alert('Authentication failed. Please try again.');
+        }
+      });
+    }
+
+    // Plan selection
+    const planInputs = document.querySelectorAll('input[name="plan"]');
+    const planOptions = document.querySelectorAll('.plan-option');
+    
+    function updatePlanSelection() {
+      planInputs.forEach((input, index) => {
+        const option = planOptions[index];
+        if (input.checked) {
+          option.classList.add('border-lexara-primary', 'bg-blue-50');
+          option.classList.remove('border-gray-200');
+        } else {
+          option.classList.remove('border-lexara-primary', 'bg-blue-50');
+          option.classList.add('border-gray-200');
+        }
+      });
+    }
+    
+    // Set initial selection
+    updatePlanSelection();
+    
+    // Handle plan option clicks
+    planOptions.forEach((option, index) => {
+      option.addEventListener('click', function() {
+        planInputs[index].checked = true;
+        updatePlanSelection();
+      });
+    });
+
+    // Manual form submission
+    const manualForm = document.getElementById('manual-signup-form');
+    if (manualForm) {
+      manualForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        try {
+          // Show loading state
+          showLoading(true);
+          hideMessages();
+          
+          const formData = new FormData(this);
+          const data = Object.fromEntries(formData.entries());
+          
+          // Handle multiple practice areas
+          const practiceAreas = formData.getAll('practice-areas');
+          
+          // Prepare firm registration data
+          const firmData = {
+            plan: data.plan || 'professional',
+            firmName: data['firm-name'],
+            firmSize: data['firm-size'],
+            practiceAreas: practiceAreas,
+            firstName: data['first-name'],
+            lastName: data['last-name'],
+            email: data.email,
+            agreedToTerms: !!data.terms
+          };
+          
+          // Validate required fields
+          if (!firmData.firmName || !firmData.firstName || !firmData.lastName || !firmData.email) {
+            throw new Error('Please fill in all required fields');
+          }
+          
+          if (!firmData.agreedToTerms) {
+            throw new Error('Please agree to the Terms of Service and Privacy Policy');
+          }
+          
+          console.log('Submitting firm registration:', firmData);
+          
+          // Create API client (no auth token needed for registration)
+          const { LexaraAPIClient } = await import('../../utils/api-client');
+          const apiClient = new LexaraAPIClient(
+            'https://lexara-api-demo.cloudswift.workers.dev',
+            async () => null // No auth needed for registration
+          );
+          
+          // Submit firm registration
+          const result = await apiClient.registerFirm(firmData);
+          
+          if (result.success) {
+            // Registration successful
+            showSuccess(`Account created successfully! Welcome to Lexara, ${firmData.firstName}! You can now sign in with Auth0 using your email address.`);
+            
+            // Redirect to login page after a delay
+            setTimeout(() => {
+              window.location.href = '/firm/login';
+            }, 2000);
+          } else {
+            // Registration failed
+            throw new Error(result.error?.message || 'Registration failed. Please try again.');
+          }
+          
+        } catch (error) {
+          console.error('Registration error:', error);
+          showError(error.message);
+          showLoading(false);
+        }
+      });
+    }
+    
+    // Helper functions for UI state management
+    function showLoading(show) {
+      const submitButton = document.getElementById('submit-button');
+      const loadingSpinner = document.getElementById('loading-spinner');
+      const submitText = document.getElementById('submit-text');
+      
+      if (show) {
+        submitButton.disabled = true;
+        loadingSpinner.classList.remove('hidden');
+        submitText.textContent = 'Creating Account...';
+      } else {
+        submitButton.disabled = false;
+        loadingSpinner.classList.add('hidden');
+        submitText.textContent = 'Create Account';
+      }
+    }
+    
+    function showSuccess(message) {
+      const statusContainer = document.getElementById('signup-status');
+      const successContainer = document.getElementById('signup-success');
+      const successText = document.getElementById('signup-success-text');
+      
+      statusContainer.classList.remove('hidden');
+      successContainer.classList.remove('hidden');
+      successText.textContent = message;
+      
+      // Hide loading state
+      showLoading(false);
+    }
+    
+    function showError(message) {
+      const statusContainer = document.getElementById('signup-status');
+      const errorContainer = document.getElementById('signup-error');
+      const errorText = document.getElementById('signup-error-text');
+      
+      statusContainer.classList.remove('hidden');
+      errorContainer.classList.remove('hidden');
+      errorText.textContent = message;
+    }
+    
+    function hideMessages() {
+      const statusContainer = document.getElementById('signup-status');
+      const successContainer = document.getElementById('signup-success');
+      const errorContainer = document.getElementById('signup-error');
+      
+      statusContainer.classList.add('hidden');
+      successContainer.classList.add('hidden');
+      errorContainer.classList.add('hidden');
+    }
+  }
+</script>
+
+<style>
+  .plan-option {
+    transition: all 0.2s ease;
+  }
+  
+  .plan-option:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+</style>
