@@ -1,5 +1,11 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
+
+// Handle POST requests for form submission
+if (Astro.request.method === 'POST') {
+  // Return the same page - JavaScript will handle the actual form processing
+  // This prevents the form from submitting as GET and showing data in URL
+}
 ---
 
 <BaseLayout 
