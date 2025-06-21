@@ -41,6 +41,10 @@
     "@astrojs/cloudflare": "^11.0.0",
     "ulid": "^2.3.0"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/lexara-com/engage.git"
+  },
   "keywords": [
     "legal-tech",
     "ai",
