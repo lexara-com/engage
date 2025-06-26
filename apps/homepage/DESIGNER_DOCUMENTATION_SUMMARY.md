@@ -4,6 +4,16 @@
 
 This documentation package provides comprehensive information about the Lexara platform for design work.
 
+### **Project Planning:**
+
+**PROJECT_PLAN_LEXARA_ENGAGE.md**
+_Official project plan and scope from Amy Swaner (CEO)_
+
+- Complete project summary and goals
+- Detailed scope of work breakdown
+- Design requirements and deliverables
+- Timeline and collaboration framework
+
 ### **Core Documentation Files:**
 
 **DESIGNER_ONBOARDING.md**
