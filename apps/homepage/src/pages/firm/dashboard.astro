@@ -706,7 +706,7 @@ const { title = "Dashboard - Lexara Firm Portal", description = "Your firm's AI-
         firmId = 'firm-' + user.sub.split('|')[1].substr(0, 8);
       }
       
-      const intakeUrl = 'https://dev.lexara.app';
+      const intakeUrl = `https://dev.lexara.app/${firmId}`;
       
       // Show modal with the firm-specific URL
       showModalWithUrl(intakeUrl);
@@ -715,7 +715,7 @@ const { title = "Dashboard - Lexara Firm Portal", description = "Your firm's AI-
       console.error('Error getting user info for intake link:', error);
       // Fallback to a generic firm ID
       const fallbackFirmId = 'firm-' + Math.random().toString(36).substr(2, 9);
-      const intakeUrl = 'https://dev.lexara.app';
+      const intakeUrl = `https://dev.lexara.app/${firmId}`;
       
       // Show modal with fallback URL
       showModalWithUrl(intakeUrl);
