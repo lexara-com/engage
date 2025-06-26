@@ -660,8 +660,8 @@ I'm here to help gather information about your claim. Please share details about
 async function handleStaticRequest(request: Request, env: Env): Promise<Response> {
   const url = new URL(request.url);
   
-  // Serve main UI for root path
-  if (url.pathname === '/') {
+  // Serve main UI for root path or firm-specific paths
+  if (url.pathname === '/' || (url.pathname.length > 1 && !url.pathname.startsWith('/api') && !url.pathname.startsWith('/_astro'))) {
     return new Response(UI_HTML, {
       headers: {
         'Content-Type': 'text/html; charset=utf-8',
@@ -682,12 +682,46 @@ async function handleStaticRequest(request: Request, env: Env): Promise<Response
   return new Response('Not Found', { status: 404 });
 }
 
-// Resolve firmId from request hostname
+// Resolve firmId from request hostname and path
 async function resolveFirmId(request: Request, env: Env): Promise<string> {
   const url = new URL(request.url);
   const hostname = url.hostname;
+  const pathname = url.pathname;
   
-  // For local development or main domains, use demo firm
+  // Check for path-based firm routing first: /[firmId] on main domains
+  if ((hostname === 'localhost' || hostname === 'dev.lexara.app' || hostname === 'lexara.app') && pathname.length > 1) {
+    const pathSegments = pathname.split('/').filter(Boolean);
+    if (pathSegments.length > 0) {
+      const potentialFirmId = pathSegments[0];
+      
+      // Validate that this is a firm ID (not an API route or static path)
+      if (!potentialFirmId.startsWith('api') && 
+          !potentialFirmId.startsWith('_astro') && 
+          potentialFirmId !== 'favicon.svg' &&
+          potentialFirmId !== 'health') {
+        
+        // Try to resolve the firm ID via FirmRegistry
+        try {
+          const firmRegistryStub = env.FIRM_REGISTRY.get(env.FIRM_REGISTRY.idFromName('registry'));
+          const response = await firmRegistryStub.fetch(new Request(`http://durable-object/firm/${potentialFirmId}`, {
+            method: 'GET'
+          }));
+          
+          if (response.ok) {
+            const firm = await response.json() as { firmId: string };
+            return firm.firmId;
+          }
+        } catch (error) {
+          console.error('Failed to resolve firm by ID from path:', error);
+        }
+        
+        // If not found in registry, assume it's a valid firm ID for now
+        return potentialFirmId;
+      }
+    }
+  }
+  
+  // For local development or main domains without path, use demo firm
   if (hostname === 'localhost' || hostname === 'dev.lexara.app' || hostname === 'lexara.app') {
     return 'demo';
   }
@@ -794,8 +828,11 @@ const handler = {
         const firmId = await resolveFirmId(request, env);
         logger.info('Resolved firm', { firmId, hostname: url.hostname });
       
-      // Serve UI static files for root and static paths
-      if (url.pathname === '/' || url.pathname.startsWith('/_astro/') || url.pathname === '/favicon.svg') {
+      // Serve UI static files for root, firm-specific paths, and static paths
+      if (url.pathname === '/' || 
+          url.pathname.startsWith('/_astro/') || 
+          url.pathname === '/favicon.svg' ||
+          (firmId !== 'demo' && url.pathname === `/${firmId}`)) {
         return handleStaticRequest(request, env);
       }
       
