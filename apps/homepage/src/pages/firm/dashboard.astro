@@ -1,32 +1,108 @@
 ---
-import BaseLayout from '../../layouts/BaseLayout.astro';
+const { title = "Dashboard - Lexara Firm Portal", description = "Your firm's AI-powered client intake dashboard" } = Astro.props;
 ---
 
-<BaseLayout 
-  title="Dashboard - Lexara Firm Portal" 
-  description="Your firm's AI-powered client intake dashboard"
->
-  <div class="min-h-screen bg-gray-50">
-    <!-- Welcome Header -->
-    <div class="bg-white shadow-sm border-b border-gray-200">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <div class="flex items-center justify-between">
-          <div>
-            <h1 id="welcome-title" class="text-2xl font-bold text-lexara-secondary">Welcome back!</h1>
-            <p class="text-lexara-gray mt-1">Here's what's happening with your client intake today.</p>
-          </div>
-          <div class="flex items-center space-x-4">
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{title}</title>
+  <meta name="description" content={description}>
+  
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  
+  <!-- Official Brand Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&family=Open+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,300;1,400;1,500;1,600;1,700;1,800&display=swap" rel="stylesheet">
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            'lexara-primary': '#2563eb',
+            'lexara-secondary': '#1f2937',
+            'lexara-gray': '#6b7280',
+            'lexara-light': '#f3f4f6',
+            'lexara-accent': '#10b981',
+            'lexara-error': '#ef4444',
+            'lexara-success': '#10b981',
+            'lexara-darkNavy': '#1e293b',
+            'lexara-lightNavy': '#475569'
+          },
+          fontFamily: {
+            'heading': ['Lora', 'serif'],
+            'body': ['Open Sans', 'sans-serif']
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="font-body antialiased bg-gray-50 text-lexara-darkNavy">
+  <!-- Dashboard Header with User Navigation -->
+  <header class="bg-white shadow-sm border-b border-gray-200">
+    <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex justify-between items-center py-4">
+        <div class="flex items-center">
+          <a href="/firm/dashboard" class="flex items-center">
+            <img src="/lexara-logo.svg" alt="Lexara" class="h-8 w-auto">
+            <span class="ml-3 text-lg font-semibold text-lexara-secondary">Firm Portal</span>
+          </a>
+        </div>
+        
+        <div class="hidden md:flex items-center space-x-8">
+          <a href="/firm/conversations" class="text-lexara-lightNavy hover:text-lexara-darkNavy transition-colors font-semibold">Conversations</a>
+          <a href="/firm/settings" class="text-lexara-lightNavy hover:text-lexara-darkNavy transition-colors font-semibold">Settings</a>
+          <a href="/firm/analytics" class="text-lexara-lightNavy hover:text-lexara-darkNavy transition-colors font-semibold">Analytics</a>
+        </div>
+
+        <!-- User Menu -->
+        <div class="flex items-center space-x-4">
+          <div id="user-info" class="hidden flex items-center space-x-3">
             <div class="text-right">
-              <p class="text-sm text-lexara-gray">Today</p>
-              <p id="current-date" class="text-sm font-medium text-lexara-secondary"></p>
+              <p id="user-name" class="text-sm font-medium text-lexara-secondary"></p>
+              <p id="user-email" class="text-xs text-lexara-gray"></p>
             </div>
-            <button class="bg-lexara-primary text-white px-4 py-2 rounded-lg hover:bg-blue-800 transition-colors">
-              <span class="text-sm font-medium">New Conversation</span>
-            </button>
+            <div class="w-8 h-8 bg-lexara-primary rounded-full flex items-center justify-center">
+              <span id="user-initials" class="text-sm font-medium text-white"></span>
+            </div>
+          </div>
+          <button id="logout-button" class="hidden text-lexara-lightNavy hover:text-lexara-darkNavy transition-colors font-semibold">
+            Sign Out
+          </button>
+        </div>
+      </div>
+    </nav>
+  </header>
+
+  <main>
+    <div class="min-h-screen bg-gray-50">
+      <!-- Welcome Header -->
+      <div class="bg-white shadow-sm border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div class="flex items-center justify-between">
+            <div>
+              <h1 id="welcome-title" class="text-2xl font-bold text-lexara-secondary">Welcome back!</h1>
+              <p class="text-lexara-gray mt-1">Here's what's happening with your client intake today.</p>
+            </div>
+            <div class="flex items-center space-x-4">
+              <div class="text-right">
+                <p class="text-sm text-lexara-gray">Today</p>
+                <p id="current-date" class="text-sm font-medium text-lexara-secondary"></p>
+              </div>
+              <button class="bg-lexara-primary text-white px-4 py-2 rounded-lg hover:bg-blue-800 transition-colors">
+                <span class="text-sm font-medium">New Conversation</span>
+              </button>
+            </div>
           </div>
         </div>
       </div>
-    </div>
 
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <!-- Loading State -->
@@ -142,7 +218,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                 </div>
                 <h4 class="text-lg font-medium text-lexara-secondary mb-2">No conversations yet</h4>
                 <p class="text-lexara-gray mb-4">Start engaging with potential clients and they'll appear here.</p>
-                <button class="bg-lexara-primary text-white px-4 py-2 rounded-lg hover:bg-blue-800 transition-colors">
+                <button id="share-intake-link" class="bg-lexara-primary text-white px-4 py-2 rounded-lg hover:bg-blue-800 transition-colors">
                   Share Your Intake Link
                 </button>
               </div>
@@ -240,15 +316,15 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
         </div>
       </div>
     </div>
-  </div>
-</BaseLayout>
+  </main>
+</body>
+</html>
 
-<script>
-  import { initializeAuth, requireAuth } from '../../utils/auth';
-  import { createAPIClient } from '../../utils/api-client';
+<script is:inline>
+  let auth0Client = null;
   
   document.addEventListener('DOMContentLoaded', async () => {
-    await initializeAuth();
+    await initializeAuth0();
     await loadDashboard();
     setupEventListeners();
     updateDateTime();
@@ -258,43 +334,68 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
       await refreshDashboardData();
     }, 30000);
   });
+  
+  async function initializeAuth0() {
+    try {
+      // Load Auth0 SDK
+      const script = document.createElement('script');
+      script.src = 'https://cdn.auth0.com/js/auth0-spa-js/2.0/auth0-spa-js.production.js';
+      document.head.appendChild(script);
+      
+      await new Promise((resolve, reject) => {
+        script.onload = resolve;
+        script.onerror = reject;
+      });
+      
+      // Initialize Auth0 client
+      auth0Client = await window.auth0.createAuth0Client({
+        domain: 'dev-sv0pf6cz2530xz0o.us.auth0.com',
+        clientId: 'OjsR6To3nDqYDLVHtRjDFpk7wRcCfrfi',
+        authorizationParams: {
+          redirect_uri: window.location.origin + '/firm/callback'
+        },
+        cacheLocation: 'localstorage',
+        useRefreshTokens: false
+      });
+      
+      console.log('Auth0 client initialized for dashboard');
+    } catch (error) {
+      console.error('Failed to initialize Auth0:', error);
+      showError('Authentication system failed to load.');
+    }
+  }
 
   async function loadDashboard() {
     try {
       showLoading(true);
       
-      // Require authentication
-      const user = await requireAuth();
+      // Check authentication
+      if (!auth0Client) {
+        throw new Error('Auth0 client not initialized');
+      }
+      
+      // Check if we have valid authentication tokens locally
+      const isAuthenticated = await auth0Client.isAuthenticated();
+      if (!isAuthenticated) {
+        console.log('User not authenticated, redirecting to login');
+        // Add a flag to prevent redirect loops
+        sessionStorage.setItem('auth_redirect_from_dashboard', 'true');
+        window.location.href = '/firm/login';
+        return;
+      }
+      
+      // Clear any redirect flags
+      sessionStorage.removeItem('auth_redirect_from_dashboard');
+      
+      console.log('User is authenticated, loading dashboard data');
+      
+      // Get user info
+      const user = await auth0Client.getUser();
       updateWelcomeMessage(user);
       
-      // Create API client
-      const apiClient = await createAPIClient();
-      
-      // Load dashboard data in parallel
-      const [
-        conversationsData,
-        analyticsData,
-        recentActivity
-      ] = await Promise.allSettled([
-        apiClient.getConversations({ limit: 10 }),
-        apiClient.getAnalytics({ period: 'week' }),
-        apiClient.getRecentActivity({ limit: 5 })
-      ]);
-      
-      // Update UI with loaded data
-      if (conversationsData.status === 'fulfilled') {
-        updateConversationsList(conversationsData.value.data.conversations);
-        updateConversationStats(conversationsData.value.data);
-      }
-      
-      if (analyticsData.status === 'fulfilled') {
-        updateAnalyticsStats(analyticsData.value.data);
-      }
-      
-      if (recentActivity.status === 'fulfilled') {
-        updateRecentActivity(recentActivity.value.data.activities || []);
-      }
-      
+      // For now, show dashboard with placeholder data
+      // TODO: Implement API calls to load real data
+      updatePlaceholderData();
       showDashboard();
       
     } catch (error) {
@@ -305,17 +406,34 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 
   async function refreshDashboardData() {
     try {
-      const apiClient = await createAPIClient();
-      const analyticsData = await apiClient.getAnalytics({ period: 'today' });
-      
-      if (analyticsData.success) {
-        updateQuickStats(analyticsData.data);
-      }
-      
+      // TODO: Implement real API calls
       updateLastStatusCheck();
     } catch (error) {
       console.error('Failed to refresh dashboard data:', error);
     }
+  }
+  
+  function updatePlaceholderData() {
+    // Set placeholder stats
+    const todayElement = document.getElementById('today-conversations');
+    const activeElement = document.getElementById('active-conversations');
+    const weeklyElement = document.getElementById('weekly-completed');
+    const conversionElement = document.getElementById('conversion-rate');
+    
+    if (todayElement) todayElement.textContent = '0';
+    if (activeElement) activeElement.textContent = '0';
+    if (weeklyElement) weeklyElement.textContent = '0';
+    if (conversionElement) conversionElement.textContent = '0%';
+    
+    // Show no conversations message
+    const conversationsList = document.getElementById('conversations-list');
+    const noConversations = document.getElementById('no-conversations');
+    
+    if (conversationsList) conversationsList.innerHTML = '';
+    if (noConversations) noConversations.classList.remove('hidden');
+    
+    // Show empty recent activity
+    updateRecentActivity([]);
   }
 
   function updateWelcomeMessage(user) {
@@ -323,6 +441,33 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
     if (welcomeTitle && user.name) {
       const firstName = user.name.split(' ')[0];
       welcomeTitle.textContent = `Welcome back, ${firstName}!`;
+    }
+    
+    // Update header user info
+    updateUserHeader(user);
+  }
+  
+  function updateUserHeader(user) {
+    const userInfo = document.getElementById('user-info');
+    const userNameElement = document.getElementById('user-name');
+    const userEmailElement = document.getElementById('user-email');
+    const userInitialsElement = document.getElementById('user-initials');
+    const logoutButton = document.getElementById('logout-button');
+    
+    if (user && user.name) {
+      // Show user info
+      if (userInfo) userInfo.classList.remove('hidden');
+      if (logoutButton) logoutButton.classList.remove('hidden');
+      
+      // Update user details
+      if (userNameElement) userNameElement.textContent = user.name;
+      if (userEmailElement) userEmailElement.textContent = user.email || '';
+      
+      // Generate initials
+      if (userInitialsElement) {
+        const initials = user.name.split(' ').map(n => n.charAt(0)).join('').toUpperCase().slice(0, 2);
+        userInitialsElement.textContent = initials;
+      }
     }
   }
 
@@ -504,6 +649,185 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
     const retryButton = document.getElementById('retry-button');
     if (retryButton) {
       retryButton.addEventListener('click', loadDashboard);
+    }
+    
+    // Logout button
+    const logoutButton = document.getElementById('logout-button');
+    if (logoutButton) {
+      logoutButton.addEventListener('click', async function() {
+        if (!auth0Client) {
+          console.error('Auth0 client not available for logout');
+          return;
+        }
+        
+        try {
+          console.log('Logging out user...');
+          await auth0Client.logout({
+            logoutParams: {
+              returnTo: window.location.origin + '/firm/login'
+            }
+          });
+        } catch (error) {
+          console.error('Logout failed:', error);
+          // Fallback: clear local storage and redirect
+          localStorage.clear();
+          sessionStorage.clear();
+          window.location.href = '/firm/login';
+        }
+      });
+    }
+    
+    // Share Intake Link button
+    const shareIntakeLinkButton = document.getElementById('share-intake-link');
+    if (shareIntakeLinkButton) {
+      shareIntakeLinkButton.addEventListener('click', async function() {
+        await showIntakeLinkModal();
+      });
+    }
+  }
+  
+  async function showIntakeLinkModal() {
+    try {
+      // Get the current user to extract firm ID
+      const user = await auth0Client.getUser();
+      
+      // Extract firm ID from user metadata
+      // Check both user_metadata and app_metadata for firmId
+      let firmId = user.user_metadata?.firmId || user.app_metadata?.organization || user.app_metadata?.firmId;
+      
+      // Fallback: generate from email domain if no firmId in metadata
+      if (!firmId && user.email) {
+        const emailDomain = user.email.split('@')[1].replace(/\./g, '-');
+        firmId = 'firm-' + emailDomain;
+      }
+      
+      // Final fallback
+      if (!firmId) {
+        firmId = 'firm-' + user.sub.split('|')[1].substr(0, 8);
+      }
+      
+      const intakeUrl = 'https://dev.lexara.app';
+      
+      // Show modal with the firm-specific URL
+      showModalWithUrl(intakeUrl);
+    
+    } catch (error) {
+      console.error('Error getting user info for intake link:', error);
+      // Fallback to a generic firm ID
+      const fallbackFirmId = 'firm-' + Math.random().toString(36).substr(2, 9);
+      const intakeUrl = 'https://dev.lexara.app';
+      
+      // Show modal with fallback URL
+      showModalWithUrl(intakeUrl);
+    }
+  }
+  
+  function showModalWithUrl(intakeUrl) {
+    // Create modal HTML
+    const modalHTML = `
+      <div id="intake-link-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-lg max-w-md w-full p-6">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-semibold text-gray-900">Share Your Intake Link</h3>
+            <button id="close-modal" class="text-gray-400 hover:text-gray-600">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+              </svg>
+            </button>
+          </div>
+          
+          <p class="text-gray-600 mb-4">Share this link with potential clients to start conversations with your AI intake chatbot:</p>
+          
+          <div class="bg-gray-50 border rounded-lg p-3 mb-4">
+            <code id="intake-url" class="text-sm text-blue-600 break-all">${intakeUrl}</code>
+          </div>
+          
+          <div class="flex space-x-2 mb-4">
+            <button id="copy-link" class="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm">
+              Copy Link
+            </button>
+            <button id="test-link" class="flex-1 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors text-sm">
+              Try Chatbot
+            </button>
+          </div>
+          
+          <div class="text-xs text-gray-500">
+            <p class="mb-2"><strong>How to use:</strong></p>
+            <ul class="list-disc list-inside space-y-1">
+              <li>Embed this link on your website</li>
+              <li>Share via email or social media</li>
+              <li>Add to your business cards or marketing materials</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    `;
+    
+    // Add modal to page
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    
+    // Add event listeners for modal
+    document.getElementById('close-modal').addEventListener('click', closeModal);
+    document.getElementById('copy-link').addEventListener('click', function() {
+      copyToClipboard(intakeUrl);
+    });
+    document.getElementById('test-link').addEventListener('click', function() {
+      window.location.href = intakeUrl;
+    });
+    
+    // Close modal when clicking outside
+    document.getElementById('intake-link-modal').addEventListener('click', function(e) {
+      if (e.target.id === 'intake-link-modal') {
+        closeModal();
+      }
+    });
+  }
+  
+  function closeModal() {
+    const modal = document.getElementById('intake-link-modal');
+    if (modal) {
+      modal.remove();
+    }
+  }
+  
+  function copyToClipboard(text) {
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(text).then(function() {
+        // Show success feedback
+        const copyButton = document.getElementById('copy-link');
+        const originalText = copyButton.textContent;
+        copyButton.textContent = 'Copied!';
+        copyButton.classList.remove('bg-blue-600', 'hover:bg-blue-700');
+        copyButton.classList.add('bg-green-600', 'hover:bg-green-700');
+        
+        setTimeout(() => {
+          copyButton.textContent = originalText;
+          copyButton.classList.remove('bg-green-600', 'hover:bg-green-700');
+          copyButton.classList.add('bg-blue-600', 'hover:bg-blue-700');
+        }, 2000);
+      }).catch(function() {
+        showFallbackCopy(text);
+      });
+    } else {
+      showFallbackCopy(text);
+    }
+  }
+  
+  function showFallbackCopy(text) {
+    // Fallback: select the text
+    const urlElement = document.getElementById('intake-url');
+    const range = document.createRange();
+    range.selectNode(urlElement);
+    window.getSelection().removeAllRanges();
+    window.getSelection().addRange(range);
+    
+    try {
+      document.execCommand('copy');
+      const copyButton = document.getElementById('copy-link');
+      copyButton.textContent = 'Copied!';
+    } catch (err) {
+      console.error('Copy failed:', err);
+      alert('Please copy the URL manually: ' + text);
     }
   }
 
