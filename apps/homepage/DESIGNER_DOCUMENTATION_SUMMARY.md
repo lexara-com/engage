@@ -14,6 +14,16 @@ _Official project plan and scope from Amy Swaner (CEO)_
 - Design requirements and deliverables
 - Timeline and collaboration framework
 
+### **Quick Reference:**
+
+**URL_REFERENCE.md**
+_Complete application URL reference_
+
+- All live application URLs and endpoints
+- GitHub repository and branch links
+- Mobile testing URLs and API endpoints
+- Development and testing URL patterns
+
 ### **Core Documentation Files:**
 
 **DESIGNER_ONBOARDING.md**
