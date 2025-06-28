@@ -1,587 +1,248 @@
 ---
-import BaseLayout from '@/layouts/BaseLayout.astro';
+// Server-side authentication is handled by middleware
+// User info is available via Astro.locals if authenticated
+const user = Astro.locals.user;
+const isAuthenticated = Astro.locals.isAuthenticated;
 ---
 
-<BaseLayout 
-  title="Conversations - Lexara Firm Portal" 
-  description="Manage all client intake conversations"
->
-  <div class="min-h-screen bg-gray-50">
-    <!-- Page Header -->
-    <div class="bg-white shadow-sm border-b border-gray-200">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <div class="flex items-center justify-between">
-          <div>
-            <h1 class="text-2xl font-bold text-lexara-secondary">Conversations</h1>
-            <p class="text-lexara-gray mt-1">Monitor and manage all client intake conversations.</p>
-          </div>
-          <div class="flex items-center space-x-3">
-            <button id="refresh-button" class="bg-white border border-gray-300 text-lexara-gray px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
-              </svg>
-            </button>
-            <button class="bg-lexara-primary text-white px-4 py-2 rounded-lg hover:bg-blue-800 transition-colors">
-              Export Data
-            </button>
-          </div>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Conversations - Lexara Firm Portal</title>
+  <style>
+    body {
+      font-family: 'Open Sans', sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #f7fafc;
+      color: #2d3748;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+    .header {
+      background: white;
+      border-bottom: 1px solid #e2e8f0;
+      padding: 1rem 0;
+      margin-bottom: 2rem;
+    }
+    .header-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 2rem;
+    }
+    .logo {
+      display: flex;
+      align-items: center;
+      font-size: 1.5rem;
+      font-weight: bold;
+      color: #2d3748;
+    }
+    .logo-icon {
+      width: 2rem;
+      height: 2rem;
+      background: #667eea;
+      border-radius: 0.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-right: 0.75rem;
+      color: white;
+      font-weight: bold;
+    }
+    .back-link {
+      color: #667eea;
+      text-decoration: none;
+      font-weight: 500;
+    }
+    .back-link:hover {
+      text-decoration: underline;
+    }
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      color: #718096;
+      font-size: 0.875rem;
+    }
+    .content {
+      background: white;
+      border-radius: 0.5rem;
+      padding: 2rem;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+    .status-badge {
+      display: inline-block;
+      padding: 0.25rem 0.75rem;
+      border-radius: 0.25rem;
+      font-size: 0.75rem;
+      font-weight: 500;
+    }
+    .status-success {
+      background: #d4edda;
+      color: #155724;
+    }
+    .debug-section {
+      background: #f8f9fa;
+      border: 1px solid #e2e8f0;
+      border-radius: 0.5rem;
+      padding: 1.5rem;
+      margin: 2rem 0;
+    }
+    .debug-data {
+      background: #f1f3f4;
+      padding: 1rem;
+      border-radius: 0.25rem;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      font-family: 'Courier New', monospace;
+      font-size: 0.875rem;
+      line-height: 1.4;
+    }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <div class="header-content">
+      <div class="logo">
+        <div class="logo-icon">L</div>
+        <span>Lexara Firm Portal</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 2rem;">
+        <a href="/firm/dashboard" class="back-link">← Back to Dashboard</a>
+        <div class="user-info">
+          {user && (
+            <span>Logged in as: {user.name || user.email}</span>
+          )}
         </div>
       </div>
     </div>
+  </header>
 
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <!-- Filters and Search -->
-      <div class="bg-white rounded-xl shadow-sm p-6 mb-8">
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <!-- Search -->
-          <div class="md:col-span-2">
-            <label for="search" class="block text-sm font-medium text-lexara-secondary mb-2">Search</label>
-            <div class="relative">
-              <input type="text" id="search" placeholder="Search by name, email, or phone..."
-                     class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-lexara-primary focus:border-transparent">
-              <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                </svg>
-              </div>
-            </div>
-          </div>
-
-          <!-- Status Filter -->
-          <div>
-            <label for="status-filter" class="block text-sm font-medium text-lexara-secondary mb-2">Status</label>
-            <select id="status-filter" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-lexara-primary focus:border-transparent">
-              <option value="">All Statuses</option>
-              <option value="pre_login">Starting</option>
-              <option value="data_gathering">In Progress</option>
-              <option value="completed">Completed</option>
-              <option value="terminated">Ended</option>
-            </select>
-          </div>
-
-          <!-- Date Filter -->
-          <div>
-            <label for="date-filter" class="block text-sm font-medium text-lexara-secondary mb-2">Period</label>
-            <select id="date-filter" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-lexara-primary focus:border-transparent">
-              <option value="all">All Time</option>
-              <option value="today">Today</option>
-              <option value="week">This Week</option>
-              <option value="month">This Month</option>
-            </select>
-          </div>
+  <main class="container">
+    <div class="content">
+      <h1>Conversations</h1>
+      
+      <!-- Success Message -->
+      {isAuthenticated && (
+        <div style="margin: 1rem 0;">
+          <span class="status-badge status-success">
+            ✅ Authentication successful! You can access this protected page.
+          </span>
         </div>
-      </div>
-
-      <!-- Loading State -->
-      <div id="loading-state" class="text-center py-12">
-        <div class="w-8 h-8 border-3 border-lexara-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-        <p class="text-lexara-gray">Loading conversations...</p>
-      </div>
-
-      <!-- Error State -->
-      <div id="error-state" class="hidden text-center py-12">
-        <div class="w-12 h-12 bg-lexara-error/10 rounded-full flex items-center justify-center mx-auto mb-4">
-          <svg class="w-6 h-6 text-lexara-error" fill="currentColor" viewBox="0 0 20 20">
-            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>
-          </svg>
+      )}
+      
+      <p>This is the conversations page. If you can see this content with your user information below, then the session validation is working correctly!</p>
+      
+      {user ? (
+        <div style="margin-top: 2rem; padding: 1rem; background: #f8f9fa; border-radius: 0.25rem;">
+          <h3>✅ Session Information:</h3>
+          <ul>
+            <li><strong>Name:</strong> {user.name || 'Not provided'}</li>
+            <li><strong>Email:</strong> {user.email}</li>
+            <li><strong>User ID:</strong> {user.id}</li>
+            <li><strong>Firm ID:</strong> {user.firmId}</li>
+            <li><strong>Roles:</strong> {user.roles?.join(', ') || 'None'}</li>
+          </ul>
         </div>
-        <h3 class="text-lg font-medium text-lexara-secondary mb-2">Unable to load conversations</h3>
-        <p id="error-message" class="text-lexara-gray mb-4">We're having trouble loading your conversation data.</p>
-        <button id="retry-button" class="bg-lexara-primary text-white px-4 py-2 rounded-lg hover:bg-blue-800 transition-colors">
-          Try Again
-        </button>
-      </div>
-
-      <!-- Conversations List -->
-      <div id="conversations-content" class="hidden">
-        <!-- Summary Stats -->
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <div class="bg-white rounded-xl shadow-sm p-6">
-            <div class="flex items-center justify-between">
-              <div>
-                <p class="text-sm font-medium text-lexara-gray">Total</p>
-                <p id="total-conversations" class="text-2xl font-bold text-lexara-secondary">0</p>
-              </div>
-              <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
-                </svg>
-              </div>
-            </div>
-          </div>
-
-          <div class="bg-white rounded-xl shadow-sm p-6">
-            <div class="flex items-center justify-between">
-              <div>
-                <p class="text-sm font-medium text-lexara-gray">Active</p>
-                <p id="active-conversations" class="text-2xl font-bold text-lexara-secondary">0</p>
-              </div>
-              <div class="w-10 h-10 bg-lexara-accent/10 rounded-full flex items-center justify-center">
-                <svg class="w-5 h-5 text-lexara-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                </svg>
-              </div>
-            </div>
-          </div>
-
-          <div class="bg-white rounded-xl shadow-sm p-6">
-            <div class="flex items-center justify-between">
-              <div>
-                <p class="text-sm font-medium text-lexara-gray">Completed</p>
-                <p id="completed-conversations" class="text-2xl font-bold text-lexara-secondary">0</p>
-              </div>
-              <div class="w-10 h-10 bg-lexara-success/10 rounded-full flex items-center justify-center">
-                <svg class="w-5 h-5 text-lexara-success" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                </svg>
-              </div>
-            </div>
-          </div>
-
-          <div class="bg-white rounded-xl shadow-sm p-6">
-            <div class="flex items-center justify-between">
-              <div>
-                <p class="text-sm font-medium text-lexara-gray">Conversion Rate</p>
-                <p id="conversion-rate" class="text-2xl font-bold text-lexara-secondary">0%</p>
-              </div>
-              <div class="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
-                <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
-                </svg>
-              </div>
-            </div>
-          </div>
+      ) : (
+        <div style="margin-top: 2rem; padding: 1rem; background: #fed7d7; border-radius: 0.25rem; color: #c53030;">
+          <h3>❌ No Session Found</h3>
+          <p>This should not happen if you reached this page through proper authentication.</p>
         </div>
-
-        <!-- Conversations Table -->
-        <div class="bg-white rounded-xl shadow-sm overflow-hidden">
-          <div class="px-6 py-4 border-b border-gray-200">
-            <div class="flex items-center justify-between">
-              <h3 class="text-lg font-semibold text-lexara-secondary">All Conversations</h3>
-              <div class="flex items-center space-x-2 text-sm text-lexara-gray">
-                <span>Showing</span>
-                <span id="showing-count">0</span>
-                <span>of</span>
-                <span id="total-count">0</span>
-                <span>conversations</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- Table Header -->
-          <div class="hidden md:grid grid-cols-6 gap-4 px-6 py-3 bg-gray-50 text-xs font-medium text-gray-500 uppercase tracking-wider">
-            <div class="col-span-2">Client</div>
-            <div>Status</div>
-            <div>Started</div>
-            <div>Last Activity</div>
-            <div>Actions</div>
-          </div>
-
-          <!-- Table Body -->
-          <div id="conversations-table" class="divide-y divide-gray-200">
-            <!-- Conversation rows will be populated here -->
-          </div>
-
-          <!-- No Results -->
-          <div id="no-conversations" class="hidden p-8 text-center">
-            <div class="w-16 h-16 bg-lexara-light rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg class="w-8 h-8 text-lexara-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
-              </svg>
-            </div>
-            <h4 class="text-lg font-medium text-lexara-secondary mb-2">No conversations found</h4>
-            <p class="text-lexara-gray">Try adjusting your filters or check back later for new conversations.</p>
-          </div>
-        </div>
-
-        <!-- Pagination -->
-        <div id="pagination" class="hidden mt-6 flex items-center justify-between">
-          <div class="flex items-center text-sm text-lexara-gray">
-            <span>Page</span>
-            <span id="current-page" class="mx-2 font-medium">1</span>
-            <span>of</span>
-            <span id="total-pages" class="ml-2 font-medium">1</span>
-          </div>
-          <div class="flex items-center space-x-2">
-            <button id="prev-page" class="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
-              Previous
-            </button>
-            <button id="next-page" class="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
-              Next
-            </button>
-          </div>
-        </div>
+      )}
+      
+      <div style="margin-top: 2rem; display: flex; gap: 1rem;">
+        <a href="/firm/dashboard" style="color: #667eea; text-decoration: none; padding: 0.5rem 1rem; border: 1px solid #667eea; border-radius: 0.25rem;">
+          ← Back to Dashboard
+        </a>
+        <a href="/firm/debug-session" style="color: #667eea; text-decoration: none; padding: 0.5rem 1rem; border: 1px solid #667eea; border-radius: 0.25rem;">
+          🔧 Debug Session
+        </a>
       </div>
     </div>
-  </div>
-</BaseLayout>
 
-<script>
-  import { initializeAuth, requireAuth } from '@/utils/auth';
-  import { createAPIClient } from '@/utils/api-client';
-  
-  let currentPage = 1;
-  const pageSize = 20;
-  let currentFilters = {
-    search: '',
-    status: '',
-    period: 'all'
-  };
-  
-  document.addEventListener('DOMContentLoaded', async () => {
-    await initializeAuth();
-    await loadConversations();
-    setupEventListeners();
-  });
-
-  async function loadConversations() {
-    try {
-      showLoading(true);
+    <!-- Debug Session Information -->
+    <div class="debug-section">
+      <h3>Session Debugging Information</h3>
+      <p style="margin-bottom: 1rem; color: #718096; font-size: 0.875rem;">
+        This helps identify if there are session validation issues.
+      </p>
       
-      // Require authentication
-      await requireAuth();
+      <div class="debug-data">
+        {JSON.stringify({
+          serverSide: {
+            user: user,
+            isAuthenticated: isAuthenticated,
+            userAgent: Astro.request.headers.get('user-agent'),
+            url: Astro.url.href,
+            pathname: Astro.url.pathname,
+            timestamp: new Date().toISOString()
+          }
+        }, null, 2)}
+      </div>
+    </div>
+
+    <!-- Client-side Cookie Check -->
+    <div class="debug-section">
+      <h3>Client-side Cookie Check</h3>
+      <div class="debug-data" id="client-cookies">
+        Loading client-side cookie data...
+      </div>
+    </div>
+  </main>
+
+  <script>
+    // Check client-side cookies to compare with server-side validation
+    function displayClientCookies() {
+      const debugElement = document.getElementById('client-cookies');
       
-      // Create API client
-      const apiClient = await createAPIClient();
-      
-      // Build query parameters
-      const params = {
-        page: currentPage,
-        limit: pageSize,
-        ...currentFilters
-      };
-      
-      // Load conversations and analytics
-      const [conversationsResult, analyticsResult] = await Promise.allSettled([
-        apiClient.getConversations(params),
-        apiClient.getAnalytics({ period: currentFilters.period || 'all' })
-      ]);
-      
-      if (conversationsResult.status === 'fulfilled' && conversationsResult.value.success) {
-        const data = conversationsResult.value.data;
-        updateConversationsList(data.conversations);
-        updatePagination(data.total, data.conversations.length);
-        updateSummaryStats(data.conversations);
-      } else {
-        throw new Error('Failed to load conversations');
-      }
-      
-      if (analyticsResult.status === 'fulfilled' && analyticsResult.value.success) {
-        updateAnalyticsStats(analyticsResult.value.data);
-      }
-      
-      showConversationsContent();
-      
-    } catch (error) {
-      console.error('Failed to load conversations:', error);
-      showError('Unable to load conversations. Please check your connection and try again.');
-    }
-  }
-
-  function updateConversationsList(conversations) {
-    const conversationsTable = document.getElementById('conversations-table');
-    const noConversations = document.getElementById('no-conversations');
-    
-    if (!conversations || conversations.length === 0) {
-      if (conversationsTable) conversationsTable.innerHTML = '';
-      if (noConversations) noConversations.classList.remove('hidden');
-      return;
-    }
-
-    if (noConversations) noConversations.classList.add('hidden');
-    
-    if (conversationsTable) {
-      conversationsTable.innerHTML = conversations.map(conv => `
-        <div class="md:grid grid-cols-6 gap-4 p-6 hover:bg-gray-50 transition-colors">
-          <!-- Mobile Layout -->
-          <div class="md:hidden space-y-3">
-            <div class="flex items-center justify-between">
-              <div class="flex items-center space-x-3">
-                <div class="w-10 h-10 rounded-full bg-lexara-primary/10 flex items-center justify-center">
-                  <span class="text-sm font-medium text-lexara-primary">
-                    ${conv.userIdentity?.name ? conv.userIdentity.name.charAt(0).toUpperCase() : '?'}
-                  </span>
-                </div>
-                <div>
-                  <p class="font-medium text-lexara-secondary">
-                    ${conv.userIdentity?.name || 'Anonymous User'}
-                  </p>
-                  <p class="text-sm text-lexara-gray">
-                    ${conv.userIdentity?.email || 'No email provided'}
-                  </p>
-                </div>
-              </div>
-              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(conv.phase)}">
-                ${getStatusText(conv.phase)}
-              </span>
-            </div>
-            <div class="flex items-center justify-between text-sm text-lexara-gray">
-              <span>Started ${formatDate(conv.createdAt)}</span>
-              <span>Active ${formatTimeAgo(conv.lastActivity)}</span>
-            </div>
-            <div class="flex justify-end">
-              <a href="/conversations/${conv.sessionId}" class="text-lexara-primary hover:text-blue-800 text-sm font-medium">
-                View Details →
-              </a>
-            </div>
-          </div>
-
-          <!-- Desktop Layout -->
-          <div class="hidden md:contents">
-            <div class="col-span-2 flex items-center space-x-3">
-              <div class="w-10 h-10 rounded-full bg-lexara-primary/10 flex items-center justify-center">
-                <span class="text-sm font-medium text-lexara-primary">
-                  ${conv.userIdentity?.name ? conv.userIdentity.name.charAt(0).toUpperCase() : '?'}
-                </span>
-              </div>
-              <div>
-                <p class="font-medium text-lexara-secondary">
-                  ${conv.userIdentity?.name || 'Anonymous User'}
-                </p>
-                <p class="text-sm text-lexara-gray">
-                  ${conv.userIdentity?.email || 'No email provided'}
-                </p>
-              </div>
-            </div>
-            
-            <div class="flex items-center">
-              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(conv.phase)}">
-                ${getStatusText(conv.phase)}
-              </span>
-            </div>
-            
-            <div class="flex items-center text-sm text-lexara-gray">
-              ${formatDate(conv.createdAt)}
-            </div>
-            
-            <div class="flex items-center text-sm text-lexara-gray">
-              ${formatTimeAgo(conv.lastActivity)}
-            </div>
-            
-            <div class="flex items-center">
-              <a href="/conversations/${conv.sessionId}" class="text-lexara-primary hover:text-blue-800">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                </svg>
-              </a>
-            </div>
-          </div>
-        </div>
-      `).join('');
-    }
-  }
-
-  function updateSummaryStats(conversations) {
-    const totalElement = document.getElementById('total-conversations');
-    const activeElement = document.getElementById('active-conversations');
-    const completedElement = document.getElementById('completed-conversations');
-    
-    if (totalElement) totalElement.textContent = conversations.length.toString();
-    
-    if (activeElement) {
-      const activeCount = conversations.filter(conv => 
-        conv.phase === 'data_gathering' || conv.phase === 'pre_login'
-      ).length;
-      activeElement.textContent = activeCount.toString();
-    }
-    
-    if (completedElement) {
-      const completedCount = conversations.filter(conv => conv.phase === 'completed').length;
-      completedElement.textContent = completedCount.toString();
-    }
-  }
-
-  function updateAnalyticsStats(analytics) {
-    const conversionElement = document.getElementById('conversion-rate');
-    if (conversionElement && analytics.conversionRate !== undefined) {
-      conversionElement.textContent = `${Math.round(analytics.conversionRate * 100)}%`;
-    }
-  }
-
-  function updatePagination(total, showing) {
-    const showingCount = document.getElementById('showing-count');
-    const totalCount = document.getElementById('total-count');
-    const currentPageElement = document.getElementById('current-page');
-    const totalPagesElement = document.getElementById('total-pages');
-    const pagination = document.getElementById('pagination');
-    const prevButton = document.getElementById('prev-page');
-    const nextButton = document.getElementById('next-page');
-    
-    const totalPages = Math.ceil(total / pageSize);
-    
-    if (showingCount) showingCount.textContent = showing.toString();
-    if (totalCount) totalCount.textContent = total.toString();
-    if (currentPageElement) currentPageElement.textContent = currentPage.toString();
-    if (totalPagesElement) totalPagesElement.textContent = totalPages.toString();
-    
-    if (pagination && totalPages > 1) {
-      pagination.classList.remove('hidden');
-    }
-    
-    if (prevButton) {
-      prevButton.disabled = currentPage <= 1;
-    }
-    
-    if (nextButton) {
-      nextButton.disabled = currentPage >= totalPages;
-    }
-  }
-
-  function setupEventListeners() {
-    // Search input
-    const searchInput = document.getElementById('search');
-    if (searchInput) {
-      let searchTimeout;
-      searchInput.addEventListener('input', () => {
-        clearTimeout(searchTimeout);
-        searchTimeout = setTimeout(() => {
-          currentFilters.search = searchInput.value;
-          currentPage = 1;
-          loadConversations();
-        }, 500);
-      });
-    }
-
-    // Filter changes
-    const statusFilter = document.getElementById('status-filter');
-    const dateFilter = document.getElementById('date-filter');
-    
-    if (statusFilter) {
-      statusFilter.addEventListener('change', () => {
-        currentFilters.status = statusFilter.value;
-        currentPage = 1;
-        loadConversations();
-      });
-    }
-    
-    if (dateFilter) {
-      dateFilter.addEventListener('change', () => {
-        currentFilters.period = dateFilter.value;
-        currentPage = 1;
-        loadConversations();
-      });
-    }
-
-    // Refresh button
-    const refreshButton = document.getElementById('refresh-button');
-    if (refreshButton) {
-      refreshButton.addEventListener('click', () => {
-        loadConversations();
-      });
-    }
-
-    // Pagination
-    const prevButton = document.getElementById('prev-page');
-    const nextButton = document.getElementById('next-page');
-    
-    if (prevButton) {
-      prevButton.addEventListener('click', () => {
-        if (currentPage > 1) {
-          currentPage--;
-          loadConversations();
+      // Get all cookies
+      const cookies = {};
+      document.cookie.split(';').forEach(cookie => {
+        const [name, value] = cookie.trim().split('=');
+        if (name && value) {
+          cookies[name] = value;
         }
       });
-    }
-    
-    if (nextButton) {
-      nextButton.addEventListener('click', () => {
-        currentPage++;
-        loadConversations();
-      });
+
+      // Parse firm session if it exists
+      let sessionData = null;
+      const sessionCookie = cookies['firm_session'];
+      if (sessionCookie) {
+        try {
+          sessionData = JSON.parse(decodeURIComponent(sessionCookie));
+        } catch (error) {
+          sessionData = { error: 'Failed to parse session cookie: ' + error.message };
+        }
+      }
+
+      const clientData = {
+        allCookies: Object.keys(cookies),
+        firmSessionExists: !!sessionCookie,
+        firmSessionData: sessionData,
+        sessionValid: sessionData && sessionData.isAuthenticated && 
+                      sessionData.exp > Math.floor(Date.now() / 1000),
+        sessionExpiry: sessionData?.exp ? new Date(sessionData.exp * 1000).toISOString() : null,
+        timeLeft: sessionData?.exp ? Math.max(0, sessionData.exp - Math.floor(Date.now() / 1000)) + ' seconds' : null,
+        url: window.location.href,
+        timestamp: new Date().toISOString()
+      };
+
+      debugElement.textContent = JSON.stringify(clientData, null, 2);
     }
 
-    // Retry button
-    const retryButton = document.getElementById('retry-button');
-    if (retryButton) {
-      retryButton.addEventListener('click', loadConversations);
-    }
-  }
-
-  function getStatusColor(phase) {
-    switch (phase) {
-      case 'completed': return 'bg-lexara-success/10 text-lexara-success';
-      case 'data_gathering': return 'bg-lexara-primary/10 text-lexara-primary';
-      case 'pre_login': return 'bg-lexara-accent/10 text-lexara-accent';
-      case 'terminated': return 'bg-lexara-error/10 text-lexara-error';
-      default: return 'bg-gray-100 text-gray-600';
-    }
-  }
-
-  function getStatusText(phase) {
-    switch (phase) {
-      case 'completed': return 'Completed';
-      case 'data_gathering': return 'In Progress';
-      case 'pre_login': return 'Starting';
-      case 'terminated': return 'Ended';
-      default: return 'Unknown';
-    }
-  }
-
-  function formatDate(dateString) {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric'
+    // Initialize on page load
+    window.addEventListener('load', () => {
+      displayClientCookies();
     });
-  }
-
-  function formatTimeAgo(timestamp) {
-    const now = new Date();
-    const time = new Date(timestamp);
-    const diffMs = now.getTime() - time.getTime();
-    const diffMins = Math.floor(diffMs / 60000);
-    
-    if (diffMins < 1) return 'Just now';
-    if (diffMins < 60) return `${diffMins}m ago`;
-    
-    const diffHours = Math.floor(diffMins / 60);
-    if (diffHours < 24) return `${diffHours}h ago`;
-    
-    const diffDays = Math.floor(diffHours / 24);
-    return `${diffDays}d ago`;
-  }
-
-  function showLoading(show) {
-    const loadingState = document.getElementById('loading-state');
-    const conversationsContent = document.getElementById('conversations-content');
-    const errorState = document.getElementById('error-state');
-    
-    if (show) {
-      loadingState?.classList.remove('hidden');
-      conversationsContent?.classList.add('hidden');
-      errorState?.classList.add('hidden');
-    }
-  }
-
-  function showConversationsContent() {
-    const loadingState = document.getElementById('loading-state');
-    const conversationsContent = document.getElementById('conversations-content');
-    const errorState = document.getElementById('error-state');
-    
-    loadingState?.classList.add('hidden');
-    conversationsContent?.classList.remove('hidden');
-    errorState?.classList.add('hidden');
-  }
-
-  function showError(message) {
-    const loadingState = document.getElementById('loading-state');
-    const conversationsContent = document.getElementById('conversations-content');
-    const errorState = document.getElementById('error-state');
-    const errorMessage = document.getElementById('error-message');
-    
-    loadingState?.classList.add('hidden');
-    conversationsContent?.classList.add('hidden');
-    errorState?.classList.remove('hidden');
-    
-    if (errorMessage) {
-      errorMessage.textContent = message;
-    }
-  }
-</script>
-
-<style>
-  .border-3 {
-    border-width: 3px;
-  }
-</style>
+  </script>
+</body>
+</html>

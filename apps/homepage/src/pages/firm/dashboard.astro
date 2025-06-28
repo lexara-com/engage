@@ -1,5 +1,11 @@
 ---
-const { title = "Dashboard - Lexara Firm Portal", description = "Your firm's AI-powered client intake dashboard" } = Astro.props;
+// Server-side authentication is handled by middleware
+// User info is available via Astro.locals if authenticated
+const user = Astro.locals.user;
+const isAuthenticated = Astro.locals.isAuthenticated;
+const sessionExpiry = Astro.locals.sessionExpiry;
+
+const { title = `Dashboard - Lexara Firm Portal`, description = "Your firm's AI-powered client intake dashboard" } = Astro.props;
 ---
 
 <!DOCTYPE html>
@@ -18,859 +24,366 @@ const { title = "Dashboard - Lexara Firm Portal", description = "Your firm's AI-
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&family=Open+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,300;1,400;1,500;1,600;1,700;1,800&display=swap" rel="stylesheet">
   
-  <!-- Tailwind CSS -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          colors: {
-            'lexara-primary': '#2563eb',
-            'lexara-secondary': '#1f2937',
-            'lexara-gray': '#6b7280',
-            'lexara-light': '#f3f4f6',
-            'lexara-accent': '#10b981',
-            'lexara-error': '#ef4444',
-            'lexara-success': '#10b981',
-            'lexara-darkNavy': '#1e293b',
-            'lexara-lightNavy': '#475569'
-          },
-          fontFamily: {
-            'heading': ['Lora', 'serif'],
-            'body': ['Open Sans', 'sans-serif']
-          }
-        }
-      }
+  <style>
+    body {
+      font-family: 'Open Sans', sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #f7fafc;
+      color: #2d3748;
     }
-  </script>
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 1rem;
+    }
+    .header {
+      background: white;
+      border-bottom: 1px solid #e2e8f0;
+      padding: 1rem 0;
+      margin-bottom: 2rem;
+    }
+    .header-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 1rem;
+    }
+    .logo {
+      display: flex;
+      align-items: center;
+      font-size: 1.5rem;
+      font-weight: bold;
+      color: #2d3748;
+    }
+    .logo-icon {
+      width: 2rem;
+      height: 2rem;
+      background: #667eea;
+      border-radius: 0.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-right: 0.75rem;
+      color: white;
+      font-weight: bold;
+    }
+    .user-tile {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      background: #f8f9fa;
+      padding: 0.75rem 1rem;
+      border-radius: 0.5rem;
+      border: 1px solid #e2e8f0;
+    }
+    .user-avatar {
+      width: 2.5rem;
+      height: 2.5rem;
+      background: #667eea;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: bold;
+      font-size: 1rem;
+    }
+    .user-info {
+      display: flex;
+      flex-direction: column;
+    }
+    .user-name {
+      font-weight: 600;
+      color: #2d3748;
+      font-size: 0.875rem;
+    }
+    .user-email {
+      color: #718096;
+      font-size: 0.75rem;
+    }
+    .logout-link {
+      color: #dc3545;
+      text-decoration: none;
+      font-size: 0.875rem;
+      padding: 0.5rem 1rem;
+      border: 1px solid #dc3545;
+      border-radius: 0.25rem;
+      transition: all 0.2s;
+    }
+    .logout-link:hover {
+      background: #dc3545;
+      color: white;
+    }
+    .welcome-section {
+      background: white;
+      border-radius: 0.5rem;
+      padding: 2rem;
+      margin-bottom: 2rem;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+    .debug-section {
+      background: #f8f9fa;
+      border: 1px solid #e2e8f0;
+      border-radius: 0.5rem;
+      padding: 1.5rem;
+      margin: 2rem 0;
+    }
+    .debug-title {
+      font-weight: 600;
+      margin-bottom: 1rem;
+      color: #2d3748;
+    }
+    .debug-data {
+      background: #f1f3f4;
+      padding: 1rem;
+      border-radius: 0.25rem;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      font-family: 'Courier New', monospace;
+      font-size: 0.875rem;
+      line-height: 1.4;
+    }
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1.5rem;
+      margin: 2rem 0;
+    }
+    .stat-card {
+      background: white;
+      border-radius: 0.5rem;
+      padding: 1.5rem;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      text-align: center;
+    }
+    .stat-number {
+      font-size: 2rem;
+      font-weight: bold;
+      color: #667eea;
+      margin-bottom: 0.5rem;
+    }
+    .stat-label {
+      color: #718096;
+      font-size: 0.875rem;
+    }
+    .quick-actions {
+      background: white;
+      border-radius: 0.5rem;
+      padding: 1.5rem;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+    .action-button {
+      display: inline-block;
+      background: #667eea;
+      color: white;
+      padding: 0.75rem 1.5rem;
+      border-radius: 0.25rem;
+      text-decoration: none;
+      margin: 0.5rem;
+      transition: all 0.2s;
+    }
+    .action-button:hover {
+      background: #5a67d8;
+      transform: translateY(-1px);
+    }
+    .session-status {
+      display: inline-block;
+      padding: 0.25rem 0.75rem;
+      border-radius: 0.25rem;
+      font-size: 0.75rem;
+      font-weight: 500;
+    }
+    .session-valid {
+      background: #d4edda;
+      color: #155724;
+    }
+    .session-expired {
+      background: #f8d7da;
+      color: #721c24;
+    }
+  </style>
 </head>
-<body class="font-body antialiased bg-gray-50 text-lexara-darkNavy">
-  <!-- Dashboard Header with User Navigation -->
-  <header class="bg-white shadow-sm border-b border-gray-200">
-    <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="flex justify-between items-center py-4">
-        <div class="flex items-center">
-          <a href="/firm/dashboard" class="flex items-center">
-            <img src="/lexara-logo.svg" alt="Lexara" class="h-8 w-auto">
-            <span class="ml-3 text-lg font-semibold text-lexara-secondary">Firm Portal</span>
-          </a>
-        </div>
-        
-        <div class="hidden md:flex items-center space-x-8">
-          <a href="/firm/conversations" class="text-lexara-lightNavy hover:text-lexara-darkNavy transition-colors font-semibold">Conversations</a>
-          <a href="/firm/settings" class="text-lexara-lightNavy hover:text-lexara-darkNavy transition-colors font-semibold">Settings</a>
-          <a href="/firm/analytics" class="text-lexara-lightNavy hover:text-lexara-darkNavy transition-colors font-semibold">Analytics</a>
-        </div>
-
-        <!-- User Menu -->
-        <div class="flex items-center space-x-4">
-          <div id="user-info" class="hidden flex items-center space-x-3">
-            <div class="text-right">
-              <p id="user-name" class="text-sm font-medium text-lexara-secondary"></p>
-              <p id="user-email" class="text-xs text-lexara-gray"></p>
+<body>
+  <!-- Header with User Tile -->
+  <header class="header">
+    <div class="header-content">
+      <div class="logo">
+        <div class="logo-icon">L</div>
+        <span>Lexara Firm Portal</span>
+      </div>
+      
+      {user ? (
+        <div style="display: flex; align-items: center; gap: 1rem;">
+          <div class="user-tile">
+            <div class="user-avatar">
+              {user.name ? user.name.split(' ').map(n => n[0]).join('').toUpperCase() : user.email[0].toUpperCase()}
             </div>
-            <div class="w-8 h-8 bg-lexara-primary rounded-full flex items-center justify-center">
-              <span id="user-initials" class="text-sm font-medium text-white"></span>
+            <div class="user-info">
+              <div class="user-name">{user.name || 'User'}</div>
+              <div class="user-email">{user.email}</div>
+              <div style="font-size: 0.75rem; color: #667eea;">
+                {user.roles?.join(', ') || 'User'} • {user.firmId}
+              </div>
             </div>
           </div>
-          <button id="logout-button" class="hidden text-lexara-lightNavy hover:text-lexara-darkNavy transition-colors font-semibold">
-            Sign Out
-          </button>
+          <a href="/firm/logout" class="logout-link">Sign Out</a>
         </div>
-      </div>
-    </nav>
+      ) : (
+        <div>Not authenticated</div>
+      )}
+    </div>
   </header>
 
-  <main>
-    <div class="min-h-screen bg-gray-50">
-      <!-- Welcome Header -->
-      <div class="bg-white shadow-sm border-b border-gray-200">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div class="flex items-center justify-between">
-            <div>
-              <h1 id="welcome-title" class="text-2xl font-bold text-lexara-secondary">Welcome back!</h1>
-              <p class="text-lexara-gray mt-1">Here's what's happening with your client intake today.</p>
-            </div>
-            <div class="flex items-center space-x-4">
-              <div class="text-right">
-                <p class="text-sm text-lexara-gray">Today</p>
-                <p id="current-date" class="text-sm font-medium text-lexara-secondary"></p>
-              </div>
-              <button class="bg-lexara-primary text-white px-4 py-2 rounded-lg hover:bg-blue-800 transition-colors">
-                <span class="text-sm font-medium">New Conversation</span>
-              </button>
-            </div>
-          </div>
-        </div>
+  <main class="container">
+    <!-- Welcome Section -->
+    <div class="welcome-section">
+      <h1>Welcome back{user?.name ? `, ${user.name}` : ''}!</h1>
+      <p>Here's your firm portal dashboard. You're successfully authenticated and ready to manage your client intake.</p>
+      
+      <!-- Session Status -->
+      <div style="margin-top: 1rem;">
+        <span class="session-status {isAuthenticated ? 'session-valid' : 'session-expired'}">
+          {isAuthenticated ? '✅ Session Active' : '❌ Session Expired'}
+        </span>
+        {sessionExpiry && (
+          <span style="margin-left: 1rem; font-size: 0.875rem; color: #718096;">
+            Expires: {new Date(sessionExpiry * 1000).toLocaleString()}
+          </span>
+        )}
       </div>
+    </div>
 
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <!-- Loading State -->
-      <div id="loading-state" class="text-center py-12">
-        <div class="w-8 h-8 border-3 border-lexara-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-        <p class="text-lexara-gray">Loading your dashboard...</p>
+    <!-- Stats Overview -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-number">5</div>
+        <div class="stat-label">Active Conversations</div>
       </div>
-
-      <!-- Error State -->
-      <div id="error-state" class="hidden text-center py-12">
-        <div class="w-12 h-12 bg-lexara-error/10 rounded-full flex items-center justify-center mx-auto mb-4">
-          <svg class="w-6 h-6 text-lexara-error" fill="currentColor" viewBox="0 0 20 20">
-            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>
-          </svg>
-        </div>
-        <h3 class="text-lg font-medium text-lexara-secondary mb-2">Unable to load dashboard</h3>
-        <p id="error-message" class="text-lexara-gray mb-4">We're having trouble connecting to your data.</p>
-        <button id="retry-button" class="bg-lexara-primary text-white px-4 py-2 rounded-lg hover:bg-blue-800 transition-colors">
-          Try Again
-        </button>
+      <div class="stat-card">
+        <div class="stat-number">12</div>
+        <div class="stat-label">This Week</div>
       </div>
+      <div class="stat-card">
+        <div class="stat-number">89%</div>
+        <div class="stat-label">Success Rate</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number">24</div>
+        <div class="stat-label">Total Clients</div>
+      </div>
+    </div>
 
-      <!-- Dashboard Content -->
-      <div id="dashboard-content" class="hidden space-y-8">
-        <!-- Stats Overview -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <!-- Today's Conversations -->
-          <div class="bg-white rounded-xl shadow-sm p-6">
-            <div class="flex items-center justify-between">
-              <div>
-                <p class="text-sm font-medium text-lexara-gray">Today</p>
-                <p id="today-conversations" class="text-2xl font-bold text-lexara-secondary">-</p>
-                <p class="text-xs text-lexara-gray mt-1">New conversations</p>
-              </div>
-              <div class="w-12 h-12 bg-lexara-primary/10 rounded-full flex items-center justify-center">
-                <svg class="w-6 h-6 text-lexara-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
-                </svg>
-              </div>
-            </div>
-          </div>
+    <!-- Quick Actions -->
+    <div class="quick-actions">
+      <h3>Quick Actions</h3>
+      <a href="/firm/conversations" class="action-button">View Conversations</a>
+      <a href="/firm/settings" class="action-button">Settings</a>
+      <a href="/firm/debug-session" class="action-button">Debug Session</a>
+      <a href="/" class="action-button">Back to Home</a>
+    </div>
 
-          <!-- Active Conversations -->
-          <div class="bg-white rounded-xl shadow-sm p-6">
-            <div class="flex items-center justify-between">
-              <div>
-                <p class="text-sm font-medium text-lexara-gray">Active</p>
-                <p id="active-conversations" class="text-2xl font-bold text-lexara-secondary">-</p>
-                <p class="text-xs text-lexara-gray mt-1">In progress</p>
-              </div>
-              <div class="w-12 h-12 bg-lexara-accent/10 rounded-full flex items-center justify-center">
-                <svg class="w-6 h-6 text-lexara-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                </svg>
-              </div>
-            </div>
-          </div>
+    <!-- Session Debug Information -->
+    <div class="debug-section">
+      <h3 class="debug-title">Session Debug Information</h3>
+      <p style="margin-bottom: 1rem; color: #718096; font-size: 0.875rem;">
+        This information helps debug authentication issues and verify session data.
+      </p>
+      
+      <div class="debug-data" id="session-debug">
+        {JSON.stringify({
+          serverSide: {
+            user: user,
+            isAuthenticated: isAuthenticated,
+            sessionExpiry: sessionExpiry,
+            firmId: user?.firmId,
+            roles: user?.roles
+          },
+          timestamp: new Date().toISOString(),
+          expiresAt: sessionExpiry ? new Date(sessionExpiry * 1000).toISOString() : null,
+          timeLeft: sessionExpiry ? Math.max(0, sessionExpiry - Math.floor(Date.now() / 1000)) + ' seconds' : null
+        }, null, 2)}
+      </div>
+    </div>
 
-          <!-- Completed This Week -->
-          <div class="bg-white rounded-xl shadow-sm p-6">
-            <div class="flex items-center justify-between">
-              <div>
-                <p class="text-sm font-medium text-lexara-gray">This Week</p>
-                <p id="weekly-completed" class="text-2xl font-bold text-lexara-secondary">-</p>
-                <p class="text-xs text-lexara-gray mt-1">Completed</p>
-              </div>
-              <div class="w-12 h-12 bg-lexara-success/10 rounded-full flex items-center justify-center">
-                <svg class="w-6 h-6 text-lexara-success" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                </svg>
-              </div>
-            </div>
-          </div>
-
-          <!-- Conversion Rate -->
-          <div class="bg-white rounded-xl shadow-sm p-6">
-            <div class="flex items-center justify-between">
-              <div>
-                <p class="text-sm font-medium text-lexara-gray">Conversion</p>
-                <p id="conversion-rate" class="text-2xl font-bold text-lexara-secondary">-</p>
-                <p class="text-xs text-lexara-gray mt-1">Lead to client</p>
-              </div>
-              <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
-                <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
-                </svg>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Recent Conversations & Quick Actions -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <!-- Recent Conversations -->
-          <div class="lg:col-span-2">
-            <div class="bg-white rounded-xl shadow-sm">
-              <div class="p-6 border-b border-gray-200">
-                <div class="flex items-center justify-between">
-                  <h3 class="text-lg font-semibold text-lexara-secondary">Recent Conversations</h3>
-                  <a href="/conversations" class="text-sm text-lexara-primary hover:underline">View all</a>
-                </div>
-              </div>
-              
-              <div id="conversations-list" class="divide-y divide-gray-200">
-                <!-- Conversation items will be populated here -->
-              </div>
-              
-              <div id="no-conversations" class="hidden p-8 text-center">
-                <div class="w-16 h-16 bg-lexara-light rounded-full flex items-center justify-center mx-auto mb-4">
-                  <svg class="w-8 h-8 text-lexara-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
-                  </svg>
-                </div>
-                <h4 class="text-lg font-medium text-lexara-secondary mb-2">No conversations yet</h4>
-                <p class="text-lexara-gray mb-4">Start engaging with potential clients and they'll appear here.</p>
-                <button id="share-intake-link" class="bg-lexara-primary text-white px-4 py-2 rounded-lg hover:bg-blue-800 transition-colors">
-                  Share Your Intake Link
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <!-- Quick Actions & Notifications -->
-          <div class="space-y-6">
-            <!-- Quick Actions -->
-            <div class="bg-white rounded-xl shadow-sm p-6">
-              <h3 class="text-lg font-semibold text-lexara-secondary mb-4">Quick Actions</h3>
-              <div class="space-y-3">
-                <a href="/conversations/new" class="flex items-center p-3 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors">
-                  <div class="w-8 h-8 bg-lexara-primary/10 rounded-lg flex items-center justify-center mr-3">
-                    <svg class="w-4 h-4 text-lexara-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-                    </svg>
-                  </div>
-                  <div>
-                    <p class="text-sm font-medium text-lexara-secondary">Start Conversation</p>
-                    <p class="text-xs text-lexara-gray">Begin manual intake</p>
-                  </div>
-                </a>
-
-                <a href="/settings/intake" class="flex items-center p-3 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors">
-                  <div class="w-8 h-8 bg-lexara-accent/10 rounded-lg flex items-center justify-center mr-3">
-                    <svg class="w-4 h-4 text-lexara-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                    </svg>
-                  </div>
-                  <div>
-                    <p class="text-sm font-medium text-lexara-secondary">Customize Intake</p>
-                    <p class="text-xs text-lexara-gray">Configure questions</p>
-                  </div>
-                </a>
-
-                <a href="/analytics" class="flex items-center p-3 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors">
-                  <div class="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center mr-3">
-                    <svg class="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
-                    </svg>
-                  </div>
-                  <div>
-                    <p class="text-sm font-medium text-lexara-secondary">View Analytics</p>
-                    <p class="text-xs text-lexara-gray">Detailed reports</p>
-                  </div>
-                </a>
-              </div>
-            </div>
-
-            <!-- System Status -->
-            <div class="bg-white rounded-xl shadow-sm p-6">
-              <h3 class="text-lg font-semibold text-lexara-secondary mb-4">System Status</h3>
-              <div class="space-y-3">
-                <div class="flex items-center justify-between">
-                  <span class="text-sm text-lexara-gray">AI Agent</span>
-                  <div id="ai-status" class="flex items-center">
-                    <div class="w-2 h-2 bg-lexara-success rounded-full mr-2"></div>
-                    <span class="text-xs text-lexara-success">Operational</span>
-                  </div>
-                </div>
-                <div class="flex items-center justify-between">
-                  <span class="text-sm text-lexara-gray">Intake Portal</span>
-                  <div id="portal-status" class="flex items-center">
-                    <div class="w-2 h-2 bg-lexara-success rounded-full mr-2"></div>
-                    <span class="text-xs text-lexara-success">Online</span>
-                  </div>
-                </div>
-                <div class="flex items-center justify-between">
-                  <span class="text-sm text-lexara-gray">Conflict Detection</span>
-                  <div id="conflict-status" class="flex items-center">
-                    <div class="w-2 h-2 bg-lexara-success rounded-full mr-2"></div>
-                    <span class="text-xs text-lexara-success">Active</span>
-                  </div>
-                </div>
-              </div>
-              
-              <div class="mt-4 pt-4 border-t border-gray-200">
-                <div class="flex items-center justify-between text-xs text-lexara-gray">
-                  <span>Last checked</span>
-                  <span id="last-status-check">Just now</span>
-                </div>
-              </div>
-            </div>
-
-            <!-- Recent Activity -->
-            <div class="bg-white rounded-xl shadow-sm p-6">
-              <h3 class="text-lg font-semibold text-lexara-secondary mb-4">Recent Activity</h3>
-              <div id="recent-activity" class="space-y-3">
-                <!-- Activity items will be populated here -->
-              </div>
-            </div>
-          </div>
-        </div>
+    <!-- Client-side Session Info -->
+    <div class="debug-section">
+      <h3 class="debug-title">Client-side Session Information</h3>
+      <div class="debug-data" id="client-session-debug">
+        Loading client-side session data...
       </div>
     </div>
   </main>
+
+  <script>
+    // Display client-side session information
+    function displayClientSessionInfo() {
+      const debugElement = document.getElementById('client-session-debug');
+      
+      // Get all cookies
+      const cookies = {};
+      document.cookie.split(';').forEach(cookie => {
+        const [name, value] = cookie.trim().split('=');
+        if (name && value) {
+          cookies[name] = value;
+        }
+      });
+
+      // Parse firm session if it exists
+      let sessionData = null;
+      const sessionCookie = cookies['firm_session'];
+      if (sessionCookie) {
+        try {
+          sessionData = JSON.parse(decodeURIComponent(sessionCookie));
+        } catch (error) {
+          sessionData = { error: 'Failed to parse session cookie: ' + error.message };
+        }
+      }
+
+      // Get sessionStorage data
+      const sessionStorage = {};
+      try {
+        for (let i = 0; i < window.sessionStorage.length; i++) {
+          const key = window.sessionStorage.key(i);
+          sessionStorage[key] = window.sessionStorage.getItem(key);
+        }
+      } catch (error) {
+        sessionStorage.error = 'Failed to read sessionStorage: ' + error.message;
+      }
+
+      const clientData = {
+        cookies: cookies,
+        firmSession: sessionData,
+        sessionStorage: sessionStorage,
+        url: window.location.href,
+        userAgent: navigator.userAgent,
+        timestamp: new Date().toISOString()
+      };
+
+      debugElement.textContent = JSON.stringify(clientData, null, 2);
+    }
+
+    // Initialize on page load
+    window.addEventListener('load', () => {
+      displayClientSessionInfo();
+      
+      // Update time display every 30 seconds
+      setInterval(() => {
+        const now = new Date();
+        // You can add real-time updates here if needed
+      }, 30000);
+    });
+
+    // Add logout confirmation
+    document.querySelectorAll('a[href="/firm/logout"]').forEach(link => {
+      link.addEventListener('click', (e) => {
+        if (!confirm('Are you sure you want to sign out?')) {
+          e.preventDefault();
+        }
+      });
+    });
+  </script>
 </body>
 </html>
-
-<script is:inline>
-  let auth0Client = null;
-  
-  document.addEventListener('DOMContentLoaded', async () => {
-    await initializeAuth0();
-    await loadDashboard();
-    setupEventListeners();
-    updateDateTime();
-    
-    // Refresh data every 30 seconds
-    setInterval(async () => {
-      await refreshDashboardData();
-    }, 30000);
-  });
-  
-  async function initializeAuth0() {
-    try {
-      // Load Auth0 SDK
-      const script = document.createElement('script');
-      script.src = 'https://cdn.auth0.com/js/auth0-spa-js/2.0/auth0-spa-js.production.js';
-      document.head.appendChild(script);
-      
-      await new Promise((resolve, reject) => {
-        script.onload = resolve;
-        script.onerror = reject;
-      });
-      
-      // Initialize Auth0 client
-      auth0Client = await window.auth0.createAuth0Client({
-        domain: 'dev-sv0pf6cz2530xz0o.us.auth0.com',
-        clientId: 'OjsR6To3nDqYDLVHtRjDFpk7wRcCfrfi',
-        authorizationParams: {
-          redirect_uri: window.location.origin + '/firm/callback'
-        },
-        cacheLocation: 'localstorage',
-        useRefreshTokens: false
-      });
-      
-      console.log('Auth0 client initialized for dashboard');
-    } catch (error) {
-      console.error('Failed to initialize Auth0:', error);
-      showError('Authentication system failed to load.');
-    }
-  }
-
-  async function loadDashboard() {
-    try {
-      showLoading(true);
-      
-      // Check authentication
-      if (!auth0Client) {
-        throw new Error('Auth0 client not initialized');
-      }
-      
-      // Check if we have valid authentication tokens locally
-      const isAuthenticated = await auth0Client.isAuthenticated();
-      if (!isAuthenticated) {
-        console.log('User not authenticated, redirecting to login');
-        // Add a flag to prevent redirect loops
-        sessionStorage.setItem('auth_redirect_from_dashboard', 'true');
-        window.location.href = '/firm/login';
-        return;
-      }
-      
-      // Clear any redirect flags
-      sessionStorage.removeItem('auth_redirect_from_dashboard');
-      
-      console.log('User is authenticated, loading dashboard data');
-      
-      // Get user info
-      const user = await auth0Client.getUser();
-      updateWelcomeMessage(user);
-      
-      // For now, show dashboard with placeholder data
-      // TODO: Implement API calls to load real data
-      updatePlaceholderData();
-      showDashboard();
-      
-    } catch (error) {
-      console.error('Failed to load dashboard:', error);
-      showError('Unable to load dashboard. Please check your connection and try again.');
-    }
-  }
-
-  async function refreshDashboardData() {
-    try {
-      // TODO: Implement real API calls
-      updateLastStatusCheck();
-    } catch (error) {
-      console.error('Failed to refresh dashboard data:', error);
-    }
-  }
-  
-  function updatePlaceholderData() {
-    // Set placeholder stats
-    const todayElement = document.getElementById('today-conversations');
-    const activeElement = document.getElementById('active-conversations');
-    const weeklyElement = document.getElementById('weekly-completed');
-    const conversionElement = document.getElementById('conversion-rate');
-    
-    if (todayElement) todayElement.textContent = '0';
-    if (activeElement) activeElement.textContent = '0';
-    if (weeklyElement) weeklyElement.textContent = '0';
-    if (conversionElement) conversionElement.textContent = '0%';
-    
-    // Show no conversations message
-    const conversationsList = document.getElementById('conversations-list');
-    const noConversations = document.getElementById('no-conversations');
-    
-    if (conversationsList) conversationsList.innerHTML = '';
-    if (noConversations) noConversations.classList.remove('hidden');
-    
-    // Show empty recent activity
-    updateRecentActivity([]);
-  }
-
-  function updateWelcomeMessage(user) {
-    const welcomeTitle = document.getElementById('welcome-title');
-    if (welcomeTitle && user.name) {
-      const firstName = user.name.split(' ')[0];
-      welcomeTitle.textContent = `Welcome back, ${firstName}!`;
-    }
-    
-    // Update header user info
-    updateUserHeader(user);
-  }
-  
-  function updateUserHeader(user) {
-    const userInfo = document.getElementById('user-info');
-    const userNameElement = document.getElementById('user-name');
-    const userEmailElement = document.getElementById('user-email');
-    const userInitialsElement = document.getElementById('user-initials');
-    const logoutButton = document.getElementById('logout-button');
-    
-    if (user && user.name) {
-      // Show user info
-      if (userInfo) userInfo.classList.remove('hidden');
-      if (logoutButton) logoutButton.classList.remove('hidden');
-      
-      // Update user details
-      if (userNameElement) userNameElement.textContent = user.name;
-      if (userEmailElement) userEmailElement.textContent = user.email || '';
-      
-      // Generate initials
-      if (userInitialsElement) {
-        const initials = user.name.split(' ').map(n => n.charAt(0)).join('').toUpperCase().slice(0, 2);
-        userInitialsElement.textContent = initials;
-      }
-    }
-  }
-
-  function updateDateTime() {
-    const currentDate = document.getElementById('current-date');
-    if (currentDate) {
-      const now = new Date();
-      currentDate.textContent = now.toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric'
-      });
-    }
-  }
-
-  function updateConversationsList(conversations) {
-    const conversationsList = document.getElementById('conversations-list');
-    const noConversations = document.getElementById('no-conversations');
-    
-    if (!conversations || conversations.length === 0) {
-      if (conversationsList) conversationsList.innerHTML = '';
-      if (noConversations) noConversations.classList.remove('hidden');
-      return;
-    }
-
-    if (noConversations) noConversations.classList.add('hidden');
-    
-    if (conversationsList) {
-      conversationsList.innerHTML = conversations.map(conv => `
-        <div class="p-6 hover:bg-gray-50 transition-colors">
-          <div class="flex items-center justify-between">
-            <div class="flex-1">
-              <div class="flex items-center space-x-3">
-                <div class="w-10 h-10 rounded-full bg-lexara-primary/10 flex items-center justify-center">
-                  <span class="text-sm font-medium text-lexara-primary">
-                    ${conv.userIdentity?.name ? conv.userIdentity.name.charAt(0).toUpperCase() : '?'}
-                  </span>
-                </div>
-                <div class="flex-1">
-                  <p class="text-sm font-medium text-lexara-secondary">
-                    ${conv.userIdentity?.name || 'Anonymous User'}
-                  </p>
-                  <p class="text-xs text-lexara-gray">
-                    ${conv.userIdentity?.email || 'No email provided'}
-                  </p>
-                </div>
-              </div>
-              <div class="mt-2">
-                <p class="text-sm text-lexara-gray">
-                  ${conv.phase.charAt(0).toUpperCase() + conv.phase.slice(1).replace('_', ' ')} • 
-                  ${new Date(conv.lastActivity).toLocaleDateString()}
-                </p>
-              </div>
-            </div>
-            <div class="flex items-center space-x-3">
-              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(conv.phase)}">
-                ${getStatusText(conv.phase)}
-              </span>
-              <a href="/conversations/${conv.sessionId}" class="text-lexara-primary hover:text-blue-800">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                </svg>
-              </a>
-            </div>
-          </div>
-        </div>
-      `).join('');
-    }
-  }
-
-  function updateConversationStats(data) {
-    const todayElement = document.getElementById('today-conversations');
-    const activeElement = document.getElementById('active-conversations');
-    
-    if (todayElement) {
-      const today = new Date().toDateString();
-      const todayCount = data.conversations?.filter(conv => 
-        new Date(conv.createdAt).toDateString() === today
-      ).length || 0;
-      todayElement.textContent = todayCount.toString();
-    }
-    
-    if (activeElement) {
-      const activeCount = data.conversations?.filter(conv => 
-        conv.phase === 'data_gathering' || conv.phase === 'pre_login'
-      ).length || 0;
-      activeElement.textContent = activeCount.toString();
-    }
-  }
-
-  function updateAnalyticsStats(analytics) {
-    const weeklyElement = document.getElementById('weekly-completed');
-    const conversionElement = document.getElementById('conversion-rate');
-    
-    if (weeklyElement && analytics.weeklyCompleted !== undefined) {
-      weeklyElement.textContent = analytics.weeklyCompleted.toString();
-    }
-    
-    if (conversionElement && analytics.conversionRate !== undefined) {
-      conversionElement.textContent = `${Math.round(analytics.conversionRate * 100)}%`;
-    }
-  }
-
-  function updateQuickStats(analytics) {
-    if (analytics.todayConversations !== undefined) {
-      const element = document.getElementById('today-conversations');
-      if (element) element.textContent = analytics.todayConversations.toString();
-    }
-  }
-
-  function updateRecentActivity(activities) {
-    const activityContainer = document.getElementById('recent-activity');
-    if (!activityContainer) return;
-    
-    if (activities.length === 0) {
-      activityContainer.innerHTML = `
-        <p class="text-sm text-lexara-gray text-center py-4">No recent activity</p>
-      `;
-      return;
-    }
-    
-    activityContainer.innerHTML = activities.map(activity => `
-      <div class="flex items-start space-x-3">
-        <div class="w-6 h-6 bg-lexara-primary/10 rounded-full flex items-center justify-center mt-0.5">
-          <div class="w-2 h-2 bg-lexara-primary rounded-full"></div>
-        </div>
-        <div class="flex-1">
-          <p class="text-sm text-lexara-secondary">${activity.description}</p>
-          <p class="text-xs text-lexara-gray">${formatTimeAgo(activity.timestamp)}</p>
-        </div>
-      </div>
-    `).join('');
-  }
-
-  function updateLastStatusCheck() {
-    const element = document.getElementById('last-status-check');
-    if (element) {
-      element.textContent = 'Just now';
-    }
-  }
-
-  function getStatusColor(phase) {
-    switch (phase) {
-      case 'completed': return 'bg-lexara-success/10 text-lexara-success';
-      case 'data_gathering': return 'bg-lexara-primary/10 text-lexara-primary';
-      case 'pre_login': return 'bg-lexara-accent/10 text-lexara-accent';
-      case 'terminated': return 'bg-lexara-error/10 text-lexara-error';
-      default: return 'bg-gray-100 text-gray-600';
-    }
-  }
-
-  function getStatusText(phase) {
-    switch (phase) {
-      case 'completed': return 'Completed';
-      case 'data_gathering': return 'In Progress';
-      case 'pre_login': return 'Starting';
-      case 'terminated': return 'Ended';
-      default: return 'Unknown';
-    }
-  }
-
-  function formatTimeAgo(timestamp) {
-    const now = new Date();
-    const time = new Date(timestamp);
-    const diffMs = now.getTime() - time.getTime();
-    const diffMins = Math.floor(diffMs / 60000);
-    
-    if (diffMins < 1) return 'Just now';
-    if (diffMins < 60) return `${diffMins}m ago`;
-    
-    const diffHours = Math.floor(diffMins / 60);
-    if (diffHours < 24) return `${diffHours}h ago`;
-    
-    const diffDays = Math.floor(diffHours / 24);
-    return `${diffDays}d ago`;
-  }
-
-  function setupEventListeners() {
-    const retryButton = document.getElementById('retry-button');
-    if (retryButton) {
-      retryButton.addEventListener('click', loadDashboard);
-    }
-    
-    // Logout button
-    const logoutButton = document.getElementById('logout-button');
-    if (logoutButton) {
-      logoutButton.addEventListener('click', async function() {
-        if (!auth0Client) {
-          console.error('Auth0 client not available for logout');
-          return;
-        }
-        
-        try {
-          console.log('Logging out user...');
-          await auth0Client.logout({
-            logoutParams: {
-              returnTo: window.location.origin + '/firm/login'
-            }
-          });
-        } catch (error) {
-          console.error('Logout failed:', error);
-          // Fallback: clear local storage and redirect
-          localStorage.clear();
-          sessionStorage.clear();
-          window.location.href = '/firm/login';
-        }
-      });
-    }
-    
-    // Share Intake Link button
-    const shareIntakeLinkButton = document.getElementById('share-intake-link');
-    if (shareIntakeLinkButton) {
-      shareIntakeLinkButton.addEventListener('click', async function() {
-        await showIntakeLinkModal();
-      });
-    }
-  }
-  
-  async function showIntakeLinkModal() {
-    try {
-      // Get the current user to extract firm ID
-      const user = await auth0Client.getUser();
-      
-      // Extract firm ID from user metadata
-      // Check both user_metadata and app_metadata for firmId
-      let firmId = user.user_metadata?.firmId || user.app_metadata?.organization || user.app_metadata?.firmId;
-      
-      // Fallback: generate from email domain if no firmId in metadata
-      if (!firmId && user.email) {
-        const emailDomain = user.email.split('@')[1].replace(/\./g, '-');
-        firmId = 'firm-' + emailDomain;
-      }
-      
-      // Final fallback
-      if (!firmId) {
-        firmId = 'firm-' + user.sub.split('|')[1].substr(0, 8);
-      }
-      
-      const intakeUrl = `https://dev.lexara.app/${firmId}`;
-      
-      // Show modal with the firm-specific URL
-      showModalWithUrl(intakeUrl);
-    
-    } catch (error) {
-      console.error('Error getting user info for intake link:', error);
-      // Fallback to a generic firm ID
-      const fallbackFirmId = 'firm-' + Math.random().toString(36).substr(2, 9);
-      const intakeUrl = `https://dev.lexara.app/${firmId}`;
-      
-      // Show modal with fallback URL
-      showModalWithUrl(intakeUrl);
-    }
-  }
-  
-  function showModalWithUrl(intakeUrl) {
-    // Create modal HTML
-    const modalHTML = `
-      <div id="intake-link-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-        <div class="bg-white rounded-lg max-w-md w-full p-6">
-          <div class="flex items-center justify-between mb-4">
-            <h3 class="text-lg font-semibold text-gray-900">Share Your Intake Link</h3>
-            <button id="close-modal" class="text-gray-400 hover:text-gray-600">
-              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-              </svg>
-            </button>
-          </div>
-          
-          <p class="text-gray-600 mb-4">Share this link with potential clients to start conversations with your AI intake chatbot:</p>
-          
-          <div class="bg-gray-50 border rounded-lg p-3 mb-4">
-            <code id="intake-url" class="text-sm text-blue-600 break-all">${intakeUrl}</code>
-          </div>
-          
-          <div class="flex space-x-2 mb-4">
-            <button id="copy-link" class="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm">
-              Copy Link
-            </button>
-            <button id="test-link" class="flex-1 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors text-sm">
-              Try Chatbot
-            </button>
-          </div>
-          
-          <div class="text-xs text-gray-500">
-            <p class="mb-2"><strong>How to use:</strong></p>
-            <ul class="list-disc list-inside space-y-1">
-              <li>Embed this link on your website</li>
-              <li>Share via email or social media</li>
-              <li>Add to your business cards or marketing materials</li>
-            </ul>
-          </div>
-        </div>
-      </div>
-    `;
-    
-    // Add modal to page
-    document.body.insertAdjacentHTML('beforeend', modalHTML);
-    
-    // Add event listeners for modal
-    document.getElementById('close-modal').addEventListener('click', closeModal);
-    document.getElementById('copy-link').addEventListener('click', function() {
-      copyToClipboard(intakeUrl);
-    });
-    document.getElementById('test-link').addEventListener('click', function() {
-      window.location.href = intakeUrl;
-    });
-    
-    // Close modal when clicking outside
-    document.getElementById('intake-link-modal').addEventListener('click', function(e) {
-      if (e.target.id === 'intake-link-modal') {
-        closeModal();
-      }
-    });
-  }
-  
-  function closeModal() {
-    const modal = document.getElementById('intake-link-modal');
-    if (modal) {
-      modal.remove();
-    }
-  }
-  
-  function copyToClipboard(text) {
-    if (navigator.clipboard) {
-      navigator.clipboard.writeText(text).then(function() {
-        // Show success feedback
-        const copyButton = document.getElementById('copy-link');
-        const originalText = copyButton.textContent;
-        copyButton.textContent = 'Copied!';
-        copyButton.classList.remove('bg-blue-600', 'hover:bg-blue-700');
-        copyButton.classList.add('bg-green-600', 'hover:bg-green-700');
-        
-        setTimeout(() => {
-          copyButton.textContent = originalText;
-          copyButton.classList.remove('bg-green-600', 'hover:bg-green-700');
-          copyButton.classList.add('bg-blue-600', 'hover:bg-blue-700');
-        }, 2000);
-      }).catch(function() {
-        showFallbackCopy(text);
-      });
-    } else {
-      showFallbackCopy(text);
-    }
-  }
-  
-  function showFallbackCopy(text) {
-    // Fallback: select the text
-    const urlElement = document.getElementById('intake-url');
-    const range = document.createRange();
-    range.selectNode(urlElement);
-    window.getSelection().removeAllRanges();
-    window.getSelection().addRange(range);
-    
-    try {
-      document.execCommand('copy');
-      const copyButton = document.getElementById('copy-link');
-      copyButton.textContent = 'Copied!';
-    } catch (err) {
-      console.error('Copy failed:', err);
-      alert('Please copy the URL manually: ' + text);
-    }
-  }
-
-  function showLoading(show) {
-    const loadingState = document.getElementById('loading-state');
-    const dashboardContent = document.getElementById('dashboard-content');
-    const errorState = document.getElementById('error-state');
-    
-    if (show) {
-      loadingState?.classList.remove('hidden');
-      dashboardContent?.classList.add('hidden');
-      errorState?.classList.add('hidden');
-    }
-  }
-
-  function showDashboard() {
-    const loadingState = document.getElementById('loading-state');
-    const dashboardContent = document.getElementById('dashboard-content');
-    const errorState = document.getElementById('error-state');
-    
-    loadingState?.classList.add('hidden');
-    dashboardContent?.classList.remove('hidden');
-    errorState?.classList.add('hidden');
-  }
-
-  function showError(message) {
-    const loadingState = document.getElementById('loading-state');
-    const dashboardContent = document.getElementById('dashboard-content');
-    const errorState = document.getElementById('error-state');
-    const errorMessage = document.getElementById('error-message');
-    
-    loadingState?.classList.add('hidden');
-    dashboardContent?.classList.add('hidden');
-    errorState?.classList.remove('hidden');
-    
-    if (errorMessage) {
-      errorMessage.textContent = message;
-    }
-  }
-</script>
-
-<style>
-  .border-3 {
-    border-width: 3px;
-  }
-</style>
