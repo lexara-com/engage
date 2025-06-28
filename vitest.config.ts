@@ -1,6 +1,19 @@
 import { defineConfig } from 'vitest/config';
+import { resolve } from 'path';
 
 export default defineConfig({
+  resolve: {
+    alias: {
+      '@': resolve(__dirname, './src'),
+      '@/types': resolve(__dirname, './src/types'),
+      '@/utils': resolve(__dirname, './src/utils'),
+      '@/durable-objects': resolve(__dirname, './src/durable-objects'),
+      '@/mcp-servers': resolve(__dirname, './src/mcp-servers'),
+      '@/agent': resolve(__dirname, './src/agent'),
+      '@/platform': resolve(__dirname, './src/platform'),
+      '@/auth': resolve(__dirname, './src/auth')
+    }
+  },
   test: {
     globals: true,
     environment: 'node',

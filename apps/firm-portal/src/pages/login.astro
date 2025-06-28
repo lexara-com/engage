@@ -1,0 +1,228 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+---
+
+<BaseLayout 
+  title="Sign In - Lexara Firm Portal" 
+  description="Sign in to your Lexara firm dashboard"
+  showNavigation={false}
+>
+  <div class="min-h-screen bg-gradient-to-br from-lexara-light to-blue-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-md w-full space-y-8">
+      <!-- Header -->
+      <div class="text-center">
+        <div class="flex justify-center items-center space-x-3 mb-6">
+          <div class="w-12 h-12 bg-lexara-primary rounded-xl flex items-center justify-center">
+            <span class="text-white font-bold text-xl">L</span>
+          </div>
+          <h1 class="text-3xl font-bold text-lexara-secondary">Lexara</h1>
+        </div>
+        <h2 class="text-2xl font-bold text-lexara-secondary mb-2">
+          Welcome Back
+        </h2>
+        <p class="text-lexara-gray">
+          Sign in to your firm dashboard
+        </p>
+      </div>
+
+      <!-- Error Message -->
+      <div id="error-message" class="hidden bg-lexara-error/10 border border-lexara-error/20 rounded-lg p-4">
+        <div class="flex items-center space-x-2">
+          <svg class="w-5 h-5 text-lexara-error" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>
+          </svg>
+          <span id="error-text" class="text-sm text-lexara-error"></span>
+        </div>
+      </div>
+
+      <!-- Login Form -->
+      <div class="bg-white rounded-2xl shadow-lg p-8">
+        <!-- Auth0 Login Button -->
+        <button 
+          id="auth0-login-button"
+          class="w-full bg-lexara-primary text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-800 transition-colors flex items-center justify-center space-x-2 mb-6"
+        >
+          <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M12 0C5.374 0 0 5.373 0 12s5.374 12 12 12 12-5.373 12-12S18.626 0 12 0zm5.568 7.875c.216 1.125.216 2.25 0 3.375-.216 1.125-.648 2.124-1.296 3.002-.648.878-1.512 1.58-2.592 2.106-1.08.526-2.304.792-3.68.792s-2.6-.266-3.68-.792c-1.08-.526-1.944-1.228-2.592-2.106-.648-.878-1.08-1.877-1.296-3.002-.216-1.125-.216-2.25 0-3.375.216-1.125.648-2.124 1.296-3.002.648-.878 1.512-1.58 2.592-2.106C9.4 2.766 10.624 2.5 12 2.5s2.6.266 3.68.792c1.08.526 1.944 1.228 2.592 2.106.648.878 1.08 1.877 1.296 3.002z"/>
+          </svg>
+          <span>Sign In with Auth0</span>
+        </button>
+
+        <div class="relative mb-6">
+          <div class="absolute inset-0 flex items-center">
+            <div class="w-full border-t border-gray-300"></div>
+          </div>
+          <div class="relative flex justify-center text-sm">
+            <span class="px-2 bg-white text-lexara-gray">Or use your email</span>
+          </div>
+        </div>
+
+        <!-- Email/Password Form -->
+        <form id="email-login-form" class="space-y-6">
+          <div>
+            <label for="email" class="block text-sm font-medium text-lexara-secondary mb-2">
+              Email Address
+            </label>
+            <input type="email" id="email" name="email" required
+                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-lexara-primary focus:border-transparent">
+          </div>
+
+          <div>
+            <label for="password" class="block text-sm font-medium text-lexara-secondary mb-2">
+              Password
+            </label>
+            <input type="password" id="password" name="password" required
+                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-lexara-primary focus:border-transparent">
+          </div>
+
+          <div class="flex items-center justify-between">
+            <label class="flex items-center">
+              <input type="checkbox" class="rounded border-gray-300 text-lexara-primary focus:ring-lexara-primary">
+              <span class="ml-2 text-sm text-lexara-gray">Remember me</span>
+            </label>
+
+            <a href="/forgot-password" class="text-sm text-lexara-primary hover:underline">
+              Forgot password?
+            </a>
+          </div>
+
+          <button type="submit" 
+                  class="w-full bg-lexara-secondary text-white py-3 rounded-lg font-medium hover:bg-gray-800 transition-colors">
+            Sign In
+          </button>
+        </form>
+
+        <!-- Additional Links -->
+        <div class="mt-6 text-center space-y-2">
+          <p class="text-sm text-lexara-gray">
+            Don't have an account? 
+            <a href="/signup" class="text-lexara-primary hover:underline font-medium">Sign up</a>
+          </p>
+          <p class="text-sm text-lexara-gray">
+            Need help? 
+            <a href="/contact" class="text-lexara-primary hover:underline">Contact support</a>
+          </p>
+        </div>
+      </div>
+
+      <!-- Loading Indicator -->
+      <div id="loading-indicator" class="hidden text-center">
+        <div class="inline-flex items-center space-x-2">
+          <div class="w-4 h-4 border-2 border-lexara-primary border-t-transparent rounded-full animate-spin"></div>
+          <span class="text-sm text-lexara-gray">Signing you in...</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</BaseLayout>
+
+<script>
+  import { initializeAuth, login, isAuthenticated } from '@/utils/auth';
+  
+  document.addEventListener('DOMContentLoaded', async () => {
+    await initializeAuth();
+    await checkExistingAuth();
+    setupEventListeners();
+    handleURLErrors();
+  });
+
+  async function checkExistingAuth() {
+    // If user is already authenticated, redirect to dashboard
+    const isAuth = await isAuthenticated();
+    if (isAuth) {
+      window.location.href = '/dashboard';
+    }
+  }
+
+  function handleURLErrors() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const error = urlParams.get('error');
+    
+    if (error) {
+      const errorMessage = document.getElementById('error-message');
+      const errorText = document.getElementById('error-text');
+      
+      let message = 'An error occurred during sign in.';
+      
+      switch (error) {
+        case 'callback_failed':
+          message = 'Authentication callback failed. Please try again.';
+          break;
+        case 'unauthorized':
+          message = 'You are not authorized to access this application.';
+          break;
+        case 'access_denied':
+          message = 'Access was denied. Please check your credentials.';
+          break;
+        default:
+          message = 'Authentication failed. Please try again.';
+      }
+      
+      if (errorMessage && errorText) {
+        errorText.textContent = message;
+        errorMessage.classList.remove('hidden');
+      }
+    }
+  }
+
+  function setupEventListeners() {
+    // Auth0 login button
+    const auth0LoginButton = document.getElementById('auth0-login-button');
+    if (auth0LoginButton) {
+      auth0LoginButton.addEventListener('click', async () => {
+        try {
+          showLoading(true);
+          await login('/dashboard');
+        } catch (error) {
+          console.error('Auth0 login failed:', error);
+          showError('Authentication failed. Please try again.');
+          showLoading(false);
+        }
+      });
+    }
+
+    // Email/password form
+    const emailForm = document.getElementById('email-login-form');
+    if (emailForm) {
+      emailForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        // For now, redirect to Auth0 since we're using Auth0 for authentication
+        // In a full implementation, this would handle email/password login
+        showError('Please use the "Sign In with Auth0" button above for secure authentication.');
+      });
+    }
+  }
+
+  function showLoading(show) {
+    const loadingIndicator = document.getElementById('loading-indicator');
+    const auth0Button = document.getElementById('auth0-login-button');
+    
+    if (loadingIndicator && auth0Button) {
+      if (show) {
+        loadingIndicator.classList.remove('hidden');
+        auth0Button.disabled = true;
+        auth0Button.classList.add('opacity-50');
+      } else {
+        loadingIndicator.classList.add('hidden');
+        auth0Button.disabled = false;
+        auth0Button.classList.remove('opacity-50');
+      }
+    }
+  }
+
+  function showError(message) {
+    const errorMessage = document.getElementById('error-message');
+    const errorText = document.getElementById('error-text');
+    
+    if (errorMessage && errorText) {
+      errorText.textContent = message;
+      errorMessage.classList.remove('hidden');
+      
+      // Auto-hide after 5 seconds
+      setTimeout(() => {
+        errorMessage.classList.add('hidden');
+      }, 5000);
+    }
+  }
+</script>

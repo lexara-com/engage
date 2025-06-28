@@ -186,50 +186,21 @@ const { sessionId, initialSession } = Astro.props;
         this.showTypingIndicator();
         this.updateConnectionStatus('connected');
         
-        // Send to API and handle streaming response
-        const stream = await this.apiClient.sendMessage(this.session.id, content);
+        // Send to API and handle JSON response
+        const response = await this.apiClient.sendMessage(this.session.id, content);
         
-        if (!stream) {
-          throw new Error('Failed to get response stream');
-        }
-        
-        // Create placeholder AI message
-        const aiMessage = createMessage('', 'assistant', { isStreaming: true });
-        this.session = addMessageToSession(this.session, aiMessage);
+        // Hide typing indicator
         this.hideTypingIndicator();
+        
+        // Create AI message with response
+        const aiMessage = createMessage(response.message || 'I received your message.', 'assistant');
+        this.session = addMessageToSession(this.session, aiMessage);
         this.renderMessage(aiMessage);
         
-        let accumulatedContent = '';
-        
-        // Process streaming response
-        await processStream(
-          stream,
-          (chunk: string) => {
-            // Update message content with new chunk
-            accumulatedContent += chunk;
-            this.session = updateLastMessage(this.session, accumulatedContent, { isStreaming: true });
-            this.updateLastMessage(accumulatedContent, true);
-          },
-          () => {
-            // Mark message as complete
-            this.session = updateLastMessage(this.session, accumulatedContent, { isComplete: true, isStreaming: false });
-            this.updateLastMessage(accumulatedContent, false);
-            this.resetInputArea();
-            SessionStorage.save(this.session);
-          },
-          (error: Error) => {
-            // Handle error
-            console.error('Streaming error:', error);
-            this.session = updateLastMessage(this.session, accumulatedContent || 'Sorry, I encountered an error processing your request.', {
-              isComplete: true,
-              isStreaming: false,
-              error: error.message
-            });
-            this.updateLastMessage(accumulatedContent || 'Sorry, I encountered an error processing your request.', false, error.message);
-            this.resetInputArea();
-            this.updateConnectionStatus('disconnected');
-          }
-        );
+        // Reset input and save session
+        this.resetInputArea();
+        this.updateConnectionStatus('connected');
+        SessionStorage.save(this.session);
         
       } catch (error) {
         console.error('Error sending message:', error);

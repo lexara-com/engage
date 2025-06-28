@@ -1,0 +1,106 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+---
+
+<BaseLayout 
+  title="Lexara - AI-Powered Legal Client Intake" 
+  description="Transform your law firm's client intake with AI-powered conversations"
+  showNavigation={false}
+>
+  <div class="min-h-screen bg-gradient-to-br from-lexara-light to-lexara-background flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-4xl w-full">
+      <!-- Hero Section -->
+      <div class="text-center mb-12">
+        <div class="flex justify-center items-center space-x-4 mb-8">
+          <div class="w-20 h-20 bg-lexara-primary rounded-xl flex items-center justify-center">
+            <span class="text-lexara-white font-bold text-3xl">L</span>
+          </div>
+          <h1 class="text-5xl font-serif font-medium text-lexara-primary">LEXARA</h1>
+        </div>
+        
+        <h2 class="text-3xl md:text-4xl font-serif text-lexara-primary mb-4">
+          AI-Powered Legal Client Intake
+        </h2>
+        <p class="text-xl text-lexara-secondary mb-8 max-w-2xl mx-auto font-sans">
+          Transform your law firm's client intake process with intelligent conversations, 
+          automatic conflict detection, and seamless lead qualification.
+        </p>
+        
+        <div class="flex flex-col sm:flex-row gap-4 justify-center">
+          <a href="/signup" class="bg-lexara-primary text-lexara-white px-8 py-3 rounded-lg font-semibold hover:bg-lexara-secondary transition-colors">
+            Start Free Trial
+          </a>
+          <a href="/login" class="bg-lexara-white text-lexara-primary border-2 border-lexara-primary px-8 py-3 rounded-lg font-semibold hover:bg-lexara-light transition-colors">
+            Sign In
+          </a>
+        </div>
+      </div>
+
+      <!-- Features Grid -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
+        <div class="bg-white rounded-2xl shadow-lg p-8 text-center">
+          <div class="w-12 h-12 bg-lexara-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg class="w-6 h-6 text-lexara-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+            </svg>
+          </div>
+          <h3 class="text-xl font-semibold text-lexara-secondary mb-2">Intelligent Conversations</h3>
+          <p class="text-lexara-gray">AI-powered agent conducts natural conversations to gather comprehensive case information.</p>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-lg p-8 text-center">
+          <div class="w-12 h-12 bg-lexara-accent/10 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg class="w-6 h-6 text-lexara-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+            </svg>
+          </div>
+          <h3 class="text-xl font-semibold text-lexara-secondary mb-2">Conflict Detection</h3>
+          <p class="text-lexara-gray">Automatic conflict of interest detection protects your firm from ethical violations.</p>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-lg p-8 text-center">
+          <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+            </svg>
+          </div>
+          <h3 class="text-xl font-semibold text-lexara-secondary mb-2">Real-time Analytics</h3>
+          <p class="text-lexara-gray">Track conversion rates, lead quality, and intake performance with detailed analytics.</p>
+        </div>
+      </div>
+
+      <!-- Demo CTA -->
+      <div class="bg-white rounded-2xl shadow-lg p-8 text-center">
+        <h3 class="text-2xl font-bold text-lexara-secondary mb-4">Ready to Transform Your Intake?</h3>
+        <p class="text-lexara-gray mb-6">Join law firms already using Lexara to capture more qualified leads and reduce screening time by 70%.</p>
+        <div class="flex flex-col sm:flex-row gap-4 justify-center">
+          <a href="/signup" class="bg-lexara-primary text-white px-8 py-3 rounded-lg font-medium hover:bg-blue-800 transition-colors">
+            Start 14-Day Free Trial
+          </a>
+          <a href="/contact" class="text-lexara-primary hover:underline font-medium px-8 py-3">
+            Schedule a Demo
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</BaseLayout>
+
+<script>
+  import { initializeAuth, isAuthenticated } from '@/utils/auth';
+  
+  document.addEventListener('DOMContentLoaded', async () => {
+    try {
+      await initializeAuth();
+      
+      // If user is already authenticated, redirect to dashboard
+      const isAuth = await isAuthenticated();
+      if (isAuth) {
+        window.location.href = '/dashboard';
+      }
+    } catch (error) {
+      console.error('Auth check failed:', error);
+      // Continue showing landing page
+    }
+  });
+</script>

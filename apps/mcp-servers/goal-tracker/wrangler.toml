@@ -1,0 +1,36 @@
+name = "engage-goal-tracker-mcp"
+main = "src/mcp/goal-tracker/worker.ts"
+compatibility_date = "2024-01-01"
+compatibility_flags = ["nodejs_compat"]
+
+# Development environment
+[env.dev]
+workers_dev = true
+
+# Staging environment  
+[env.staging]
+name = "engage-goal-tracker-mcp-staging"
+workers_dev = false
+
+# Production environment
+[env.production]
+name = "engage-goal-tracker-mcp-production" 
+workers_dev = false
+routes = [
+  { pattern = "goal-tracker.engage.lexara.com/*", zone_name = "lexara.com" }
+]
+
+# Environment variables
+[vars]
+ENVIRONMENT = "development"
+LOG_LEVEL = "info"
+
+# Production-specific variables
+[env.production.vars]
+ENVIRONMENT = "production"
+LOG_LEVEL = "warn"
+
+# Staging-specific variables  
+[env.staging.vars]
+ENVIRONMENT = "staging"
+LOG_LEVEL = "debug"

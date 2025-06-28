@@ -2,13 +2,29 @@ name = "engage-ui"
 compatibility_date = "2024-01-01"
 pages_build_output_dir = "dist"
 
+# Development environment
+[env.dev]
+name = "engage-ui-dev"
+
+[env.dev.vars]
+ENVIRONMENT = "development"
+API_BASE_URL = "https://dev.lexara.app"
+ADMIN_BASE_URL = "https://admin-dev.lexara.app"
+
+# Test environment  
+[env.test]
+name = "engage-ui-test"
+
+[env.test.vars]
+ENVIRONMENT = "test"
+API_BASE_URL = "https://test.lexara.app"
+ADMIN_BASE_URL = "https://admin-test.lexara.app"
+
+# Production environment
 [env.production]
 name = "engage-ui-production"
 
-[env.staging]
-name = "engage-ui-staging"
-
-# Environment variables for the UI
-[vars]
-ENGAGE_API_BASE = "https://engage-legal-ai-production.cloudswift.workers.dev"
+[env.production.vars]
 ENVIRONMENT = "production"
+API_BASE_URL = "https://lexara.app"
+ADMIN_BASE_URL = "https://admin.lexara.app"

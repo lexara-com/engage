@@ -1,0 +1,23 @@
+{
+  "name": "@lexara/auth-lib",
+  "version": "0.1.0",
+  "description": "Authentication and authorization library for Engage Legal AI Platform",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@lexara/shared-types": "workspace:*",
+    "@lexara/shared-utils": "workspace:*"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20240909.0",
+    "typescript": "^5.5.0"
+  },
+  "publishConfig": {
+    "access": "restricted"
+  }
+}

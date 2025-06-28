@@ -1,0 +1,248 @@
+---
+// Server-side authentication is handled by middleware
+// User info is available via Astro.locals if authenticated
+const user = Astro.locals.user;
+const isAuthenticated = Astro.locals.isAuthenticated;
+---
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Conversations - Lexara Firm Portal</title>
+  <style>
+    body {
+      font-family: 'Open Sans', sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #f7fafc;
+      color: #2d3748;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+    .header {
+      background: white;
+      border-bottom: 1px solid #e2e8f0;
+      padding: 1rem 0;
+      margin-bottom: 2rem;
+    }
+    .header-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 2rem;
+    }
+    .logo {
+      display: flex;
+      align-items: center;
+      font-size: 1.5rem;
+      font-weight: bold;
+      color: #2d3748;
+    }
+    .logo-icon {
+      width: 2rem;
+      height: 2rem;
+      background: #667eea;
+      border-radius: 0.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-right: 0.75rem;
+      color: white;
+      font-weight: bold;
+    }
+    .back-link {
+      color: #667eea;
+      text-decoration: none;
+      font-weight: 500;
+    }
+    .back-link:hover {
+      text-decoration: underline;
+    }
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      color: #718096;
+      font-size: 0.875rem;
+    }
+    .content {
+      background: white;
+      border-radius: 0.5rem;
+      padding: 2rem;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+    .status-badge {
+      display: inline-block;
+      padding: 0.25rem 0.75rem;
+      border-radius: 0.25rem;
+      font-size: 0.75rem;
+      font-weight: 500;
+    }
+    .status-success {
+      background: #d4edda;
+      color: #155724;
+    }
+    .debug-section {
+      background: #f8f9fa;
+      border: 1px solid #e2e8f0;
+      border-radius: 0.5rem;
+      padding: 1.5rem;
+      margin: 2rem 0;
+    }
+    .debug-data {
+      background: #f1f3f4;
+      padding: 1rem;
+      border-radius: 0.25rem;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      font-family: 'Courier New', monospace;
+      font-size: 0.875rem;
+      line-height: 1.4;
+    }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <div class="header-content">
+      <div class="logo">
+        <div class="logo-icon">L</div>
+        <span>Lexara Firm Portal</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 2rem;">
+        <a href="/firm/dashboard" class="back-link">← Back to Dashboard</a>
+        <div class="user-info">
+          {user && (
+            <span>Logged in as: {user.name || user.email}</span>
+          )}
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="content">
+      <h1>Conversations</h1>
+      
+      <!-- Success Message -->
+      {isAuthenticated && (
+        <div style="margin: 1rem 0;">
+          <span class="status-badge status-success">
+            ✅ Authentication successful! You can access this protected page.
+          </span>
+        </div>
+      )}
+      
+      <p>This is the conversations page. If you can see this content with your user information below, then the session validation is working correctly!</p>
+      
+      {user ? (
+        <div style="margin-top: 2rem; padding: 1rem; background: #f8f9fa; border-radius: 0.25rem;">
+          <h3>✅ Session Information:</h3>
+          <ul>
+            <li><strong>Name:</strong> {user.name || 'Not provided'}</li>
+            <li><strong>Email:</strong> {user.email}</li>
+            <li><strong>User ID:</strong> {user.id}</li>
+            <li><strong>Firm ID:</strong> {user.firmId}</li>
+            <li><strong>Roles:</strong> {user.roles?.join(', ') || 'None'}</li>
+          </ul>
+        </div>
+      ) : (
+        <div style="margin-top: 2rem; padding: 1rem; background: #fed7d7; border-radius: 0.25rem; color: #c53030;">
+          <h3>❌ No Session Found</h3>
+          <p>This should not happen if you reached this page through proper authentication.</p>
+        </div>
+      )}
+      
+      <div style="margin-top: 2rem; display: flex; gap: 1rem;">
+        <a href="/firm/dashboard" style="color: #667eea; text-decoration: none; padding: 0.5rem 1rem; border: 1px solid #667eea; border-radius: 0.25rem;">
+          ← Back to Dashboard
+        </a>
+        <a href="/firm/debug-session" style="color: #667eea; text-decoration: none; padding: 0.5rem 1rem; border: 1px solid #667eea; border-radius: 0.25rem;">
+          🔧 Debug Session
+        </a>
+      </div>
+    </div>
+
+    <!-- Debug Session Information -->
+    <div class="debug-section">
+      <h3>Session Debugging Information</h3>
+      <p style="margin-bottom: 1rem; color: #718096; font-size: 0.875rem;">
+        This helps identify if there are session validation issues.
+      </p>
+      
+      <div class="debug-data">
+        {JSON.stringify({
+          serverSide: {
+            user: user,
+            isAuthenticated: isAuthenticated,
+            userAgent: Astro.request.headers.get('user-agent'),
+            url: Astro.url.href,
+            pathname: Astro.url.pathname,
+            timestamp: new Date().toISOString()
+          }
+        }, null, 2)}
+      </div>
+    </div>
+
+    <!-- Client-side Cookie Check -->
+    <div class="debug-section">
+      <h3>Client-side Cookie Check</h3>
+      <div class="debug-data" id="client-cookies">
+        Loading client-side cookie data...
+      </div>
+    </div>
+  </main>
+
+  <script>
+    // Check client-side cookies to compare with server-side validation
+    function displayClientCookies() {
+      const debugElement = document.getElementById('client-cookies');
+      
+      // Get all cookies
+      const cookies = {};
+      document.cookie.split(';').forEach(cookie => {
+        const [name, value] = cookie.trim().split('=');
+        if (name && value) {
+          cookies[name] = value;
+        }
+      });
+
+      // Parse firm session if it exists
+      let sessionData = null;
+      const sessionCookie = cookies['firm_session'];
+      if (sessionCookie) {
+        try {
+          sessionData = JSON.parse(decodeURIComponent(sessionCookie));
+        } catch (error) {
+          sessionData = { error: 'Failed to parse session cookie: ' + error.message };
+        }
+      }
+
+      const clientData = {
+        allCookies: Object.keys(cookies),
+        firmSessionExists: !!sessionCookie,
+        firmSessionData: sessionData,
+        sessionValid: sessionData && sessionData.isAuthenticated && 
+                      sessionData.exp > Math.floor(Date.now() / 1000),
+        sessionExpiry: sessionData?.exp ? new Date(sessionData.exp * 1000).toISOString() : null,
+        timeLeft: sessionData?.exp ? Math.max(0, sessionData.exp - Math.floor(Date.now() / 1000)) + ' seconds' : null,
+        url: window.location.href,
+        timestamp: new Date().toISOString()
+      };
+
+      debugElement.textContent = JSON.stringify(clientData, null, 2);
+    }
+
+    // Initialize on page load
+    window.addEventListener('load', () => {
+      displayClientCookies();
+    });
+  </script>
+</body>
+</html>

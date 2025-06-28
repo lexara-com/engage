@@ -19,12 +19,145 @@ export type GoalCategory = 'identification' | 'conflict_resolution' | 'legal_con
 
 export type GoalSource = 'base' | 'additional' | 'conflict_checker' | 'manual';
 
+// Multi-Tenant Types
+export type SubscriptionTier = 'starter' | 'professional' | 'enterprise';
+export type SubscriptionStatus = 'trial' | 'active' | 'suspended' | 'cancelled';
+export type FirmRole = 'admin' | 'lawyer' | 'staff' | 'viewer';
+
+export interface FirmBranding {
+  logoUrl?: string;
+  primaryColor: string;     // "#1a2b3c"
+  secondaryColor: string;   // "#4a5b6c"
+  fontFamily?: string;      // "Inter, sans-serif"
+  customCss?: string;       // Advanced styling
+}
+
+export interface FirmSubscription {
+  tier: SubscriptionTier;
+  status: SubscriptionStatus;
+  trialEndsAt?: Date;
+  monthlyConversationLimit: number;
+  currentUsage: number;
+  stripeCustomerId?: string;
+  stripeSubscriptionId?: string;
+}
+
+export interface FirmCompliance {
+  hipaaEnabled: boolean;
+  retentionPolicyDays: number;      // 90, 365, 2555 (7 years)
+  allowAnonymousChats: boolean;
+  requireAuth0Login: boolean;
+  enableConflictChecking: boolean;
+  autoDeleteAfterDays?: number;
+}
+
+export interface AdminPermissions {
+  canManageUsers: boolean;
+  canManageConflicts: boolean;
+  canViewAnalytics: boolean;
+  canManageBilling: boolean;
+  canManageBranding: boolean;
+  canManageCompliance: boolean;
+}
+
+export interface FirmUser {
+  auth0UserId: string;
+  email: string;
+  name: string;
+  role: FirmRole;
+  permissions: AdminPermissions;
+  addedAt: Date;
+  lastLogin?: Date;
+  isActive: boolean;
+}
+
+export interface Firm {
+  firmId: string;           // ULID - Primary key
+  name: string;             // "Smith & Associates Law"
+  slug: string;             // "smith-associates" for subdomain
+  domain?: string;          // Custom domain "intake.smithlaw.com"
+  
+  // Contact Information
+  contactEmail: string;
+  contactPhone?: string;
+  address?: Address;
+  website?: string;
+  
+  // Branding
+  branding: FirmBranding;
+  
+  // Practice Configuration
+  practiceAreas: string[];  // ["personal_injury", "employment_law"]
+  restrictions: string[];   // Areas they don't handle
+  supportingDocuments: string[]; // Document IDs in Vectorize
+  
+  // Business Configuration
+  subscription: FirmSubscription;
+  
+  // Compliance Settings
+  compliance: FirmCompliance;
+  
+  // Users and Access
+  users: FirmUser[];        // All users with access to this firm
+  
+  // Metadata
+  createdAt: Date;
+  lastActive: Date;
+  isActive: boolean;
+  
+  // Analytics (cached)
+  analytics?: {
+    totalConversations: number;
+    monthlyConversations: number;
+    conversionRate: number;
+    avgResponseTime: number;
+    lastCalculated: Date;
+  };
+}
+
+export interface FirmContext {
+  firm: Firm;
+  currentUser?: FirmUser;
+  isValidDomain: boolean;
+  subdomain?: string;
+}
+
 export interface Message {
   id: string;
   role: 'user' | 'agent';
   content: string;
   timestamp: Date;
   metadata?: Record<string, unknown>;
+}
+
+// HIPAA-enhanced message with encryption support
+export interface EncryptedMessage extends Omit<Message, 'content'> {
+  // Content handling
+  content?: string;                 // Plain text (if not sensitive)
+  encryptedContent?: {
+    encryptedData: string;          // Base64 encoded
+    iv: string;                     // Base64 encoded initialization vector
+    authTag: string;                // Base64 encoded authentication tag
+    algorithm: 'AES-256-GCM';
+    keyId: string;                  // Reference to encryption key
+  };
+  isEncrypted: boolean;
+  
+  // HIPAA compliance
+  classification: {
+    containsPII: boolean;
+    containsePHI: boolean;
+    containsMedicalInfo: boolean;
+    sensitivityLevel: 'public' | 'internal' | 'confidential' | 'restricted';
+    requiresEncryption: boolean;
+  };
+  
+  // Data integrity
+  integrityHash: string;
+  
+  // Audit trail
+  encryptedBy?: string;             // System or user ID
+  encryptionTimestamp?: Date;
 }
 
 export interface Goal {
@@ -61,7 +194,16 @@ export interface ConversationState {
   // Identity
   sessionId: string; // ULID
   userId: string;    // ULID, maps to Auth0 post-login
-  firmId: string;
+  firmId: string;    // ULID - Which firm owns this conversation
+  
+  // Firm Context (cached for performance)
+  firmConfig?: {
+    name: string;
+    branding: FirmBranding;
+    practiceAreas: string[];
+    restrictions: string[];
+    compliance: FirmCompliance;
+  };
   
   // Authentication & Security
   isAuthenticated: boolean;
@@ -218,6 +360,11 @@ export interface Env {
   // Durable Object bindings
   CONVERSATION_SESSION: DurableObjectNamespace;
   USER_IDENTITY: DurableObjectNamespace;
+  FIRM_REGISTRY: DurableObjectNamespace;
+  
+  // Platform Admin Durable Object bindings
+  PLATFORM_SESSION: DurableObjectNamespace;
+  PLATFORM_AUDIT_LOG: DurableObjectNamespace;
   
   // Vectorize bindings
   SUPPORTING_DOCUMENTS: VectorizeIndex;
@@ -230,6 +377,30 @@ export interface Env {
   ENVIRONMENT: string;
   LOG_LEVEL: string;
   
+  // Domain and API configuration
+  API_BASE_URL?: string;
+  ADMIN_BASE_URL?: string;
+  PLATFORM_BASE_URL?: string;
+  CORS_ORIGINS?: string;
+  
+  // Auth0 configuration
+  AUTH0_DOMAIN?: string;
+  AUTH0_CLIENT_ID?: string;
+  AUTH0_CLIENT_SECRET?: string;
+  AUTH0_AUDIENCE?: string;
+  
+  // Rate limiting
+  RATE_LIMIT_PER_MINUTE?: string;
+  MAX_REQUEST_SIZE?: string;
+  
   // API Keys
   ANTHROPIC_API_KEY: string;
+  
+  // OpenTelemetry configuration
+  OTEL_EXPORTER_OTLP_ENDPOINT?: string;
+  OTEL_EXPORTER_OTLP_HEADERS?: string;
+  OTEL_EXPORTER_OTLP_PROTOCOL?: string;
+  OTEL_SERVICE_NAME?: string;
+  OTEL_SERVICE_VERSION?: string;
+  LOGFIRE_TOKEN?: string; // Pydantic Logfire authentication token
 }

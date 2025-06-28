@@ -78,53 +78,87 @@ export function updateLastMessage(session: ChatSession, content: string, metadat
 export class EngageApiClient {
   private baseUrl: string;
   
-  constructor(baseUrl: string = '') {
-    // Use relative URLs for same-origin requests to leverage Astro's API routes
-    this.baseUrl = baseUrl || (typeof window !== 'undefined' ? window.location.origin : '');
+  constructor(baseUrl?: string) {
+    // Use the environment-specific API base URL
+    this.baseUrl = baseUrl || 
+      (typeof window !== 'undefined' && (window as any).__ENV_API_BASE_URL__) ||
+      import.meta.env.PUBLIC_API_BASE_URL ||
+      'https://dev.lexara.app';
   }
   
-  async sendMessage(sessionId: string, message: string): Promise<ReadableStream<Uint8Array> | null> {
+  async sendMessage(sessionId: string, message: string): Promise<any> {
+    console.log('sendMessage called:', { sessionId, message, baseUrl: this.baseUrl });
+    
     try {
-      const response = await fetch(`${this.baseUrl}/api/chat`, {
+      const url = `${this.baseUrl}/api/v1/conversations/message`;
+      console.log('Making request to:', url);
+      
+      const response = await fetch(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           sessionId,
-          message,
-          stream: true
+          message
         })
       });
       
+      console.log('Response received:', response.status, response.statusText);
+      
       if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        let errorData;
+        try {
+          errorData = await response.json();
+        } catch {
+          errorData = { message: `HTTP ${response.status}: ${response.statusText}` };
+        }
+        console.error('API Error:', errorData);
+        throw new Error(errorData.message || `HTTP ${response.status}: ${response.statusText}`);
       }
       
-      return response.body;
+      const result = await response.json();
+      console.log('API Response:', result);
+      return result;
     } catch (error) {
       console.error('Failed to send message:', error);
-      return null;
+      throw error;
     }
   }
   
   async createSession(): Promise<ApiResponse<{ sessionId: string }>> {
+    console.log('createSession called with baseUrl:', this.baseUrl);
+    
     try {
-      const response = await fetch(`${this.baseUrl}/api/chat/session`, {
+      const url = `${this.baseUrl}/api/v1/conversations`;
+      console.log('Creating session at:', url);
+      
+      const response = await fetch(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          firmId: 'firm_test_123' // Default firm ID for demo
+          firmId: 'demo' // Default firm ID for demo
         })
       });
       
+      console.log('Session creation response:', response.status, response.statusText);
+      
       if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Session creation failed:', errorText);
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
       
-      return await response.json();
+      const data = await response.json();
+      console.log('Session created successfully:', data);
+      
+      return {
+        success: true,
+        sessionId: data.sessionId,
+        data: { sessionId: data.sessionId }
+      };
     } catch (error) {
       console.error('Failed to create session:', error);
       return {
@@ -136,13 +170,12 @@ export class EngageApiClient {
   
   async getSession(sessionId: string): Promise<ApiResponse<ChatSession>> {
     try {
-      const response = await fetch(`${this.baseUrl}/api/chat/session/${sessionId}`);
-      
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-      
-      return await response.json();
+      // For now, we don't have a get session endpoint, so return failure
+      // This will trigger the client to create a new session
+      return {
+        success: false,
+        error: 'Session retrieval not implemented'
+      };
     } catch (error) {
       console.error('Failed to get session:', error);
       return {

@@ -7,6 +7,7 @@ import { createLogger } from '@/utils/logger';
 import { EngageError } from '@/utils/errors';
 import { generateMessageId, generateSessionId } from '@/utils/ulid';
 import { MCPClient, createGoalTrackerClient, createConflictCheckerClient, createAdditionalGoalsClient } from '@/utils/mcp-client';
+import { trackAIServiceCall, trackConversationFlow, telemetry } from '@/utils/simple-telemetry';
 
 export interface AgentContext {
   sessionId: string;
@@ -119,20 +120,27 @@ export class ClaudeAgent {
 
   // Get conversation context from Durable Object
   private async getConversationContext(sessionId: string): Promise<AgentContext> {
-    // Use sessionId directly as the Durable Object name for consistency
-    const conversationStub = this.env.CONVERSATION_SESSION.get(
-      this.env.CONVERSATION_SESSION.idFromName(sessionId)
+    return trackConversationFlow(
+      'get_context',
+      sessionId,
+      async () => {
+        // Use sessionId directly as the Durable Object name for consistency
+        const conversationStub = this.env.CONVERSATION_SESSION.get(
+          this.env.CONVERSATION_SESSION.idFromName(sessionId)
+        );
+
+        const response = await conversationStub.fetch(new Request('http://durable-object/context', {
+          method: 'GET'
+        }));
+
+        if (!response.ok) {
+          throw new EngageError('Failed to get conversation context', 'CONTEXT_ERROR', response.status);
+        }
+
+        return await response.json() as AgentContext;
+      },
+      { sessionId }
     );
-
-    const response = await conversationStub.fetch(new Request('http://durable-object/context', {
-      method: 'GET'
-    }));
-
-    if (!response.ok) {
-      throw new EngageError('Failed to get conversation context', 'CONTEXT_ERROR', response.status);
-    }
-
-    return await response.json() as AgentContext;
   }
 
   // Resume conversation using resume token
@@ -196,12 +204,14 @@ export class ClaudeAgent {
         phase: context.phase
       });
 
-      // Call Claude using Anthropic API directly
-      const response = await this.callAnthropicAPI(systemPrompt, conversationHistory);
-      const agentMessage = response || "I apologize, but I'm having trouble responding right now. Could you please try again?";
+      // Call AI service (Claude primary, Workers AI fallback)
+      const aiResult = await this.callAnthropicAPI(systemPrompt, conversationHistory);
+      const agentMessage = aiResult.message || "I apologize, but I'm having trouble responding right now. Could you please try again?";
 
-      logger.info('Generated Claude response', {
-        responseLength: agentMessage.length
+      logger.info('Generated AI response', {
+        responseLength: agentMessage.length,
+        aiService: aiResult.service,
+        isClaudeUsed: aiResult.service === 'claude-anthropic'
       });
 
       return agentMessage;
@@ -294,33 +304,123 @@ CURRENT GOALS:`;
   }
 
   // Call Anthropic API directly
-  private async callAnthropicAPI(systemPrompt: string, conversationHistory: Array<{role: string, content: string}>): Promise<string> {
+  private async callAnthropicAPI(systemPrompt: string, conversationHistory: Array<{role: string, content: string}>): Promise<{message: string, service: string}> {
+    const logger = createLogger(this.env, { operation: 'ai-service-call' });
+    
+    // Try Claude (Anthropic) first - this is our primary AI service
     try {
-      const response = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': this.env.ANTHROPIC_API_KEY,
-          'anthropic-version': '2023-06-01'
-        },
-        body: JSON.stringify({
-          model: 'claude-3-haiku-20240307',
-          max_tokens: 500,
-          temperature: 0.7,
-          system: systemPrompt,
-          messages: conversationHistory
-        })
+      logger.info('Attempting Claude API call', { 
+        hasApiKey: !!this.env.ANTHROPIC_API_KEY,
+        messageCount: conversationHistory.length 
       });
 
-      if (!response.ok) {
-        throw new Error(`Anthropic API error: ${response.status} ${response.statusText}`);
+      if (!this.env.ANTHROPIC_API_KEY) {
+        logger.warn('ANTHROPIC_API_KEY not configured, skipping to Workers AI fallback');
+        throw new Error('ANTHROPIC_API_KEY not configured');
       }
 
-      const data = await response.json() as any;
-      return data.content?.[0]?.text || '';
-    } catch (error) {
-      console.error('Anthropic API call failed:', error);
-      throw error;
+      return await trackAIServiceCall(
+        'generate_response',
+        'claude-anthropic',
+        async () => {
+          const response = await fetch('https://api.anthropic.com/v1/messages', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'x-api-key': this.env.ANTHROPIC_API_KEY,
+              'anthropic-version': '2023-06-01'
+            },
+            body: JSON.stringify({
+              model: 'claude-3-haiku-20240307',
+              max_tokens: 500,
+              temperature: 0.7,
+              system: systemPrompt,
+              messages: conversationHistory
+            })
+          });
+
+          if (!response.ok) {
+            logger.warn('Claude API failed', { 
+              status: response.status, 
+              statusText: response.statusText 
+            });
+            throw new Error(`Anthropic API error: ${response.status} ${response.statusText}`);
+          }
+
+          const data = await response.json() as any;
+          const claudeResponse = data.content?.[0]?.text || '';
+          
+          if (claudeResponse) {
+            logger.info('✅ Claude API successful', { 
+              responseLength: claudeResponse.length,
+              aiService: 'claude-anthropic'
+            });
+            
+            return { message: claudeResponse, service: 'claude-anthropic' };
+          } else {
+            throw new Error('Empty response from Claude API');
+          }
+        },
+        {
+          'ai.system_prompt.length': systemPrompt.length,
+          'ai.conversation.length': conversationHistory.length,
+          'ai.max_tokens': 500,
+          'ai.temperature': 0.7,
+        }
+      );
+
+    } catch (claudeError) {
+      logger.warn('Claude API failed, falling back to Workers AI', { 
+        error: (claudeError as Error).message 
+      });
+
+      // Fallback to Workers AI only if Claude fails
+      try {
+        logger.info('Attempting Workers AI fallback');
+        
+        return await trackAIServiceCall(
+          'generate_response_fallback',
+          'workers-ai',
+          async () => {
+            const prompt = `${systemPrompt}\n\nConversation:\n${conversationHistory.map(msg => `${msg.role}: ${msg.content}`).join('\n')}\n\nassistant:`;
+            
+            const aiResponse = await this.env.AI.run('@cf/meta/llama-3.1-8b-instruct', {
+              prompt,
+              max_tokens: 500
+            });
+            
+            if (aiResponse?.response) {
+              logger.info('✅ Workers AI fallback successful', { 
+                responseLength: aiResponse.response.length,
+                aiService: 'workers-ai-fallback'
+              });
+              
+              return { message: aiResponse.response, service: 'workers-ai-fallback' };
+            } else {
+              throw new Error('Empty response from Workers AI');
+            }
+          },
+          {
+            'ai.prompt.length': systemPrompt.length + conversationHistory.length,
+            'ai.max_tokens': 500,
+            'ai.fallback': true,
+          }
+        );
+        
+      } catch (workersError) {
+        const claudeErr = claudeError as Error;
+        const workersErr = workersError as Error;
+        logger.error('Both AI services failed', { 
+          claudeErrorMessage: claudeErr.message,
+          workersErrorMessage: workersErr.message
+        });
+        
+        // If both services fail, return fallback response with service info
+        return { 
+          message: "I apologize, but I'm experiencing technical difficulties. Please try again in a moment, or contact our office directly if this issue persists.",
+          service: 'fallback-error'
+        };
+      }
     }
   }
 
@@ -460,6 +560,15 @@ CURRENT GOALS:`;
       });
 
       const conflictResult = result.content?.[0]?.text ? JSON.parse(result.content[0].text) : {};
+
+      // Track conflict check with simple telemetry
+      if (conflictResult.status) {
+        await telemetry.trackConversation('conflict_check', context.sessionId, undefined, context.firmId, true, {
+          status: conflictResult.status,
+          confidence: conflictResult.confidence || 0,
+          matchCount: conflictResult.matchDetails?.length || 0
+        });
+      }
 
       logger.info('Conflict check completed', {
         status: conflictResult.status,

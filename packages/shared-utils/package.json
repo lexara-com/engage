@@ -1,0 +1,21 @@
+{
+  "name": "@lexara/shared-utils",
+  "version": "0.1.0",
+  "description": "Shared utilities for Engage Legal AI Platform",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@lexara/shared-types": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.5.0"
+  },
+  "publishConfig": {
+    "access": "restricted"
+  }
+}

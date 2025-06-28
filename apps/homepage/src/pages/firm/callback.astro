@@ -1,0 +1,282 @@
+---
+// Auth0 callback handler for firm portal
+// Based on working test-site implementation
+---
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Processing Login - Lexara Firm Portal</title>
+  <meta name="description" content="Completing your authentication">
+  
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  
+  <!-- Official Brand Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&family=Open+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,300;1,400;1,500;1,600;1,700;1,800&display=swap" rel="stylesheet">
+  
+  <style>
+    body {
+      font-family: 'Open Sans', sans-serif;
+      margin: 0;
+      padding: 0;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .container {
+      background: white;
+      border-radius: 12px;
+      padding: 3rem;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+      text-align: center;
+      max-width: 500px;
+    }
+    .logo {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-bottom: 2rem;
+    }
+    .logo-icon {
+      width: 3rem;
+      height: 3rem;
+      background: #667eea;
+      border-radius: 0.75rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-right: 0.75rem;
+    }
+    .logo-text {
+      font-size: 1.875rem;
+      font-weight: bold;
+      color: #2d3748;
+    }
+    h1 {
+      color: #2d3748;
+      margin-bottom: 1rem;
+      font-size: 2rem;
+    }
+    p {
+      color: #718096;
+      margin-bottom: 2rem;
+      font-size: 1.1rem;
+      line-height: 1.6;
+    }
+    .loading {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 1rem;
+    }
+    .spinner {
+      width: 32px;
+      height: 32px;
+      border: 3px solid #667eea;
+      border-top: 3px solid transparent;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    .error {
+      background: #fed7d7;
+      color: #c53030;
+      padding: 1rem;
+      border-radius: 8px;
+      margin-bottom: 1rem;
+      display: none;
+    }
+    .button {
+      display: inline-block;
+      background: #667eea;
+      color: white;
+      padding: 1rem 2rem;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: 600;
+      transition: all 0.2s;
+      border: none;
+      cursor: pointer;
+      font-size: 1rem;
+    }
+    .button:hover {
+      background: #5a67d8;
+      transform: translateY(-2px);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="logo">
+      <div class="logo-icon">
+        <span style="color: white; font-weight: bold; font-size: 1.25rem;">L</span>
+      </div>
+      <div class="logo-text">Lexara</div>
+    </div>
+
+    <h1>Processing Login</h1>
+    <p>Please wait while we complete your authentication and redirect you to your destination...</p>
+    
+    <div id="loading-state">
+      <div class="loading">
+        <div class="spinner"></div>
+      </div>
+      <p id="status-message">Verifying your credentials...</p>
+    </div>
+
+    <div id="error-state" class="error">
+      <strong>Authentication Error:</strong>
+      <span id="error-message">There was an issue processing your login.</span>
+      <br><br>
+      <a href="/firm/login" class="button">Try Again</a>
+    </div>
+  </div>
+
+  <script>
+    // Auth0 configuration (same as login page)
+    const auth0Config = {
+      domain: 'dev-sv0pf6cz2530xz0o.us.auth0.com',
+      clientId: 'OjsR6To3nDqYDLVHtRjDFpk7wRcCfrfi',
+      redirectUri: window.location.origin + '/firm/callback',
+      scope: 'openid profile email'
+    };
+
+    let auth0Client = null;
+
+    async function loadAuth0SDK() {
+      return new Promise((resolve, reject) => {
+        if (window.auth0) {
+          resolve(window.auth0);
+          return;
+        }
+
+        const script = document.createElement('script');
+        script.src = 'https://cdn.auth0.com/js/auth0-spa-js/2.0/auth0-spa-js.production.js';
+        script.onload = () => {
+          setTimeout(() => {
+            if (window.auth0) {
+              resolve(window.auth0);
+            } else {
+              reject(new Error('Auth0 SDK failed to load'));
+            }
+          }, 100);
+        };
+        script.onerror = () => reject(new Error('Failed to load Auth0 SDK'));
+        document.head.appendChild(script);
+      });
+    }
+
+    async function initAuth0() {
+      try {
+        const auth0 = await loadAuth0SDK();
+        auth0Client = await auth0.createAuth0Client(auth0Config);
+        return auth0Client;
+      } catch (error) {
+        console.error('Failed to initialize Auth0:', error);
+        throw error;
+      }
+    }
+
+    async function handleCallback() {
+      try {
+        document.getElementById('status-message').textContent = 'Processing authentication...';
+        
+        // Get URL parameters directly
+        const urlParams = new URLSearchParams(window.location.search);
+        const code = urlParams.get('code');
+        const error = urlParams.get('error');
+
+        console.log('Callback params:', { code: !!code, error });
+
+        if (error) {
+          throw new Error(`Auth0 error: ${error}`);
+        }
+
+        if (!code) {
+          throw new Error('No authorization code received');
+        }
+
+        // Initialize Auth0 client to handle PKCE properly
+        await initAuth0();
+
+        // Let Auth0 SDK handle the callback with PKCE validation
+        const result = await auth0Client.handleRedirectCallback();
+        console.log('Auth0 callback result:', result);
+
+        // Get the actual user from Auth0
+        const user = await auth0Client.getUser();
+        console.log('Auth0 user:', user);
+
+        if (!user) {
+          throw new Error('No user data received from Auth0');
+        }
+
+        // Create session with REAL user data from Auth0
+        const sessionData = {
+          userId: user.sub,
+          email: user.email,
+          name: user.name || user.nickname || user.given_name || 'User',
+          roles: user['https://lexara.app/roles'] || ['User'], // Auth0 custom claim for roles
+          firmId: user['https://lexara.app/firmId'] || 'default',
+          exp: Math.floor(Date.now() / 1000) + (24 * 60 * 60), // 24 hours
+          isAuthenticated: true
+        };
+
+        // Create session cookie with real Auth0 user data
+        document.cookie = `firm_session=${encodeURIComponent(JSON.stringify(sessionData))}; path=/; max-age=${24 * 60 * 60}; secure; samesite=strict`;
+
+        document.getElementById('status-message').textContent = 'Authentication successful! Redirecting...';
+
+        // Get the intended destination from sessionStorage (set by login page)
+        let returnTo = sessionStorage.getItem('firm_auth_return_to') || '/firm/dashboard';
+        
+        // Clear the return URL from sessionStorage now that we've used it
+        sessionStorage.removeItem('firm_auth_return_to');
+
+        console.log('Redirecting to:', returnTo);
+
+        // Small delay to show success message
+        setTimeout(() => {
+          window.location.href = returnTo;
+        }, 1000);
+
+      } catch (error) {
+        console.error('Callback error:', error);
+        showError(error.message || 'Authentication failed');
+      }
+    }
+
+    function showError(message) {
+      document.getElementById('loading-state').style.display = 'none';
+      const errorDiv = document.getElementById('error-state');
+      const errorMsg = document.getElementById('error-message');
+      errorMsg.textContent = message;
+      errorDiv.style.display = 'block';
+    }
+
+    // Check if this is a callback with auth parameters
+    function isAuthCallback() {
+      const urlParams = new URLSearchParams(window.location.search);
+      return urlParams.has('code');
+    }
+
+    // Start callback processing
+    window.addEventListener('load', () => {
+      if (isAuthCallback()) {
+        handleCallback();
+      } else {
+        showError('No authentication data found. Please try logging in again.');
+      }
+    });
+  </script>
+</body>
+</html>

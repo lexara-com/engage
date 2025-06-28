@@ -1,0 +1,245 @@
+---
+// Login page that redirects to Auth0 for firm portal authentication
+// Based on working test-site implementation
+---
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Signing In - Lexara Firm Portal</title>
+  <meta name="description" content="Redirecting to secure login">
+  
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  
+  <!-- Official Brand Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&family=Open+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,300;1,400;1,500;1,600;1,700;1,800&display=swap" rel="stylesheet">
+  
+  <!-- Tailwind CSS -->
+  <style>
+    body {
+      font-family: 'Open Sans', sans-serif;
+      margin: 0;
+      padding: 0;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .container {
+      background: white;
+      border-radius: 12px;
+      padding: 3rem;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+      text-align: center;
+      max-width: 500px;
+    }
+    .logo {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-bottom: 2rem;
+    }
+    .logo-icon {
+      width: 3rem;
+      height: 3rem;
+      background: #667eea;
+      border-radius: 0.75rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-right: 0.75rem;
+    }
+    .logo-text {
+      font-size: 1.875rem;
+      font-weight: bold;
+      color: #2d3748;
+    }
+    h1 {
+      color: #2d3748;
+      margin-bottom: 1rem;
+      font-size: 2rem;
+    }
+    p {
+      color: #718096;
+      margin-bottom: 2rem;
+      font-size: 1.1rem;
+      line-height: 1.6;
+    }
+    .loading {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 1rem;
+    }
+    .spinner {
+      width: 32px;
+      height: 32px;
+      border: 3px solid #667eea;
+      border-top: 3px solid transparent;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    .error {
+      background: #fed7d7;
+      color: #c53030;
+      padding: 1rem;
+      border-radius: 8px;
+      margin-bottom: 1rem;
+      display: none;
+    }
+    .button {
+      display: inline-block;
+      background: #667eea;
+      color: white;
+      padding: 1rem 2rem;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: 600;
+      transition: all 0.2s;
+      border: none;
+      cursor: pointer;
+      font-size: 1rem;
+    }
+    .button:hover {
+      background: #5a67d8;
+      transform: translateY(-2px);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="logo">
+      <div class="logo-icon">
+        <span style="color: white; font-weight: bold; font-size: 1.25rem;">L</span>
+      </div>
+      <div class="logo-text">Lexara</div>
+    </div>
+
+    <h1>Firm Portal Login</h1>
+    <p>You need to be authenticated to access the firm portal. Redirecting you to Auth0 for secure login...</p>
+    
+    <div id="loading-state">
+      <div class="loading">
+        <div class="spinner"></div>
+      </div>
+      <p>Redirecting to Auth0...</p>
+    </div>
+
+    <div id="error-state" class="error">
+      <strong>Authentication Error:</strong>
+      <span id="error-message">Something went wrong with the login process.</span>
+      <br><br>
+      <button class="button" onclick="retryLogin()">Try Again</button>
+    </div>
+
+    <div id="manual-login" style="display: none;">
+      <button class="button" onclick="startLogin()">Login with Auth0</button>
+    </div>
+  </div>
+
+  <script>
+    // Auth0 configuration for firm portal
+    const auth0Config = {
+      domain: 'dev-sv0pf6cz2530xz0o.us.auth0.com',
+      clientId: 'OjsR6To3nDqYDLVHtRjDFpk7wRcCfrfi',
+      redirectUri: window.location.origin + '/firm/callback',
+      scope: 'openid profile email'
+    };
+
+    let auth0Client = null;
+
+    async function loadAuth0SDK() {
+      return new Promise((resolve, reject) => {
+        if (window.auth0) {
+          resolve(window.auth0);
+          return;
+        }
+
+        const script = document.createElement('script');
+        script.src = 'https://cdn.auth0.com/js/auth0-spa-js/2.0/auth0-spa-js.production.js';
+        script.onload = () => {
+          setTimeout(() => {
+            if (window.auth0) {
+              resolve(window.auth0);
+            } else {
+              reject(new Error('Auth0 SDK failed to load'));
+            }
+          }, 100);
+        };
+        script.onerror = () => reject(new Error('Failed to load Auth0 SDK'));
+        document.head.appendChild(script);
+      });
+    }
+
+    async function initAuth0() {
+      try {
+        const auth0 = await loadAuth0SDK();
+        auth0Client = await auth0.createAuth0Client(auth0Config);
+        return auth0Client;
+      } catch (error) {
+        console.error('Failed to initialize Auth0:', error);
+        throw error;
+      }
+    }
+
+    async function startLogin() {
+      try {
+        // Get the intended destination from URL params
+        const urlParams = new URLSearchParams(window.location.search);
+        const returnTo = urlParams.get('returnTo') || '/firm/dashboard';
+
+        // Store return URL in sessionStorage for callback to use
+        sessionStorage.setItem('firm_auth_return_to', returnTo);
+
+        // Initialize Auth0 client first
+        if (!auth0Client) {
+          await initAuth0();
+        }
+
+        // Use Auth0 SDK with proper PKCE flow but store our return URL separately
+        await auth0Client.loginWithRedirect({
+          authorizationParams: {
+            redirect_uri: auth0Config.redirectUri,
+            scope: auth0Config.scope
+            // Don't pass custom state, let Auth0 handle PKCE state
+          }
+        });
+
+      } catch (error) {
+        console.error('Login error:', error);
+        showError(error.message);
+      }
+    }
+
+    function showError(message) {
+      document.getElementById('loading-state').style.display = 'none';
+      document.getElementById('manual-login').style.display = 'block';
+      const errorDiv = document.getElementById('error-state');
+      const errorMsg = document.getElementById('error-message');
+      errorMsg.textContent = message;
+      errorDiv.style.display = 'block';
+    }
+
+    function retryLogin() {
+      document.getElementById('error-state').style.display = 'none';
+      document.getElementById('loading-state').style.display = 'block';
+      document.getElementById('manual-login').style.display = 'none';
+      setTimeout(startLogin, 500);
+    }
+
+    // Auto-start login process
+    window.addEventListener('load', () => {
+      setTimeout(startLogin, 1000);
+    });
+  </script>
+</body>
+</html>
