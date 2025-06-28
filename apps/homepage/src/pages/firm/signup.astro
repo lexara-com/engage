@@ -172,6 +172,30 @@ if (Astro.request.method === 'POST') {
                      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-lexara-primary focus:border-transparent">
             </div>
 
+            <!-- Password Fields -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label for="password" class="block text-sm font-medium text-lexara-secondary mb-2">
+                  Password *
+                </label>
+                <input type="password" id="password" name="password" required
+                       minlength="8"
+                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-lexara-primary focus:border-transparent"
+                       placeholder="Min 8 chars with uppercase, lowercase, number">
+                <p class="text-xs text-lexara-gray mt-1">Must contain uppercase, lowercase, number, and special character</p>
+              </div>
+              
+              <div>
+                <label for="confirm-password" class="block text-sm font-medium text-lexara-secondary mb-2">
+                  Confirm Password *
+                </label>
+                <input type="password" id="confirm-password" name="confirm-password" required
+                       minlength="8"
+                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-lexara-primary focus:border-transparent"
+                       placeholder="Re-enter password">
+              </div>
+            </div>
+
             <!-- Terms and Privacy -->
             <div class="flex items-start space-x-3">
               <input type="checkbox" id="terms" name="terms" required
@@ -298,25 +322,19 @@ if (Astro.request.method === 'POST') {
   </div>
 </BaseLayout>
 
-<script>
-  import { initializeAuth, signup } from '../../utils/auth';
+<script is:inline>
+  // Note: Using is:inline so this script is included in the page
   
-  document.addEventListener('DOMContentLoaded', async () => {
-    await initializeAuth();
+  document.addEventListener('DOMContentLoaded', function() {
     setupEventListeners();
   });
 
   function setupEventListeners() {
-    // Auth0 signup button
+    // Auth0 signup button - simplified for now
     const auth0SignupButton = document.getElementById('auth0-signup-button');
     if (auth0SignupButton) {
-      auth0SignupButton.addEventListener('click', async () => {
-        try {
-          await signup('/firm/dashboard');
-        } catch (error) {
-          console.error('Auth0 signup failed:', error);
-          alert('Authentication failed. Please try again.');
-        }
+      auth0SignupButton.addEventListener('click', function() {
+        alert('Auth0 signup will be implemented later. Please use the manual form below.');
       });
     }
 
@@ -365,6 +383,32 @@ if (Astro.request.method === 'POST') {
           // Handle multiple practice areas
           const practiceAreas = formData.getAll('practice-areas');
           
+          // Validate passwords match
+          const password = data.password;
+          const confirmPassword = data['confirm-password'];
+          
+          if (!password || !confirmPassword) {
+            throw new Error('Please enter and confirm your password');
+          }
+          
+          if (password !== confirmPassword) {
+            throw new Error('Passwords do not match');
+          }
+          
+          if (password.length < 8) {
+            throw new Error('Password must be at least 8 characters long');
+          }
+          
+          // Validate password strength (Auth0 requirements)
+          const hasUppercase = /[A-Z]/.test(password);
+          const hasLowercase = /[a-z]/.test(password);
+          const hasNumber = /\d/.test(password);
+          const hasSpecialChar = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password);
+          
+          if (!hasUppercase || !hasLowercase || !hasNumber || !hasSpecialChar) {
+            throw new Error('Password must contain uppercase, lowercase, number, and special character');
+          }
+          
           // Prepare firm registration data
           const firmData = {
             plan: data.plan || 'professional',
@@ -374,6 +418,7 @@ if (Astro.request.method === 'POST') {
             firstName: data['first-name'],
             lastName: data['last-name'],
             email: data.email,
+            password: password,
             agreedToTerms: !!data.terms
           };
           
@@ -388,19 +433,21 @@ if (Astro.request.method === 'POST') {
           
           console.log('Submitting firm registration:', firmData);
           
-          // Create API client (no auth token needed for registration)
-          const { LexaraAPIClient } = await import('../../utils/api-client');
-          const apiClient = new LexaraAPIClient(
-            'https://lexara-api-demo.cloudswift.workers.dev',
-            async () => null // No auth needed for registration
-          );
+          // Call local registration endpoint directly
+          console.log('🚀 Calling local registration endpoint...');
+          const response = await fetch('/api/v1/firm/register', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(firmData),
+          });
           
-          // Submit firm registration
-          const result = await apiClient.registerFirm(firmData);
+          const result = await response.json();
           
           if (result.success) {
             // Registration successful
-            showSuccess(`Account created successfully! Welcome to Lexara, ${firmData.firstName}! You can now sign in with Auth0 using your email address.`);
+            showSuccess(`Account created successfully! Welcome to Lexara, ${firmData.firstName}! Please check your email to verify your account, then sign in to access your dashboard.`);
             
             // Redirect to login page after a delay
             setTimeout(() => {
