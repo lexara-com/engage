@@ -1,56 +1,239 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
-import ChatWindow from '../components/ChatWindow.astro';
-import LegalDisclaimer from '../components/LegalDisclaimer.astro';
-import type { ChatSession } from '../ui/types/chat';
-
-// Server-side logic
-let initialSession: ChatSession | undefined;
-let sessionId: string | undefined;
-
-// Check for session ID in query params
-if (Astro.url.searchParams.has('session')) {
-  sessionId = Astro.url.searchParams.get('session') || undefined;
-  
-  // In a real implementation, you would fetch the session from your backend
-  // For now, we'll let the client handle session loading
-  try {
-    // Example: const response = await fetch(`${API_BASE}/api/chat/session/${sessionId}`);
-    // initialSession = await response.json();
-  } catch (error) {
-    console.error('Failed to load session on server:', error);
-  }
-}
-
-// SEO and meta information
-const title = 'Legal Consultation - Engage';
-const description = 'Start your confidential legal consultation with our AI-powered intake system. Get professional legal guidance tailored to your needs.';
 ---
 
-<BaseLayout title={title} description={description} bodyClass="overflow-hidden">
-  <!-- Import global styles -->
-  <style>
-    @import '../ui/styles/global.css';
-  </style>
-  
-  <!-- Pass initial data to client -->
-  <script define:vars={{ initialSession, sessionId }}>
-    if (initialSession) {
-      window.__INITIAL_SESSION__ = initialSession;
-    }
-    if (sessionId) {
-      window.__SESSION_ID__ = sessionId;
-    }
-  </script>
-  
-  <!-- Legal Disclaimer Modal -->
-  <LegalDisclaimer variant="modal" />
-  
-  <!-- Main Chat Interface -->
-  <ChatWindow sessionId={sessionId} initialSession={initialSession} />
-  
-  <!-- Footer Disclaimer (Hidden on mobile, shown on larger screens) -->
-  <div class="hidden lg:block">
-    <LegalDisclaimer variant="footer" />
-  </div>
+<BaseLayout 
+  title="Lexara - AI-Powered Legal Client Intake" 
+  description="Transform your law firm's client intake with AI-powered conversations. Engage screens potential clients 24/7, detects conflicts, and delivers qualified leads."
+>
+  <!-- Hero Section -->
+  <section class="relative bg-gradient-to-br from-lexara-whiteSmoke via-lexara-pureWhite to-lexara-skyBlue/20 py-24 lg:py-32">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+        <div class="text-center lg:text-left">
+          <!-- Eyebrow Heading -->
+          <p class="text-sm font-semibold text-lexara-lightNavy tracking-wider uppercase mb-4">
+            ELEVATE YOUR LEGAL PRACTICE
+          </p>
+          <!-- Main Heading using Lora -->
+          <h1 class="text-5xl lg:text-6xl font-heading font-normal text-lexara-darkNavy leading-tight mb-8">
+            Transform Your Legal Practice Through the 
+            <span class="text-lexara-mahogany">Power of AI</span>
+          </h1>
+          <!-- Body text using Open Sans -->
+          <p class="text-xl text-lexara-lightNavy mb-10 leading-relaxed font-normal">
+            At Lexara, we're dedicated to providing exceptional AI-powered legal services 
+            tailored to meet your unique needs. Our platform screens potential clients 24/7, 
+            detects conflicts automatically, and delivers qualified leads to your attorneys.
+          </p>
+          <!-- Call-to-Action buttons -->
+          <div class="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
+            <a href="/signup" class="bg-lexara-darkNavy text-lexara-pureWhite px-8 py-4 rounded-xl text-lg font-semibold hover:bg-lexara-lightNavy transition-all duration-200 shadow-lg hover:shadow-xl">
+              Start Free Trial
+            </a>
+            <a href="/demo" class="border-2 border-lexara-darkNavy text-lexara-darkNavy px-8 py-4 rounded-xl text-lg font-semibold hover:bg-lexara-darkNavy hover:text-lexara-pureWhite transition-all duration-200">
+              Learn More
+            </a>
+          </div>
+          <p class="text-sm text-lexara-lightNavy mt-6 font-normal">
+            No credit card required • 14-day free trial • Setup in minutes
+          </p>
+        </div>
+        
+        <div class="relative">
+          <div class="bg-lexara-pureWhite rounded-3xl shadow-2xl p-8 lg:p-10 border border-lexara-skyBlue/30">
+            <div class="bg-lexara-whiteSmoke rounded-xl p-6 mb-6">
+              <div class="flex items-center space-x-3 mb-3">
+                <div class="w-3 h-3 bg-red-400 rounded-full"></div>
+                <div class="w-3 h-3 bg-yellow-400 rounded-full"></div>
+                <div class="w-3 h-3 bg-green-400 rounded-full"></div>
+              </div>
+              <div class="text-sm text-lexara-lightNavy font-medium">Legal Consultation - Lexara AI</div>
+            </div>
+            
+            <div class="space-y-6">
+              <div class="bg-lexara-darkNavy text-lexara-pureWhite p-4 rounded-2xl rounded-br-md max-w-sm shadow-lg">
+                <p class="font-medium">Hello! I'm here to help you understand your legal situation. Could you share your name and contact information?</p>
+              </div>
+              <div class="bg-lexara-skyBlue text-lexara-darkNavy p-4 rounded-2xl rounded-bl-md max-w-sm ml-auto shadow-lg">
+                <p class="font-medium">Hi, I'm Sarah Johnson. My email is sarah@email.com and I need help with a car accident case.</p>
+              </div>
+              <div class="bg-lexara-darkNavy text-lexara-pureWhite p-4 rounded-2xl rounded-br-md max-w-sm shadow-lg">
+                Thank you, Sarah. What type of legal matter brings you here today?
+              </div>
+              <div class="flex items-center space-x-2 text-gray-500">
+                <div class="flex space-x-1">
+                  <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
+                  <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0.1s"></div>
+                  <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
+                </div>
+                <span class="text-sm">Engage AI is typing...</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Benefits Section -->
+  <section class="py-24 bg-lexara-pureWhite">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="text-center mb-20">
+        <!-- Eyebrow heading -->
+        <p class="text-sm font-semibold text-lexara-lightNavy tracking-wider uppercase mb-4">
+          WHY CHOOSE LEXARA
+        </p>
+        <!-- Main heading using Lora -->
+        <h2 class="text-4xl lg:text-5xl font-heading font-normal text-lexara-darkNavy mb-6">
+          Why Law Firms Choose Lexara
+        </h2>
+        <!-- Body text using Open Sans -->
+        <p class="text-xl text-lexara-lightNavy max-w-4xl mx-auto leading-relaxed font-normal">
+          Stop losing potential clients to delayed responses and lengthy intake forms. 
+          Lexara provides immediate, intelligent client screening that works around the clock.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-12">
+        <div class="text-center p-8 bg-lexara-whiteSmoke rounded-2xl border border-lexara-skyBlue/30">
+          <div class="w-20 h-20 bg-lexara-darkNavy rounded-full flex items-center justify-center mx-auto mb-8">
+            <svg class="w-10 h-10 text-lexara-pureWhite" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+          </div>
+          <h3 class="text-2xl font-heading font-normal text-lexara-darkNavy mb-6">24/7 Availability</h3>
+          <p class="text-lexara-lightNavy leading-relaxed font-normal">
+            Never miss a potential client again. Lexara works around the clock to capture leads 
+            when your office is closed.
+          </p>
+        </div>
+
+        <div class="text-center p-8 bg-lexara-whiteSmoke rounded-2xl border border-lexara-skyBlue/30">
+          <div class="w-20 h-20 bg-lexara-darkNavy rounded-full flex items-center justify-center mx-auto mb-8">
+            <svg class="w-10 h-10 text-lexara-pureWhite" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+          </div>
+          <h3 class="text-2xl font-heading font-normal text-lexara-darkNavy mb-6">Automatic Conflict Detection</h3>
+          <p class="text-lexara-lightNavy leading-relaxed font-normal">
+            Protect your firm with real-time conflict checking. Lexara identifies potential 
+            conflicts before they become problems.
+          </p>
+        </div>
+
+        <div class="text-center p-8 bg-lexara-whiteSmoke rounded-2xl border border-lexara-skyBlue/30">
+          <div class="w-20 h-20 bg-lexara-lightNavy rounded-full flex items-center justify-center mx-auto mb-8">
+            <svg class="w-10 h-10 text-lexara-pureWhite" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+            </svg>
+          </div>
+          <h3 class="text-2xl font-heading font-normal text-lexara-darkNavy mb-6">Intelligent Screening</h3>
+          <p class="text-lexara-lightNavy leading-relaxed font-normal">
+            Advanced AI gathers comprehensive case details and qualifies leads, 
+            so attorneys focus on viable cases.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features Preview -->
+  <section class="py-20 bg-gray-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="text-center mb-16">
+        <h2 class="text-3xl lg:text-4xl font-bold text-lexara-secondary mb-4">
+          Powerful Features for Modern Law Firms
+        </h2>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+        <div>
+          <h3 class="text-2xl font-bold text-lexara-secondary mb-6">Smart Conversation Flow</h3>
+          <ul class="space-y-4">
+            <li class="flex items-start space-x-3">
+              <div class="w-6 h-6 bg-lexara-accent rounded-full flex items-center justify-center mt-0.5">
+                <svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                </svg>
+              </div>
+              <span class="text-lexara-gray">Natural language conversations that feel human</span>
+            </li>
+            <li class="flex items-start space-x-3">
+              <div class="w-6 h-6 bg-lexara-accent rounded-full flex items-center justify-center mt-0.5">
+                <svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                </svg>
+              </div>
+              <span class="text-lexara-gray">Adapts to your firm's practice areas and specialties</span>
+            </li>
+            <li class="flex items-start space-x-3">
+              <div class="w-6 h-6 bg-lexara-accent rounded-full flex items-center justify-center mt-0.5">
+                <svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                </svg>
+              </div>
+              <span class="text-lexara-gray">Secure authentication for sensitive information</span>
+            </li>
+          </ul>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-lg p-8">
+          <div class="space-y-6">
+            <div class="border-b pb-4">
+              <h4 class="font-semibold text-lexara-secondary">Client Information</h4>
+              <div class="mt-2 space-y-2">
+                <div class="flex justify-between">
+                  <span class="text-gray-600">Name:</span>
+                  <span class="text-lexara-secondary">Michael Rodriguez</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-gray-600">Contact:</span>
+                  <span class="text-lexara-secondary">michael@email.com</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-gray-600">Practice Area:</span>
+                  <span class="text-lexara-secondary">Personal Injury</span>
+                </div>
+              </div>
+            </div>
+            
+            <div class="border-b pb-4">
+              <h4 class="font-semibold text-lexara-secondary">Case Details</h4>
+              <p class="text-gray-600 text-sm mt-2">
+                Auto accident on Highway 101, rear-ended by commercial vehicle. 
+                Medical treatment ongoing. Other party admitted fault at scene.
+              </p>
+            </div>
+            
+            <div class="flex items-center justify-between">
+              <span class="text-sm text-gray-600">Conflict Check:</span>
+              <span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs">Clear</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA Section -->
+  <section class="py-20 bg-lexara-primary">
+    <div class="max-w-4xl mx-auto text-center px-4 sm:px-6 lg:px-8">
+      <h2 class="text-3xl lg:text-4xl font-bold text-white mb-6">
+        Ready to Transform Your Client Intake?
+      </h2>
+      <p class="text-xl text-blue-100 mb-8">
+        Join hundreds of law firms using Engage to capture more leads, 
+        reduce conflicts, and improve client experience.
+      </p>
+      <div class="flex flex-col sm:flex-row gap-4 justify-center">
+        <a href="/signup" class="bg-white text-lexara-primary px-8 py-4 rounded-lg text-lg font-semibold hover:bg-gray-100 transition-colors">
+          Start Free Trial
+        </a>
+        <a href="/contact" class="border border-white text-white px-8 py-4 rounded-lg text-lg font-semibold hover:bg-white hover:text-lexara-primary transition-colors">
+          Schedule Demo
+        </a>
+      </div>
+    </div>
+  </section>
 </BaseLayout>

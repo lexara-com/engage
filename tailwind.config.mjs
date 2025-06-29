@@ -1,48 +1,41 @@
 /** @type {import('tailwindcss').Config} */
 export default {
-	content: ['./src/**/*.{astro,html,js,jsx,md,mdx,svelte,ts,tsx,vue}'],
-	theme: {
-		extend: {
-			colors: {
-				// Lexara.com inspired color palette
-				'lexara': {
-					'white': '#ffffff',
-					'beige': 'rgb(243, 240, 237)',
-					'blue-gray': 'rgb(198, 216, 219)',
-					'navy': 'rgb(30, 43, 59)',
-					'slate': 'rgb(59, 87, 108)',
-					'gray-50': '#f9fafb',
-					'gray-100': '#f3f4f6',
-					'gray-200': '#e5e7eb',
-					'gray-300': '#d1d5db',
-					'gray-400': '#9ca3af',
-					'gray-500': '#6b7280',
-					'gray-600': '#4b5563',
-					'gray-700': '#374151',
-					'gray-800': '#1f2937',
-					'gray-900': '#111827',
-				}
-			},
-			fontFamily: {
-				'figtree': ['Figtree', 'Inter', 'system-ui', 'sans-serif'],
-				'inter': ['Inter', 'system-ui', 'sans-serif'],
-			},
-			animation: {
-				'fade-in': 'fadeIn 0.5s ease-in-out',
-				'slide-up': 'slideUp 0.3s ease-out',
-				'pulse-subtle': 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-			},
-			keyframes: {
-				fadeIn: {
-					'0%': { opacity: '0' },
-					'100%': { opacity: '1' },
-				},
-				slideUp: {
-					'0%': { transform: 'translateY(10px)', opacity: '0' },
-					'100%': { transform: 'translateY(0)', opacity: '1' },
-				},
-			},
-		},
-	},
-	plugins: [],
-};
+  content: ['./src/**/*.{astro,html,js,jsx,md,mdx,svelte,ts,tsx,vue}'],
+  theme: {
+    extend: {
+      colors: {
+        lexara: {
+          // Official Brand Colors
+          darkNavy: '#1E2B3B',     // Primary - Dark Navy
+          lightNavy: '#3B576C',    // Secondary - Light Navy  
+          skyBlue: '#C6D8DB',      // Accent - Sky Blue
+          mahogany: '#76444B',     // Warmth - Mahogany
+          whiteSmoke: '#F3F0ED',   // Light - White Smoke
+          pureWhite: '#FFFFFF',    // Clean - Pure White
+          
+          // Semantic aliases for easier usage
+          primary: '#1E2B3B',      // Dark Navy
+          secondary: '#3B576C',    // Light Navy
+          accent: '#C6D8DB',       // Sky Blue
+          warm: '#76444B',         // Mahogany
+          light: '#F3F0ED',        // White Smoke
+          gray: '#3B576C'          // Light Navy for text
+        }
+      },
+      fontFamily: {
+        // Official Brand Typography
+        heading: ['Lora', 'serif'],                    // Headlines - Lora
+        sans: ['Open Sans', 'system-ui', 'sans-serif'], // Body text - Open Sans
+        body: ['Open Sans', 'system-ui', 'sans-serif'], // Explicit body alias
+      },
+      spacing: {
+        '18': '4.5rem',
+        '88': '22rem',
+        '128': '32rem',
+      }
+    },
+  },
+  plugins: [
+    require('@tailwindcss/forms'),
+  ],
+}

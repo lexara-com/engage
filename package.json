@@ -1,72 +1,28 @@
 {
-  "name": "engage-legal-ai",
-  "version": "0.1.0",
-  "description": "Engage - AI-powered legal client intake platform",
-  "private": true,
-  "packageManager": "pnpm@10.12.1",
-  "workspaces": [
-    "apps/*",
-    "packages/*",
-    "tools/*"
-  ],
+  "name": "@lexara/firm-admin-portal",
+  "version": "1.0.0",
+  "description": "Firm admin portal for Lexara Engage - Law firm dashboard and management interface",
   "scripts": {
-    "build": "turbo run build",
-    "dev": "turbo run dev --parallel",
-    "typecheck": "turbo run typecheck",
-    "lint": "turbo run lint",
-    "test": "turbo run test",
-    "clean": "turbo run clean",
-    "dev:homepage": "turbo run dev --filter=homepage",
-    "dev:chat": "turbo run dev --filter=chat-interface",
-    "dev:platform": "turbo run dev --filter=platform-admin",
-    "dev:mcp": "turbo run dev --filter='*-mcp'",
-    "build:packages": "turbo run build --filter='@lexara/*'",
-    "build:apps": "turbo run build --filter='./apps/*'",
-    "deploy:dev": "turbo run deploy:dev",
-    "deploy:production": "turbo run deploy:production",
-    "format": "prettier --write \"**/*.{ts,js,json,md}\"",
-    "format:check": "prettier --check \"**/*.{ts,js,json,md}\"",
-    "code:check": "npm run typecheck && npm run lint && npm run format:check",
-    "code:fix": "npm run lint:fix && npm run format",
-    "prepare": "husky"
-  },
-  "devDependencies": {
-    "@astrojs/node": "^8.3.4",
-    "@astrojs/tailwind": "^5.1.2",
-    "@cloudflare/workers-types": "^4.20240909.0",
-    "@types/node": "^20.14.0",
-    "@types/puppeteer": "^5.4.7",
-    "@typescript-eslint/eslint-plugin": "^7.18.0",
-    "@typescript-eslint/parser": "^7.18.0",
-    "astro": "^4.16.7",
-    "eslint": "^8.57.0",
-    "husky": "^9.1.7",
-    "lint-staged": "^16.1.2",
-    "prettier": "^3.5.3",
-    "puppeteer": "^24.10.0",
-    "tailwindcss": "^3.4.14",
-    "turbo": "^2.5.4",
-    "typescript": "^5.5.0",
-    "vitest": "^1.6.0",
-    "wrangler": "^4.20.3"
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "deploy:dev": "wrangler deploy --env dev",
+    "deploy:staging": "wrangler deploy --env staging",
+    "deploy:production": "wrangler deploy --env production"
   },
   "dependencies": {
     "@astrojs/cloudflare": "^11.0.0",
-    "@microlabs/otel-cf-workers": "^1.0.0-rc.49",
-    "@opentelemetry/api": "^1.9.0",
-    "ulid": "^2.3.0"
+    "@astrojs/tailwind": "^5.1.2",
+    "@auth0/auth0-spa-js": "^2.1.3",
+    "@lexara/shared-types": "workspace:*",
+    "@lexara/shared-utils": "workspace:*",
+    "@tailwindcss/forms": "^0.5.7",
+    "astro": "^4.16.7",
+    "tailwindcss": "^3.4.14"
   },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/lexara-com/engage.git"
-  },
-  "keywords": [
-    "legal-tech",
-    "ai",
-    "cloudflare-workers",
-    "client-intake",
-    "conflict-detection"
-  ],
-  "author": "Lexara",
-  "license": "PROPRIETARY"
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20240909.0",
+    "typescript": "^5.5.0",
+    "wrangler": "^4.20.3"
+  }
 }
