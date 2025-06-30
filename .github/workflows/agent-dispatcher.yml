@@ -1,0 +1,149 @@
+name: Agent Task Dispatcher
+
+on:
+  issues:
+    types: [opened, labeled]
+
+jobs:
+  assign-to-agent:
+    if: contains(github.event.issue.labels.*.name, 'agent-task')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Parse Component
+        id: parse
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const body = context.payload.issue.body;
+            
+            // Extract component from issue body
+            const componentMatch = body.match(/Target Component[:\s]*([^\n\r]+)/);
+            const component = componentMatch ? componentMatch[1].trim() : 'unknown';
+            
+            // Extract priority
+            const priorityMatch = body.match(/Priority[:\s]*([^\n\r]+)/);
+            const priority = priorityMatch ? priorityMatch[1].trim() : 'Medium';
+            
+            console.log(`Parsed component: ${component}, priority: ${priority}`);
+            
+            return { component, priority };
+
+      - name: Assign Issue
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const parseResult = ${{ steps.parse.outputs.result }};
+            const component = parseResult.component;
+            const priority = parseResult.priority;
+            
+            // Map components to agent usernames (adjust these to actual GitHub usernames)
+            const agentMap = {
+              'conversation-agent': 'conversation-agent-bot',
+              'mcp-servers': 'mcp-servers-agent-bot',
+              'chat-ui': 'chat-ui-agent-bot',
+              'firm-admin-portal': 'firm-admin-portal-agent-bot',
+              'platform-admin-portal': 'platform-admin-portal-agent-bot'
+            };
+            
+            const assignee = agentMap[component];
+            const labels = ['agent-task', 'assigned', component];
+            
+            // Add priority label
+            if (priority === 'High' || priority === 'Critical') {
+              labels.push('priority-high');
+            }
+            
+            if (assignee) {
+              try {
+                await github.rest.issues.update({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: context.issue.number,
+                  assignees: [assignee],
+                  labels: labels
+                });
+                
+                // Add a comment with instructions
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: context.issue.number,
+                  body: `🤖 **Task Assigned to ${component} Agent**
+                  
+This task has been automatically assigned to the ${component} agent. 
+
+**Agent Instructions:**
+1. Switch to the \`worktrees/${component}\` directory
+2. Create a new branch for this feature: \`git checkout -b task-${context.issue.number}\`
+3. Implement the requested changes
+4. Update documentation as needed
+5. Submit a pull request when complete
+6. Update this issue with progress and completion status
+
+**Priority:** ${priority}
+**Component:** ${component}
+
+For questions or dependencies, create an agent-message issue.`
+                });
+              } catch (error) {
+                console.log(`Could not assign to ${assignee}, assigning labels only`);
+                await github.rest.issues.update({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: context.issue.number,
+                  labels: labels
+                });
+              }
+            } else {
+              console.log(`Unknown component: ${component}`);
+              await github.rest.issues.addLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                labels: ['needs-manual-assignment']
+              });
+            }
+
+  route-agent-message:
+    if: contains(github.event.issue.labels.*.name, 'agent-message')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Route Message
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const body = context.payload.issue.body;
+            
+            // Extract to_agent from issue body
+            const toAgentMatch = body.match(/To Agent[:\s]*([^\n\r]+)/);
+            const toAgent = toAgentMatch ? toAgentMatch[1].trim() : 'unknown';
+            
+            // Extract from_agent
+            const fromAgentMatch = body.match(/From Agent[:\s]*([^\n\r]+)/);
+            const fromAgent = fromAgentMatch ? fromAgentMatch[1].trim() : 'unknown';
+            
+            // Extract message type
+            const messageTypeMatch = body.match(/Message Type[:\s]*([^\n\r]+)/);
+            const messageType = messageTypeMatch ? messageTypeMatch[1].trim() : 'unknown';
+            
+            const labels = ['agent-message', toAgent, messageType];
+            
+            await github.rest.issues.update({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              labels: labels
+            });
+            
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: `📨 **Agent Message Routed**
+              
+**From:** ${fromAgent}
+**To:** ${toAgent}
+**Type:** ${messageType}
+
+This message has been routed to the ${toAgent} agent. Please respond or take action as appropriate.`
+            });

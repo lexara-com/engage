@@ -1,0 +1,175 @@
+---
+// Client intake page for law firms
+export const prerender = false;
+
+const { firmId } = Astro.params;
+
+if (!firmId) {
+  return Astro.redirect('/404');
+}
+---
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Legal Consultation - AI-Powered Intake</title>
+  <meta name="description" content="Start your legal consultation with our AI-powered intake system">
+  
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  
+  <!-- Official Brand Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&family=Open+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,300;1,400;1,500;1,600;1,700;1,800&display=swap" rel="stylesheet">
+  
+  <!-- Tailwind CSS -->
+</head>
+<body class="font-body antialiased bg-gradient-to-br from-lexara-light to-blue-50 min-h-screen">
+  <!-- Client Intake Interface -->
+  <div class="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-md w-full space-y-8">
+      <!-- Header -->
+      <div class="text-center">
+        <div class="flex justify-center items-center space-x-3 mb-6">
+          <div class="w-12 h-12 bg-lexara-primary rounded-xl flex items-center justify-center">
+            <span class="text-white font-bold text-xl">⚖️</span>
+          </div>
+          <h1 class="text-3xl font-bold text-lexara-secondary">Legal Consultation</h1>
+        </div>
+        <h2 class="text-xl font-bold text-lexara-secondary mb-2">
+          AI-Powered Client Intake
+        </h2>
+        <p class="text-lexara-gray">
+          Start your consultation with our intelligent assistant
+        </p>
+      </div>
+
+      <!-- Disclaimer -->
+      <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+        <div class="flex items-start">
+          <div class="flex-shrink-0">
+            <svg class="h-5 w-5 text-yellow-600" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+            </svg>
+          </div>
+          <div class="ml-3">
+            <h3 class="text-sm font-medium text-yellow-800">Important Legal Notice</h3>
+            <div class="mt-2 text-sm text-yellow-700">
+              <p>This consultation does not create an attorney-client relationship. Information shared is not confidential until a formal engagement is established.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Intake Form -->
+      <div class="bg-white rounded-2xl shadow-lg p-8">
+        <h3 class="text-lg font-semibold text-lexara-secondary mb-6">Start Your Consultation</h3>
+        
+        <!-- Contact Information -->
+        <form id="intake-form" class="space-y-6">
+          <div>
+            <label for="client-name" class="block text-sm font-medium text-lexara-secondary mb-2">
+              Your Name *
+            </label>
+            <input type="text" id="client-name" name="client-name" required
+                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-lexara-primary focus:border-transparent"
+                   placeholder="Enter your full name">
+          </div>
+
+          <div>
+            <label for="client-email" class="block text-sm font-medium text-lexara-secondary mb-2">
+              Email Address *
+            </label>
+            <input type="email" id="client-email" name="client-email" required
+                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-lexara-primary focus:border-transparent"
+                   placeholder="Enter your email address">
+          </div>
+
+          <div>
+            <label for="client-phone" class="block text-sm font-medium text-lexara-secondary mb-2">
+              Phone Number
+            </label>
+            <input type="tel" id="client-phone" name="client-phone"
+                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-lexara-primary focus:border-transparent"
+                   placeholder="Enter your phone number">
+          </div>
+
+          <div>
+            <label for="legal-matter" class="block text-sm font-medium text-lexara-secondary mb-2">
+              What type of legal matter brings you here? *
+            </label>
+            <select id="legal-matter" name="legal-matter" required
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-lexara-primary focus:border-transparent">
+              <option value="">Please select...</option>
+              <option value="personal_injury">Personal Injury</option>
+              <option value="family_law">Family Law</option>
+              <option value="business_law">Business Law</option>
+              <option value="criminal_law">Criminal Law</option>
+              <option value="estate_planning">Estate Planning</option>
+              <option value="real_estate">Real Estate</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+
+          <div>
+            <label for="case-description" class="block text-sm font-medium text-lexara-secondary mb-2">
+              Brief Description of Your Situation *
+            </label>
+            <textarea id="case-description" name="case-description" required rows="4"
+                      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-lexara-primary focus:border-transparent"
+                      placeholder="Please provide a brief overview of your legal situation..."></textarea>
+          </div>
+
+          <!-- Status Messages -->
+          <div id="intake-status" class="hidden">
+            <div id="intake-success" class="hidden bg-green-50 border border-green-200 rounded-lg p-4">
+              <div class="flex items-center">
+                <svg class="w-5 h-5 text-green-600 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                </svg>
+                <span id="intake-success-text" class="text-sm text-green-800"></span>
+              </div>
+            </div>
+            
+            <div id="intake-error" class="hidden bg-red-50 border border-red-200 rounded-lg p-4">
+              <div class="flex items-center">
+                <svg class="w-5 h-5 text-red-600 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>
+                </svg>
+                <span id="intake-error-text" class="text-sm text-red-800"></span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Submit Button -->
+          <button type="submit" id="submit-intake"
+                  class="w-full bg-lexara-primary text-white py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+            <span class="flex items-center justify-center">
+              <svg id="intake-spinner" class="hidden animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              <span id="submit-text">Start AI Consultation</span>
+            </span>
+          </button>
+
+          <p class="text-center text-xs text-lexara-gray">
+            By proceeding, you acknowledge that this is an initial consultation and no attorney-client relationship is created until formal engagement.
+          </p>
+        </form>
+      </div>
+
+      <!-- Powered by -->
+      <div class="text-center">
+        <p class="text-xs text-lexara-gray">
+          Powered by <span class="font-semibold">Lexara</span> - AI-Powered Legal Client Intake
+        </p>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>

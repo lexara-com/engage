@@ -1,0 +1,12 @@
+---
+// Server-side logout logic - clear session and redirect
+const response = new Response(null, {
+  status: 302,
+  headers: {
+    Location: '/firm/login',
+    'Set-Cookie': 'firm_session=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; Secure; SameSite=Strict'
+  }
+});
+
+return response;
+---

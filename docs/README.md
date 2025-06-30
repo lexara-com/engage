@@ -1,85 +1,30 @@
-# Engage Legal AI Platform
+# Lexara Engage Documentation
 
-AI-powered legal client intake platform built on Cloudflare Workers.
+This directory contains documentation for the Lexara Engage platform.
 
-## 🚀 Quick Start
+## Directory Structure
 
-```bash
-# Validate configuration
-npm run validate:config
+- `components/` - Documentation specific to individual components migrated from apps/
+- `legacy/` - Legacy documentation from previous architecture
 
-# Deploy to development
-npm run deploy:all:dev
+## Component Architecture
 
-# Verify deployment
-curl https://dev.lexara.app/health
-curl https://platform-dev.lexara.app/health
-```
+The platform is organized into 5 main components:
 
-## 📚 Documentation
+1. **Conversation Agent** - Core agentic worker (`worktrees/conversation-agent/`)
+2. **MCP Servers** - Model Context Protocol servers (`worktrees/mcp-servers/`)
+3. **Chat UI** - End-user chat interface (`worktrees/chat-ui/`)
+4. **Firm Admin Portal** - Law firm management interface (`worktrees/firm-admin-portal/`)
+5. **Platform Admin Portal** - Lexara employee administration (`worktrees/platform-admin-portal/`)
 
-- **[DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md)** - Complete deployment procedures
-- **[CONFIGURATION_REFERENCE.md](./CONFIGURATION_REFERENCE.md)** - Configuration files reference
-- **[CLAUDE.md](./CLAUDE.md)** - System architecture and specifications
+Each component has its own README.md and CLAUDE.md files in their respective worktree directories.
 
-## Project Structure
+## Development Workflow
 
-```
-src/
-├── types/          # Shared TypeScript interfaces and types
-├── utils/          # Utility functions (logging, errors, ULID generation)
-├── durable-objects/# Durable Object implementations
-├── mcp-servers/    # MCP server implementations
-└── agent/          # Main agent worker and Claude integration
-```
+For multi-agent development using git worktrees, see:
+- `../agents/coordinator/CLAUDE.md` - Coordinator instructions
+- `../.github/ISSUE_TEMPLATE/` - Issue templates for agent communication
 
-## Development
+## Legacy Documentation
 
-### Prerequisites
-- Node.js 18+
-- Cloudflare account with Workers and AI access
-- Wrangler CLI
-
-### Setup
-```bash
-npm install
-```
-
-### Development Server
-```bash
-npm run dev
-```
-
-### Type Checking
-```bash
-npm run typecheck
-```
-
-### Linting
-```bash
-npm run lint
-npm run lint:fix
-```
-
-### Testing
-```bash
-npm test
-npm run test:watch
-```
-
-### Deployment
-```bash
-# Staging
-npm run deploy:staging
-
-# Production  
-npm run deploy:production
-```
-
-## Architecture
-
-See [CLAUDE.md](./CLAUDE.md) for complete system architecture and design documentation.
-
-## License
-
-Proprietary - Lexara Legal Technologies
+Historical documentation from the previous monolithic architecture is preserved in the `legacy/` directory for reference.

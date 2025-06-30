@@ -1,0 +1,169 @@
+---
+// Server-side authentication is handled by middleware
+// User info is available via Astro.locals if authenticated
+const user = Astro.locals.user;
+---
+
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<meta name="viewport" content="width=device-width" />
+		<meta name="generator" content={Astro.generator} />
+		<title>Test Site - Dashboard</title>
+		<style>
+			body {
+				font-family: Arial, sans-serif;
+				margin: 0;
+				padding: 0;
+				background: #f7fafc;
+			}
+			.header {
+				background: white;
+				border-bottom: 1px solid #e2e8f0;
+				padding: 1rem 2rem;
+				display: flex;
+				justify-content: space-between;
+				align-items: center;
+			}
+			.logo {
+				font-size: 1.5rem;
+				font-weight: bold;
+				color: #2d3748;
+			}
+			.nav {
+				display: flex;
+				gap: 2rem;
+			}
+			.nav a {
+				color: #4a5568;
+				text-decoration: none;
+				padding: 0.5rem 1rem;
+				border-radius: 6px;
+				transition: all 0.2s;
+			}
+			.nav a:hover, .nav a.active {
+				background: #667eea;
+				color: white;
+			}
+			.main {
+				padding: 2rem;
+				max-width: 1200px;
+				margin: 0 auto;
+			}
+			.welcome {
+				background: white;
+				border-radius: 12px;
+				padding: 2rem;
+				margin-bottom: 2rem;
+				box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+			}
+			.stats {
+				display: grid;
+				grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+				gap: 1.5rem;
+				margin-bottom: 2rem;
+			}
+			.stat-card {
+				background: white;
+				border-radius: 12px;
+				padding: 1.5rem;
+				box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+				text-align: center;
+			}
+			.stat-number {
+				font-size: 2rem;
+				font-weight: bold;
+				color: #667eea;
+				margin-bottom: 0.5rem;
+			}
+			.stat-label {
+				color: #718096;
+				font-size: 0.9rem;
+			}
+			.content-area {
+				background: white;
+				border-radius: 12px;
+				padding: 2rem;
+				box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+			}
+			.back-link {
+				display: inline-block;
+				color: #667eea;
+				text-decoration: none;
+				margin-bottom: 1rem;
+				padding: 0.5rem 1rem;
+				border: 1px solid #667eea;
+				border-radius: 6px;
+				transition: all 0.2s;
+			}
+			.back-link:hover {
+				background: #667eea;
+				color: white;
+			}
+		</style>
+	</head>
+	<body>
+		<header class="header">
+			<div class="logo">Test Site Dashboard</div>
+			<nav class="nav">
+				<a href="/" class="active">Dashboard</a>
+				<a href="#">Analytics</a>
+				<a href="#">Settings</a>
+			</nav>
+		</header>
+
+		<main class="main">
+			<div class="welcome">
+				<a href="/" class="back-link">← Back to Landing Page</a>
+				<h1>Dashboard</h1>
+				{user ? (
+					<div>
+						<p>Welcome back, <strong>{user.name || user.email}</strong>!</p>
+						<p>You are successfully authenticated via Auth0.</p>
+						<div style="background: #f1f5f9; padding: 1rem; border-radius: 6px; margin: 1rem 0;">
+							<strong>User Info:</strong><br>
+							ID: {user.id}<br>
+							Email: {user.email}<br>
+							Name: {user.name}
+						</div>
+						<a href="/logout" style="color: #dc3545; text-decoration: none;">Logout</a>
+					</div>
+				) : (
+					<p>This is a simple dashboard page for testing. It demonstrates that routing works correctly and that we can build multi-page applications with Astro.</p>
+				)}
+			</div>
+
+			<div class="stats">
+				<div class="stat-card">
+					<div class="stat-number">127</div>
+					<div class="stat-label">Total Visitors</div>
+				</div>
+				<div class="stat-card">
+					<div class="stat-number">42</div>
+					<div class="stat-label">Active Sessions</div>
+				</div>
+				<div class="stat-card">
+					<div class="stat-number">89%</div>
+					<div class="stat-label">Success Rate</div>
+				</div>
+				<div class="stat-card">
+					<div class="stat-number">$1,234</div>
+					<div class="stat-label">Revenue</div>
+				</div>
+			</div>
+
+			<div class="content-area">
+				<h2>Recent Activity</h2>
+				<p>This section would typically show recent user activity, logs, or other relevant dashboard information.</p>
+				<ul>
+					<li>User John Doe logged in at 2:30 PM</li>
+					<li>Payment processed for $99.00</li>
+					<li>New user registration: jane@example.com</li>
+					<li>System backup completed successfully</li>
+					<li>API rate limit increased to 1000/hour</li>
+				</ul>
+			</div>
+		</main>
+	</body>
+</html>

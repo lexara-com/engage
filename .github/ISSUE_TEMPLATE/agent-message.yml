@@ -1,0 +1,91 @@
+name: Agent Message
+description: Inter-agent communication for dependencies and coordination
+title: "[MESSAGE] <From> → <To>: <Subject>"
+labels: ["agent-message", "coordination"]
+body:
+  - type: dropdown
+    id: from_agent
+    attributes:
+      label: From Agent
+      options:
+        - coordinator
+        - conversation-agent
+        - mcp-servers
+        - chat-ui
+        - firm-admin-portal
+        - platform-admin-portal
+    validations:
+      required: true
+
+  - type: dropdown
+    id: to_agent
+    attributes:
+      label: To Agent
+      options:
+        - coordinator
+        - conversation-agent
+        - mcp-servers
+        - chat-ui
+        - firm-admin-portal
+        - platform-admin-portal
+    validations:
+      required: true
+
+  - type: dropdown
+    id: message_type
+    attributes:
+      label: Message Type
+      options:
+        - dependency_request
+        - api_contract_change
+        - shared_resource_update
+        - integration_question
+        - deployment_coordination
+        - bug_report
+        - status_update
+    validations:
+      required: true
+
+  - type: textarea
+    id: message_content
+    attributes:
+      label: Message Content
+      placeholder: Detailed message content
+    validations:
+      required: true
+
+  - type: textarea
+    id: technical_specification
+    attributes:
+      label: Technical Specification
+      description: Technical details, API specs, data formats, etc.
+      placeholder: |
+        API Endpoint: /api/example
+        Method: POST
+        Payload: { "field": "value" }
+        Response: { "result": "data" }
+
+  - type: input
+    id: related_tasks
+    attributes:
+      label: Related Tasks
+      description: Related issue numbers
+      placeholder: "#123, #124"
+
+  - type: dropdown
+    id: urgency
+    attributes:
+      label: Urgency
+      options:
+        - Low
+        - Medium
+        - High
+        - Blocking
+    validations:
+      required: true
+
+  - type: textarea
+    id: additional_context
+    attributes:
+      label: Additional Context
+      description: Any additional context or background information

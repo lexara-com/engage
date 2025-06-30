@@ -1,0 +1,74 @@
+name: Agent Task Assignment
+description: Assign a task to a component agent
+title: "[TASK] <Component>: <Description>"
+labels: ["agent-task", "pending"]
+body:
+  - type: dropdown
+    id: component
+    attributes:
+      label: Target Component
+      options:
+        - conversation-agent
+        - mcp-servers
+        - chat-ui
+        - firm-admin-portal
+        - platform-admin-portal
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      options:
+        - Low
+        - Medium
+        - High
+        - Critical
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Task Description
+      placeholder: Detailed description of what needs to be done
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance Criteria
+      placeholder: |
+        - [ ] Criterion 1
+        - [ ] Criterion 2
+        - [ ] Criterion 3
+    validations:
+      required: true
+
+  - type: input
+    id: dependencies
+    attributes:
+      label: Dependencies
+      description: List related issue numbers
+      placeholder: "#123, #124"
+
+  - type: textarea
+    id: technical_notes
+    attributes:
+      label: Technical Notes
+      description: Any specific technical requirements or constraints
+      placeholder: |
+        - API endpoints to implement
+        - Database changes required
+        - External service integrations
+        - Performance requirements
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional Context
+      description: Any additional context that would help the agent understand the task
+      placeholder: |
+        Background information, related features, user stories, etc.

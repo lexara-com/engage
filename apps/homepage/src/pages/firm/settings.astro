@@ -1,0 +1,247 @@
+---
+const { title = "Settings - Lexara Firm Portal", description = "Manage your firm settings and view authorized users" } = Astro.props;
+---
+
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{title}</title>
+  <meta name="description" content={description}>
+  
+  <!-- Favicon (using data URL to avoid 500 error) -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><text y='20' font-size='20'>L</text></svg>">
+  
+  <!-- Official Brand Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&family=Open+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,300;1,400;1,500;1,600;1,700;1,800&display=swap" rel="stylesheet">
+  
+  <!-- Tailwind CSS -->
+  
+  <!-- Auth0 SDK - Load dynamically to avoid Astro bundling issues -->
+</head>
+<body class="font-body antialiased bg-gray-50 text-lexara-darkNavy">
+  <!-- Dashboard Header with User Navigation -->
+  <header class="bg-white shadow-sm border-b border-gray-200">
+    <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex justify-between items-center py-4">
+        <div class="flex items-center">
+          <a href="/firm/dashboard" class="flex items-center">
+            <div class="w-8 h-8 bg-lexara-primary rounded-lg flex items-center justify-center">
+              <span class="text-white font-bold text-xl">L</span>
+            </div>
+            <span class="ml-3 text-lg font-semibold text-lexara-secondary">Firm Portal</span>
+          </a>
+        </div>
+        
+        <div class="hidden md:flex items-center space-x-8">
+          <a href="/firm/dashboard" class="text-lexara-lightNavy hover:text-lexara-darkNavy transition-colors font-semibold">Dashboard</a>
+          <a href="/firm/conversations" class="text-lexara-lightNavy hover:text-lexara-darkNavy transition-colors font-semibold">Conversations</a>
+          <a href="/firm/settings" class="text-lexara-darkNavy font-semibold border-b-2 border-lexara-primary">Settings</a>
+          <a href="/firm/analytics" class="text-lexara-lightNavy hover:text-lexara-darkNavy transition-colors font-semibold">Analytics</a>
+        </div>
+
+        <!-- User Menu -->
+        <div class="flex items-center space-x-4">
+          <div id="user-info" class="hidden flex items-center space-x-3">
+            <div class="text-right">
+              <p id="user-name" class="text-sm font-medium text-lexara-secondary"></p>
+              <p id="user-email" class="text-xs text-lexara-gray"></p>
+            </div>
+            <div class="w-8 h-8 bg-lexara-primary rounded-full flex items-center justify-center">
+              <span id="user-initials" class="text-sm font-medium text-white"></span>
+            </div>
+          </div>
+          <button id="logout-button" class="hidden text-lexara-lightNavy hover:text-lexara-darkNavy transition-colors font-semibold">
+            Sign Out
+          </button>
+        </div>
+      </div>
+    </nav>
+  </header>
+
+  <main class="min-h-screen bg-gray-50">
+    <!-- Page Header -->
+    <div class="bg-white shadow-sm border-b border-gray-200">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div class="flex items-center justify-between">
+          <div>
+            <h1 class="text-2xl font-bold text-lexara-secondary">Firm Settings</h1>
+            <p class="text-lexara-gray mt-1">Manage your firm information and authorized users.</p>
+          </div>
+          <div class="flex items-center space-x-3">
+            <button id="refresh-data" class="bg-white border border-gray-300 text-lexara-gray px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+              </svg>
+            </button>
+            <button id="save-settings" class="hidden bg-lexara-primary text-white px-4 py-2 rounded-lg hover:bg-blue-800 transition-colors">
+              Save Changes
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <!-- Loading State -->
+      <div id="loading-state" class="text-center py-12">
+        <div class="w-8 h-8 border-3 border-lexara-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+        <p class="text-lexara-gray">Loading firm settings...</p>
+      </div>
+
+      <!-- Error State -->
+      <div id="error-state" class="hidden text-center py-12">
+        <div class="w-12 h-12 bg-lexara-error/10 rounded-full flex items-center justify-center mx-auto mb-4">
+          <svg class="w-6 h-6 text-lexara-error" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>
+          </svg>
+        </div>
+        <h3 class="text-lg font-medium text-lexara-secondary mb-2">Unable to load settings</h3>
+        <p id="error-message" class="text-lexara-gray mb-4">We're having trouble loading your firm data.</p>
+        <button id="retry-button" class="bg-lexara-primary text-white px-4 py-2 rounded-lg hover:bg-blue-800 transition-colors">
+          Try Again
+        </button>
+      </div>
+
+      <!-- Settings Content -->
+      <div id="settings-content" class="hidden space-y-8">
+        <!-- Firm Information -->
+        <div id="firm-info-section" class="bg-white rounded-xl shadow-sm">
+          <div class="p-6 border-b border-gray-200">
+            <h3 class="text-lg font-semibold text-lexara-secondary">Firm Information</h3>
+            <p class="text-sm text-lexara-gray mt-1">Basic information about your law firm.</p>
+          </div>
+          <div class="p-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label for="firm-name" class="block text-sm font-medium text-lexara-secondary mb-2">Firm Name *</label>
+                <input type="text" id="firm-name" name="firmName" readonly
+                       class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-500"
+                       placeholder="Loading...">
+              </div>
+              <div>
+                <label for="firm-id" class="block text-sm font-medium text-lexara-secondary mb-2">Firm ID</label>
+                <input type="text" id="firm-id" name="firmId" readonly
+                       class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-500"
+                       placeholder="Loading...">
+              </div>
+              <div>
+                <label for="plan" class="block text-sm font-medium text-lexara-secondary mb-2">Current Plan</label>
+                <input type="text" id="plan" name="plan" readonly
+                       class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-500"
+                       placeholder="Loading...">
+              </div>
+              <div>
+                <label for="status" class="block text-sm font-medium text-lexara-secondary mb-2">Status</label>
+                <input type="text" id="status" name="status" readonly
+                       class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-500"
+                       placeholder="Loading...">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Authorized Users -->
+        <div id="user-management-section" class="bg-white rounded-xl shadow-sm">
+          <div class="p-6 border-b border-gray-200">
+            <div class="flex items-center justify-between">
+              <div>
+                <h3 class="text-lg font-semibold text-lexara-secondary">Authorized Users</h3>
+                <p class="text-sm text-lexara-gray mt-1">Users who can access your firm dashboard.</p>
+              </div>
+              <button id="add-user-button" class="hidden bg-lexara-primary text-white px-4 py-2 rounded-lg hover:bg-blue-800 transition-colors text-sm">
+                Add User
+              </button>
+            </div>
+          </div>
+          <div class="divide-y divide-gray-200">
+            <div id="users-list">
+              <!-- Users will be populated here -->
+            </div>
+            <div id="no-users" class="hidden p-8 text-center">
+              <p class="text-lexara-gray">No users found.</p>
+            </div>
+            <div id="users-error" class="hidden p-8 text-center">
+              <div class="w-12 h-12 bg-lexara-error/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg class="w-6 h-6 text-lexara-error" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>
+                </svg>
+              </div>
+              <h4 class="text-lg font-medium text-lexara-secondary mb-2">Unable to Load Users</h4>
+              <p id="users-error-message" class="text-lexara-gray">You do not have permission to manage users.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Add User Modal -->
+  <div id="add-user-modal" class="hidden fixed inset-0 z-50 overflow-y-auto">
+    <div class="flex items-center justify-center min-h-screen px-4">
+      <div class="fixed inset-0 bg-black bg-opacity-50 transition-opacity"></div>
+      <div class="relative bg-white rounded-lg max-w-md w-full mx-auto shadow-xl">
+        <div class="p-6">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-semibold text-lexara-secondary">Add New User</h3>
+            <button id="close-modal" class="text-lexara-gray hover:text-lexara-secondary">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+              </svg>
+            </button>
+          </div>
+          
+          <form id="add-user-form">
+            <div class="space-y-4">
+              <div>
+                <label for="user-email" class="block text-sm font-medium text-lexara-secondary mb-2">Email Address *</label>
+                <input type="email" id="user-email" name="email" required
+                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-lexara-primary focus:border-transparent"
+                       placeholder="user@example.com">
+              </div>
+              
+              <div class="grid grid-cols-2 gap-4">
+                <div>
+                  <label for="user-first-name" class="block text-sm font-medium text-lexara-secondary mb-2">First Name</label>
+                  <input type="text" id="user-first-name" name="firstName"
+                         class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-lexara-primary focus:border-transparent"
+                         placeholder="John">
+                </div>
+                <div>
+                  <label for="user-last-name" class="block text-sm font-medium text-lexara-secondary mb-2">Last Name</label>
+                  <input type="text" id="user-last-name" name="lastName"
+                         class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-lexara-primary focus:border-transparent"
+                         placeholder="Doe">
+                </div>
+              </div>
+              
+              <div>
+                <label for="user-role" class="block text-sm font-medium text-lexara-secondary mb-2">Role *</label>
+                <select id="user-role" name="role" required
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-lexara-primary focus:border-transparent">
+                  <option value="user">User</option>
+                  <option value="admin">Admin</option>
+                </select>
+              </div>
+            </div>
+            
+            <div class="flex justify-end space-x-3 mt-6">
+              <button type="button" id="cancel-add-user" class="px-4 py-2 text-lexara-gray border border-gray-300 rounded-lg hover:bg-gray-50">
+                Cancel
+              </button>
+              <button type="submit" id="submit-add-user" class="px-4 py-2 bg-lexara-primary text-white rounded-lg hover:bg-blue-800">
+                Add User
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+</body>
+</html>

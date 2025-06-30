@@ -89,7 +89,10 @@
       "Bash(npm run test:*)",
       "Bash(pnpm test:*)",
       "Bash(pnpm run:*)",
-      "Bash(git remote set-url:*)"
+      "Bash(git remote set-url:*)",
+      "Bash(git worktree:*)",
+      "Bash(./scripts/create-deployment-validation-issues.sh:*)",
+      "Bash(gh issue list:*)"
     ],
     "deny": []
   }

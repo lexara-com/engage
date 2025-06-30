@@ -1,0 +1,219 @@
+---
+
+---
+
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<meta name="viewport" content="width=device-width" />
+		<title>Auth0 Test - Test Site</title>
+		<style>
+			body {
+				font-family: Arial, sans-serif;
+				margin: 2rem;
+				background: #f7fafc;
+			}
+			.container {
+				max-width: 800px;
+				margin: 0 auto;
+				background: white;
+				padding: 2rem;
+				border-radius: 8px;
+				box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+			}
+			.test-section {
+				margin: 2rem 0;
+				padding: 1rem;
+				border: 1px solid #e2e8f0;
+				border-radius: 6px;
+			}
+			.button {
+				background: #667eea;
+				color: white;
+				padding: 0.75rem 1.5rem;
+				border: none;
+				border-radius: 6px;
+				cursor: pointer;
+				font-size: 1rem;
+				margin: 0.5rem;
+			}
+			.button:hover {
+				background: #5a67d8;
+			}
+			#output {
+				background: #f8f9fa;
+				border: 1px solid #dee2e6;
+				padding: 1rem;
+				margin-top: 1rem;
+				white-space: pre-wrap;
+				font-family: monospace;
+			}
+		</style>
+	</head>
+	<body>
+		<div class="container">
+			<h1>Auth0 Connection Test</h1>
+			<p>This page tests the Auth0 configuration and connection.</p>
+
+			<div class="test-section">
+				<h3>1. Test Auth0 SDK Loading</h3>
+				<button class="button" onclick="testSDKLoad()">Load Auth0 SDK</button>
+				<div id="sdk-status"></div>
+			</div>
+
+			<div class="test-section">
+				<h3>2. Test Auth0 Client Creation</h3>
+				<button class="button" onclick="testClientCreation()">Create Auth0 Client</button>
+				<div id="client-status"></div>
+			</div>
+
+			<div class="test-section">
+				<h3>3. Test Auth0 Login URL</h3>
+				<button class="button" onclick="testLoginRedirect()">Generate Login URL</button>
+				<div id="login-status"></div>
+			</div>
+
+			<div class="test-section">
+				<h3>4. Direct Auth0 Login</h3>
+				<button class="button" onclick="testDirectLogin()">Try Direct Login</button>
+				<div id="direct-status"></div>
+			</div>
+
+			<div id="output"></div>
+		</div>
+
+		<script>
+			const auth0Config = {
+				domain: 'dev-sv0pf6cz2530xz0o.us.auth0.com',
+				clientId: 'nI1qZf7RIHMfJTTrQQoosfWu9d204apX',
+				redirectUri: window.location.origin + '/callback',
+				scope: 'openid profile email'
+			};
+
+			let auth0Client = null;
+			const output = document.getElementById('output');
+
+			function log(message) {
+				output.textContent += new Date().toISOString() + ': ' + message + '\n';
+				console.log(message);
+			}
+
+			async function testSDKLoad() {
+				const status = document.getElementById('sdk-status');
+				try {
+					log('Loading Auth0 SDK...');
+					status.textContent = 'Loading...';
+					
+					if (window.auth0) {
+						log('Auth0 SDK already loaded');
+						status.textContent = '✅ SDK already loaded';
+						return;
+					}
+
+					const script = document.createElement('script');
+					script.src = 'https://cdn.auth0.com/js/auth0-spa-js/2.0/auth0-spa-js.production.js';
+					
+					await new Promise((resolve, reject) => {
+						script.onload = () => {
+							setTimeout(() => {
+								if (window.auth0) {
+									log('Auth0 SDK loaded successfully');
+									status.textContent = '✅ SDK loaded successfully';
+									resolve();
+								} else {
+									log('Auth0 SDK loaded but not available');
+									status.textContent = '❌ SDK loaded but not available';
+									reject(new Error('SDK not available'));
+								}
+							}, 100);
+						};
+						script.onerror = (error) => {
+							log('Failed to load Auth0 SDK: ' + error);
+							status.textContent = '❌ Failed to load SDK';
+							reject(error);
+						};
+						document.head.appendChild(script);
+					});
+				} catch (error) {
+					log('SDK load error: ' + error.message);
+					status.textContent = '❌ Error: ' + error.message;
+				}
+			}
+
+			async function testClientCreation() {
+				const status = document.getElementById('client-status');
+				try {
+					log('Creating Auth0 client...');
+					status.textContent = 'Creating...';
+
+					if (!window.auth0) {
+						await testSDKLoad();
+					}
+
+					auth0Client = await window.auth0.createAuth0Client(auth0Config);
+					log('Auth0 client created successfully');
+					status.textContent = '✅ Client created successfully';
+				} catch (error) {
+					log('Client creation error: ' + error.message);
+					status.textContent = '❌ Error: ' + error.message;
+				}
+			}
+
+			async function testLoginRedirect() {
+				const status = document.getElementById('login-status');
+				try {
+					log('Testing login URL generation...');
+					status.textContent = 'Testing...';
+
+					// Manual URL generation
+					const params = new URLSearchParams({
+						response_type: 'code',
+						client_id: auth0Config.clientId,
+						redirect_uri: auth0Config.redirectUri,
+						scope: auth0Config.scope,
+						state: encodeURIComponent('/dashboard')
+					});
+					
+					const loginUrl = `https://${auth0Config.domain}/authorize?${params.toString()}`;
+					log('Generated login URL: ' + loginUrl);
+					status.innerHTML = '✅ URL generated<br><a href="' + loginUrl + '" target="_blank">Test Login URL</a>';
+				} catch (error) {
+					log('URL generation error: ' + error.message);
+					status.textContent = '❌ Error: ' + error.message;
+				}
+			}
+
+			async function testDirectLogin() {
+				const status = document.getElementById('direct-status');
+				try {
+					log('Attempting direct login...');
+					status.textContent = 'Redirecting...';
+
+					if (!auth0Client) {
+						await testClientCreation();
+					}
+
+					await auth0Client.loginWithRedirect({
+						authorizationParams: {
+							redirect_uri: auth0Config.redirectUri,
+							scope: auth0Config.scope,
+							state: encodeURIComponent('/dashboard')
+						}
+					});
+				} catch (error) {
+					log('Direct login error: ' + error.message);
+					status.textContent = '❌ Error: ' + error.message;
+				}
+			}
+
+			// Auto-run first test
+			window.addEventListener('load', () => {
+				log('Page loaded, testing Auth0 configuration...');
+				log('Domain: ' + auth0Config.domain);
+				log('Client ID: ' + auth0Config.clientId);
+				log('Redirect URI: ' + auth0Config.redirectUri);
+			});
+		</script>
+	</body>
+</html>

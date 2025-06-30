@@ -1,0 +1,15 @@
+name = "lexara-test-site"
+compatibility_date = "2024-01-01"
+
+# Pages configuration
+pages_build_output_dir = "dist"
+
+# Environment variables for Auth0 (optional - currently using hardcoded values)
+[vars]
+AUTH0_DOMAIN = "dev-sv0pf6cz2530xz0o.us.auth0.com"
+AUTH0_CLIENT_ID = "nI1qZf7RIHMfJTTrQQoosfWu9d204apX"
+
+# KV namespace for session storage (if needed in future)
+# [[kv_namespaces]]
+# binding = "SESSIONS"
+# id = "your-kv-namespace-id"
