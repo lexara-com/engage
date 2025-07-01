@@ -89,7 +89,11 @@
       "Bash(npm run test:*)",
       "Bash(pnpm test:*)",
       "Bash(pnpm run:*)",
-      "Bash(git remote set-url:*)"
+      "Bash(git remote set-url:*)",
+      "Bash(gh issue list:*)",
+      "WebFetch(domain:dev.lexara-firm-portal-dev.pages.dev)",
+      "Bash(gh issue create:*)",
+      "WebFetch(domain:dev-www.lexara.app)"
     ],
     "deny": []
   }
