@@ -32,6 +32,7 @@ routes = [
 [env.dev.vars]
 ENVIRONMENT = "development"
 LOG_LEVEL = "debug"
+API_URL = "https://api-dev.lexara.app"
 
 [env.staging.vars]
 ENVIRONMENT = "staging"

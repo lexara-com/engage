@@ -1,210 +1,283 @@
 ---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import ConversationDetailModal from '../../components/ConversationDetailModal.astro';
+
 // Server-side authentication is handled by middleware
-// User info is available via Astro.locals if authenticated
 const user = Astro.locals.user;
 const isAuthenticated = Astro.locals.isAuthenticated;
+
+// Fetch conversations data from our API proxy
+let conversations = [];
+let error = null;
+let pagination = null;
+
+try {
+  const response = await fetch(`${Astro.url.origin}/api/firm/conversations`);
+  const data = await response.json();
+  
+  if (data.success) {
+    conversations = data.data.conversations;
+    pagination = data.data.pagination;
+  } else {
+    error = data.error || 'Failed to load conversations';
+  }
+} catch (e) {
+  error = 'Failed to connect to API';
+  console.error('Error fetching conversations:', e);
+}
+
+// Format date helper
+function formatDate(dateString: string) {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diff = now.getTime() - date.getTime();
+  const hours = Math.floor(diff / (1000 * 60 * 60));
+  const days = Math.floor(hours / 24);
+  
+  if (hours < 1) return 'Just now';
+  if (hours < 24) return `${hours}h ago`;
+  if (days < 7) return `${days}d ago`;
+  
+  return date.toLocaleDateString();
+}
+
+// Get status color
+function getStatusColor(status: string) {
+  switch (status) {
+    case 'active': return 'bg-green-100 text-green-800';
+    case 'completed': return 'bg-blue-100 text-blue-800';
+    case 'terminated': return 'bg-red-100 text-red-800';
+    default: return 'bg-gray-100 text-gray-800';
+  }
+}
+
+// Get conflict status color
+function getConflictColor(status: string) {
+  switch (status) {
+    case 'clear': return 'bg-green-100 text-green-800';
+    case 'potential': return 'bg-yellow-100 text-yellow-800';
+    case 'confirmed': return 'bg-red-100 text-red-800';
+    default: return 'bg-gray-100 text-gray-800';
+  }
+}
+
+// Format practice area
+function formatPracticeArea(area: string) {
+  return area.split('_').map(word => 
+    word.charAt(0).toUpperCase() + word.slice(1)
+  ).join(' ');
+}
 ---
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Conversations - Lexara Firm Portal</title>
-  <style>
-    body {
-      font-family: 'Open Sans', sans-serif;
-      margin: 0;
-      padding: 0;
-      background: #f7fafc;
-      color: #2d3748;
-    }
-    .container {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 2rem;
-    }
-    .header {
-      background: white;
-      border-bottom: 1px solid #e2e8f0;
-      padding: 1rem 0;
-      margin-bottom: 2rem;
-    }
-    .header-content {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 0 2rem;
-    }
-    .logo {
-      display: flex;
-      align-items: center;
-      font-size: 1.5rem;
-      font-weight: bold;
-      color: #2d3748;
-    }
-    .logo-icon {
-      width: 2rem;
-      height: 2rem;
-      background: #667eea;
-      border-radius: 0.5rem;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin-right: 0.75rem;
-      color: white;
-      font-weight: bold;
-    }
-    .back-link {
-      color: #667eea;
-      text-decoration: none;
-      font-weight: 500;
-    }
-    .back-link:hover {
-      text-decoration: underline;
-    }
-    .user-info {
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-      color: #718096;
-      font-size: 0.875rem;
-    }
-    .content {
-      background: white;
-      border-radius: 0.5rem;
-      padding: 2rem;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    }
-    .status-badge {
-      display: inline-block;
-      padding: 0.25rem 0.75rem;
-      border-radius: 0.25rem;
-      font-size: 0.75rem;
-      font-weight: 500;
-    }
-    .status-success {
-      background: #d4edda;
-      color: #155724;
-    }
-    .debug-section {
-      background: #f8f9fa;
-      border: 1px solid #e2e8f0;
-      border-radius: 0.5rem;
-      padding: 1.5rem;
-      margin: 2rem 0;
-    }
-    .debug-data {
-      background: #f1f3f4;
-      padding: 1rem;
-      border-radius: 0.25rem;
-      overflow-x: auto;
-      white-space: pre-wrap;
-      font-family: 'Courier New', monospace;
-      font-size: 0.875rem;
-      line-height: 1.4;
-    }
-  </style>
-</head>
-<body>
-  <header class="header">
-    <div class="header-content">
-      <div class="logo">
-        <div class="logo-icon">L</div>
-        <span>Lexara Firm Portal</span>
-      </div>
-      <div style="display: flex; align-items: center; gap: 2rem;">
-        <a href="/firm/dashboard" class="back-link">← Back to Dashboard</a>
-        <div class="user-info">
-          {user && (
-            <span>Logged in as: {user.name || user.email}</span>
-          )}
+<BaseLayout 
+  title="Conversations - Lexara Firm Portal" 
+  description="Manage client conversations and intake sessions"
+>
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Page Header -->
+    <div class="mb-8">
+      <h1 class="text-3xl font-heading font-normal text-lexara-darkNavy">Conversations</h1>
+      <p class="text-lexara-lightNavy mt-2">Manage and review client intake conversations</p>
+    </div>
+
+    <!-- Filters and Search -->
+    <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-lexara-lightNavy mb-2">Search</label>
+          <input 
+            type="search" 
+            id="searchInput"
+            placeholder="Search by name, email..." 
+            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-lexara-skyBlue focus:border-transparent"
+          />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-lexara-lightNavy mb-2">Status</label>
+          <select id="statusFilter" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-lexara-skyBlue focus:border-transparent">
+            <option value="">All Status</option>
+            <option value="active">Active</option>
+            <option value="completed">Completed</option>
+            <option value="terminated">Terminated</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-lexara-lightNavy mb-2">Practice Area</label>
+          <select id="practiceFilter" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-lexara-skyBlue focus:border-transparent">
+            <option value="">All Areas</option>
+            <option value="personal_injury">Personal Injury</option>
+            <option value="family_law">Family Law</option>
+            <option value="employment_law">Employment Law</option>
+            <option value="criminal_defense">Criminal Defense</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-lexara-lightNavy mb-2">Assigned To</label>
+          <select id="assignedFilter" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-lexara-skyBlue focus:border-transparent">
+            <option value="">All Attorneys</option>
+            <option value="unassigned">Unassigned</option>
+            <option value="attorney_123">James Wilson</option>
+            <option value="attorney_456">Emily Davis</option>
+            <option value="attorney_789">David Brown</option>
+          </select>
         </div>
       </div>
     </div>
-  </header>
 
-  <main class="container">
-    <div class="content">
-      <h1>Conversations</h1>
-      
-      <!-- Success Message -->
-      {isAuthenticated && (
-        <div style="margin: 1rem 0;">
-          <span class="status-badge status-success">
-            ✅ Authentication successful! You can access this protected page.
-          </span>
+    <!-- Conversations List -->
+    <div class="bg-white rounded-lg shadow-sm overflow-hidden">
+      {error ? (
+        <div class="p-6 text-center">
+          <div class="text-red-600 mb-4">
+            <svg class="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+          </div>
+          <p class="text-lg text-gray-700">{error}</p>
         </div>
-      )}
-      
-      <p>This is the conversations page. If you can see this content with your user information below, then the session validation is working correctly!</p>
-      
-      {user ? (
-        <div style="margin-top: 2rem; padding: 1rem; background: #f8f9fa; border-radius: 0.25rem;">
-          <h3>✅ Session Information:</h3>
-          <ul>
-            <li><strong>Name:</strong> {user.name || 'Not provided'}</li>
-            <li><strong>Email:</strong> {user.email}</li>
-            <li><strong>User ID:</strong> {user.id}</li>
-            <li><strong>Firm ID:</strong> {user.firmId}</li>
-            <li><strong>Roles:</strong> {user.roles?.join(', ') || 'None'}</li>
-          </ul>
+      ) : conversations.length === 0 ? (
+        <div class="p-6 text-center">
+          <p class="text-lg text-gray-500">No conversations found</p>
         </div>
       ) : (
-        <div style="margin-top: 2rem; padding: 1rem; background: #fed7d7; border-radius: 0.25rem; color: #c53030;">
-          <h3>❌ No Session Found</h3>
-          <p>This should not happen if you reached this page through proper authentication.</p>
+        <div class="overflow-x-auto">
+          <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+              <tr>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Client
+                </th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Practice Area
+                </th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Status
+                </th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Assigned To
+                </th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Conflict
+                </th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Last Activity
+                </th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+              {conversations.map((conversation: any) => (
+                <tr class="hover:bg-gray-50 cursor-pointer" data-conversation-id={conversation.sessionId}>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <div>
+                      <div class="text-sm font-medium text-gray-900">{conversation.clientName}</div>
+                      <div class="text-sm text-gray-500">{conversation.clientEmail}</div>
+                    </div>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <span class="text-sm text-gray-900">{formatPracticeArea(conversation.practiceArea)}</span>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <span class={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(conversation.status)}`}>
+                      {conversation.status}
+                    </span>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <span class="text-sm text-gray-900">
+                      {conversation.assignedToName || <span class="text-gray-500 italic">Unassigned</span>}
+                    </span>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <span class={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getConflictColor(conversation.conflictStatus)}`}>
+                      {conversation.conflictStatus}
+                    </span>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {formatDate(conversation.lastActivity)}
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <button class="text-lexara-darkNavy hover:text-lexara-lightNavy mr-3" data-action="view" data-id={conversation.sessionId}>
+                      View
+                    </button>
+                    <button class="text-lexara-darkNavy hover:text-lexara-lightNavy" data-action="export" data-id={conversation.sessionId}>
+                      Export
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       )}
-      
-      <div style="margin-top: 2rem; display: flex; gap: 1rem;">
-        <a href="/firm/dashboard" style="color: #667eea; text-decoration: none; padding: 0.5rem 1rem; border: 1px solid #667eea; border-radius: 0.25rem;">
-          ← Back to Dashboard
-        </a>
-        <a href="/firm/debug-session" style="color: #667eea; text-decoration: none; padding: 0.5rem 1rem; border: 1px solid #667eea; border-radius: 0.25rem;">
-          🔧 Debug Session
-        </a>
-      </div>
     </div>
 
-    <!-- Debug Session Information -->
-    <div class="debug-section">
-      <h3>Session Debugging Information</h3>
-      <p style="margin-bottom: 1rem; color: #718096; font-size: 0.875rem;">
-        This helps identify if there are session validation issues.
-      </p>
-      
-      <div class="debug-data">
-        {JSON.stringify({
-          serverSide: {
+    <!-- Pagination -->
+    {pagination && pagination.pages > 1 && (
+      <div class="mt-6 flex items-center justify-between">
+        <div class="text-sm text-gray-700">
+          Showing page {pagination.page} of {pagination.pages} ({pagination.total} total)
+        </div>
+        <div class="flex space-x-2">
+          <button 
+            class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={pagination.page === 1}
+          >
+            Previous
+          </button>
+          <button 
+            class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={pagination.page === pagination.pages}
+          >
+            Next
+          </button>
+        </div>
+      </div>
+    )}
+
+    <!-- Debug Information (Collapsible) -->
+    <details class="mt-8 bg-gray-50 rounded-lg p-6">
+      <summary class="cursor-pointer font-semibold text-gray-700 hover:text-gray-900">
+        Debug Information
+      </summary>
+      <div class="mt-4 space-y-4">
+        <!-- Session Information -->
+        <div class="bg-white rounded-lg p-4">
+          <h3 class="font-semibold text-gray-700 mb-2">Session Information</h3>
+          <pre class="text-sm text-gray-600 overflow-x-auto">{JSON.stringify({
             user: user,
             isAuthenticated: isAuthenticated,
-            userAgent: Astro.request.headers.get('user-agent'),
-            url: Astro.url.href,
-            pathname: Astro.url.pathname,
             timestamp: new Date().toISOString()
-          }
-        }, null, 2)}
-      </div>
-    </div>
+          }, null, 2)}</pre>
+        </div>
 
-    <!-- Client-side Cookie Check -->
-    <div class="debug-section">
-      <h3>Client-side Cookie Check</h3>
-      <div class="debug-data" id="client-cookies">
-        Loading client-side cookie data...
+        <!-- API Response -->
+        <div class="bg-white rounded-lg p-4">
+          <h3 class="font-semibold text-gray-700 mb-2">API Response</h3>
+          <pre class="text-sm text-gray-600 overflow-x-auto">{JSON.stringify({
+            conversationCount: conversations.length,
+            pagination: pagination,
+            error: error
+          }, null, 2)}</pre>
+        </div>
+
+        <!-- Client-side Cookies -->
+        <div class="bg-white rounded-lg p-4">
+          <h3 class="font-semibold text-gray-700 mb-2">Client-side Cookies</h3>
+          <pre id="client-cookies" class="text-sm text-gray-600 overflow-x-auto">Loading...</pre>
+        </div>
       </div>
-    </div>
-  </main>
+    </details>
+  </div>
+
+  <!-- Include the conversation detail modal -->
+  <ConversationDetailModal />
 
   <script>
-    // Check client-side cookies to compare with server-side validation
+    // Check client-side cookies
     function displayClientCookies() {
       const debugElement = document.getElementById('client-cookies');
-      
-      // Get all cookies
       const cookies = {};
       document.cookie.split(';').forEach(cookie => {
         const [name, value] = cookie.trim().split('=');
@@ -213,7 +286,6 @@ const isAuthenticated = Astro.locals.isAuthenticated;
         }
       });
 
-      // Parse firm session if it exists
       let sessionData = null;
       const sessionCookie = cookies['firm_session'];
       if (sessionCookie) {
@@ -224,25 +296,74 @@ const isAuthenticated = Astro.locals.isAuthenticated;
         }
       }
 
-      const clientData = {
+      debugElement.textContent = JSON.stringify({
         allCookies: Object.keys(cookies),
         firmSessionExists: !!sessionCookie,
         firmSessionData: sessionData,
-        sessionValid: sessionData && sessionData.isAuthenticated && 
-                      sessionData.exp > Math.floor(Date.now() / 1000),
-        sessionExpiry: sessionData?.exp ? new Date(sessionData.exp * 1000).toISOString() : null,
-        timeLeft: sessionData?.exp ? Math.max(0, sessionData.exp - Math.floor(Date.now() / 1000)) + ' seconds' : null,
-        url: window.location.href,
         timestamp: new Date().toISOString()
-      };
+      }, null, 2);
+    }
 
-      debugElement.textContent = JSON.stringify(clientData, null, 2);
+    // Handle filter changes
+    function applyFilters() {
+      const search = document.getElementById('searchInput').value;
+      const status = document.getElementById('statusFilter').value;
+      const practice = document.getElementById('practiceFilter').value;
+      const assigned = document.getElementById('assignedFilter').value;
+
+      const params = new URLSearchParams();
+      if (search) params.set('search', search);
+      if (status) params.set('status', status);
+      if (practice) params.set('practice', practice);
+      if (assigned) params.set('assigned', assigned);
+
+      const newUrl = window.location.pathname + (params.toString() ? '?' + params.toString() : '');
+      window.location.href = newUrl;
+    }
+
+    // Handle conversation row clicks
+    function handleConversationClick(e) {
+      const row = e.target.closest('tr[data-conversation-id]');
+      if (row && !e.target.closest('button')) {
+        const conversationId = row.dataset.conversationId;
+        // Open conversation detail modal
+        window.conversationModal.show(conversationId);
+      }
+    }
+
+    // Handle action buttons
+    function handleActionClick(e) {
+      const button = e.target.closest('button[data-action]');
+      if (button) {
+        e.preventDefault();
+        e.stopPropagation();
+        const action = button.dataset.action;
+        const id = button.dataset.id;
+        
+        if (action === 'export') {
+          // TODO: Implement export
+          console.log('Export conversation:', id);
+          alert('Export functionality coming soon!');
+        } else if (action === 'view') {
+          // Open detail modal
+          window.conversationModal.show(id);
+        }
+      }
     }
 
     // Initialize on page load
     window.addEventListener('load', () => {
       displayClientCookies();
+
+      // Add event listeners for filters
+      document.getElementById('searchInput')?.addEventListener('change', applyFilters);
+      document.getElementById('statusFilter')?.addEventListener('change', applyFilters);
+      document.getElementById('practiceFilter')?.addEventListener('change', applyFilters);
+      document.getElementById('assignedFilter')?.addEventListener('change', applyFilters);
+
+      // Add event listeners for conversation clicks
+      document.querySelector('tbody')?.addEventListener('click', handleConversationClick);
+      document.querySelector('tbody')?.addEventListener('click', handleActionClick);
     });
   </script>
-</body>
-</html>
+</BaseLayout>
