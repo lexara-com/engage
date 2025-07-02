@@ -93,7 +93,10 @@
       "Bash(gh issue list:*)",
       "WebFetch(domain:dev.lexara-firm-portal-dev.pages.dev)",
       "Bash(gh issue create:*)",
-      "WebFetch(domain:dev-www.lexara.app)"
+      "WebFetch(domain:dev-www.lexara.app)",
+      "Bash(git fetch:*)",
+      "Bash(git stash:*)",
+      "Bash(git pull:*)"
     ],
     "deny": []
   }
