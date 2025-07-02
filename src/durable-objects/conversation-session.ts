@@ -526,6 +526,18 @@ export class ConversationSession implements DurableObject {
     if (method === 'POST' && url.pathname === '/conflict') {
       return this.setConflictResult(request);
     }
+    
+    if (method === 'GET' && url.pathname === '/full-conversation') {
+      return this.getFullConversation(request);
+    }
+    
+    if (method === 'POST' && url.pathname === '/delete') {
+      return this.markDeleted(request);
+    }
+    
+    if (method === 'GET' && url.pathname === '/sync-state') {
+      return this.getSyncState(request);
+    }
 
     return new Response(JSON.stringify({
       error: 'NOT_FOUND',
@@ -537,11 +549,165 @@ export class ConversationSession implements DurableObject {
         'POST /message',
         'POST /identity',
         'POST /authenticate',
-        'POST /conflict'
+        'POST /conflict',
+        'GET /full-conversation',
+        'POST /delete',
+        'GET /sync-state'
       ]
     }), {
       status: 404,
       headers: { 'Content-Type': 'application/json' }
     });
+  }
+
+  // Get full conversation data for admin API
+  async getFullConversation(request: Request): Promise<Response> {
+    const logger = createLogger(this.env, { operation: 'getFullConversation' });
+    
+    try {
+      // Verify admin request
+      if (request.headers.get('X-Admin-Request') !== 'true') {
+        throw new UnauthorizedAccessError('Admin access required');
+      }
+      
+      await this.initializeState();
+      
+      if (!this.conversationState) {
+        throw new SessionNotFoundError('Session does not exist');
+      }
+      
+      // Return full conversation data
+      const fullData = {
+        ...this.conversationState,
+        messages: this.conversationState.messages || [],
+        userIdentity: this.conversationState.userIdentity || {},
+        dataGoals: this.conversationState.dataGoals || [],
+        supportDocuments: this.conversationState.supportDocuments || [],
+        conflictCheck: this.conversationState.conflictCheck || { status: 'pending' }
+      };
+      
+      return new Response(JSON.stringify(fullData), {
+        headers: { 'Content-Type': 'application/json' }
+      });
+      
+    } catch (error) {
+      logger.error('Failed to get full conversation', error as Error);
+      const engageError = error instanceof EngageError ? error : 
+        new EngageError('Get full conversation failed', 'GET_FULL_CONVERSATION_ERROR', 500);
+      
+      return new Response(JSON.stringify({
+        error: engageError.code,
+        message: engageError.message
+      }), {
+        status: engageError.statusCode,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+  }
+
+  // Mark conversation as deleted (soft delete)
+  async markDeleted(request: Request): Promise<Response> {
+    const logger = createLogger(this.env, { operation: 'markDeleted' });
+    
+    try {
+      // Verify admin request
+      if (request.headers.get('X-Admin-Request') !== 'true') {
+        throw new UnauthorizedAccessError('Admin access required');
+      }
+      
+      const deletedBy = request.headers.get('X-Deleted-By');
+      if (!deletedBy) {
+        throw new EngageError('X-Deleted-By header required', 'MISSING_DELETED_BY', 400);
+      }
+      
+      await this.initializeState();
+      
+      if (!this.conversationState) {
+        throw new SessionNotFoundError('Session does not exist');
+      }
+      
+      // Mark as deleted
+      this.conversationState.isDeleted = true;
+      this.conversationState.deletedAt = new Date();
+      this.conversationState.deletedBy = deletedBy;
+      
+      await this.saveState();
+      
+      logger.info('Marked conversation as deleted', {
+        sessionId: this.conversationState.sessionId,
+        deletedBy
+      });
+      
+      return new Response(JSON.stringify({
+        deleted: true,
+        deletedAt: this.conversationState.deletedAt
+      }), {
+        headers: { 'Content-Type': 'application/json' }
+      });
+      
+    } catch (error) {
+      logger.error('Failed to mark as deleted', error as Error);
+      const engageError = error instanceof EngageError ? error : 
+        new EngageError('Delete operation failed', 'DELETE_ERROR', 500);
+      
+      return new Response(JSON.stringify({
+        error: engageError.code,
+        message: engageError.message
+      }), {
+        status: engageError.statusCode,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+  }
+
+  // Get sync state for reconciliation
+  async getSyncState(request: Request): Promise<Response> {
+    const logger = createLogger(this.env, { operation: 'getSyncState' });
+    
+    try {
+      await this.initializeState();
+      
+      if (!this.conversationState) {
+        throw new SessionNotFoundError('Session does not exist');
+      }
+      
+      // Return minimal sync state
+      const syncState = {
+        conversationId: this.conversationState.sessionId,
+        firmId: this.conversationState.firmId,
+        userId: this.conversationState.userId,
+        doVersion: (this.conversationState as any).doVersion || 0,
+        phase: this.conversationState.phase,
+        status: this.conversationState.phase === 'completed' ? 'completed' : 
+                this.conversationState.phase === 'terminated' ? 'terminated' : 'active',
+        conflictStatus: this.conversationState.conflictCheck.status,
+        messageCount: this.conversationState.messages.length,
+        completedGoals: this.conversationState.completedGoals.length,
+        totalGoals: this.conversationState.dataGoals.length,
+        lastActivity: this.conversationState.lastActivity,
+        userIdentity: {
+          name: this.conversationState.userIdentity.name,
+          email: this.conversationState.userIdentity.email,
+          phone: this.conversationState.userIdentity.phone
+        }
+      };
+      
+      return new Response(JSON.stringify(syncState), {
+        headers: { 'Content-Type': 'application/json' }
+      });
+      
+    } catch (error) {
+      logger.error('Failed to get sync state', error as Error);
+      const engageError = error instanceof EngageError ? error : 
+        new EngageError('Get sync state failed', 'GET_SYNC_STATE_ERROR', 500);
+      
+      return new Response(JSON.stringify({
+        error: engageError.code,
+        message: engageError.message
+      }), {
+        status: engageError.statusCode,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
   }
 }

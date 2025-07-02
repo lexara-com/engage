@@ -1,0 +1,192 @@
+---
+import BaseLayout from './BaseLayout.astro';
+
+export interface Props {
+  title: string;
+  description?: string;
+  currentPage?: 'dashboard' | 'conversations' | 'conflicts' | 'documents' | 'settings';
+}
+
+const { title, description, currentPage } = Astro.props;
+const user = Astro.locals.user; // Will be set by auth middleware
+---
+
+<BaseLayout title={`${title} - Engage Admin`} description={description}>
+  <div class="min-h-screen bg-gray-50">
+    <!-- Top Navigation Bar -->
+    <nav class="bg-white shadow-sm border-b border-gray-200">
+      <div class="px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between h-16">
+          <div class="flex">
+            <!-- Logo -->
+            <div class="flex-shrink-0 flex items-center">
+              <h1 class="text-xl font-bold text-gray-900">Engage Admin</h1>
+            </div>
+            
+            <!-- Navigation Links -->
+            <div class="hidden sm:ml-8 sm:flex sm:space-x-8">
+              <a 
+                href="/admin" 
+                class={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${
+                  currentPage === 'dashboard' 
+                    ? 'border-indigo-500 text-gray-900' 
+                    : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
+                }`}
+              >
+                Dashboard
+              </a>
+              <a 
+                href="/admin/conversations" 
+                class={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${
+                  currentPage === 'conversations' 
+                    ? 'border-indigo-500 text-gray-900' 
+                    : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
+                }`}
+              >
+                Conversations
+              </a>
+              <a 
+                href="/admin/conflicts" 
+                class={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${
+                  currentPage === 'conflicts' 
+                    ? 'border-indigo-500 text-gray-900' 
+                    : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
+                }`}
+              >
+                Conflicts
+              </a>
+              <a 
+                href="/admin/documents" 
+                class={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${
+                  currentPage === 'documents' 
+                    ? 'border-indigo-500 text-gray-900' 
+                    : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
+                }`}
+              >
+                Documents
+              </a>
+              <a 
+                href="/admin/settings" 
+                class={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${
+                  currentPage === 'settings' 
+                    ? 'border-indigo-500 text-gray-900' 
+                    : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
+                }`}
+              >
+                Settings
+              </a>
+            </div>
+          </div>
+          
+          <!-- Right side -->
+          <div class="flex items-center">
+            <!-- User Menu -->
+            <div class="ml-3 relative">
+              <div class="flex items-center text-sm">
+                <span class="text-gray-700 mr-4">{user?.email || 'Loading...'}</span>
+                <button
+                  id="logout-btn"
+                  class="text-gray-500 hover:text-gray-700"
+                >
+                  Sign Out
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Mobile menu -->
+      <div class="sm:hidden" id="mobile-menu" style="display: none;">
+        <div class="pt-2 pb-3 space-y-1">
+          <a 
+            href="/admin" 
+            class={`block pl-3 pr-4 py-2 border-l-4 text-base font-medium ${
+              currentPage === 'dashboard'
+                ? 'bg-indigo-50 border-indigo-500 text-indigo-700'
+                : 'border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800'
+            }`}
+          >
+            Dashboard
+          </a>
+          <a 
+            href="/admin/conversations" 
+            class={`block pl-3 pr-4 py-2 border-l-4 text-base font-medium ${
+              currentPage === 'conversations'
+                ? 'bg-indigo-50 border-indigo-500 text-indigo-700'
+                : 'border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800'
+            }`}
+          >
+            Conversations
+          </a>
+          <a 
+            href="/admin/conflicts" 
+            class={`block pl-3 pr-4 py-2 border-l-4 text-base font-medium ${
+              currentPage === 'conflicts'
+                ? 'bg-indigo-50 border-indigo-500 text-indigo-700'
+                : 'border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800'
+            }`}
+          >
+            Conflicts
+          </a>
+          <a 
+            href="/admin/documents" 
+            class={`block pl-3 pr-4 py-2 border-l-4 text-base font-medium ${
+              currentPage === 'documents'
+                ? 'bg-indigo-50 border-indigo-500 text-indigo-700'
+                : 'border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800'
+            }`}
+          >
+            Documents
+          </a>
+          <a 
+            href="/admin/settings" 
+            class={`block pl-3 pr-4 py-2 border-l-4 text-base font-medium ${
+              currentPage === 'settings'
+                ? 'bg-indigo-50 border-indigo-500 text-indigo-700'
+                : 'border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800'
+            }`}
+          >
+            Settings
+          </a>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="py-6">
+      <slot />
+    </main>
+  </div>
+
+  <script>
+    // Handle logout
+    document.getElementById('logout-btn')?.addEventListener('click', async () => {
+      try {
+        await fetch('/api/auth/logout', { method: 'POST' });
+        window.location.href = '/admin/login';
+      } catch (error) {
+        console.error('Logout failed:', error);
+      }
+    });
+
+    // Mobile menu toggle
+    const mobileMenuButton = document.createElement('button');
+    mobileMenuButton.className = 'sm:hidden inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100';
+    mobileMenuButton.innerHTML = `
+      <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+      </svg>
+    `;
+    
+    const nav = document.querySelector('nav .flex.justify-between');
+    nav?.appendChild(mobileMenuButton);
+    
+    mobileMenuButton.addEventListener('click', () => {
+      const mobileMenu = document.getElementById('mobile-menu');
+      if (mobileMenu) {
+        mobileMenu.style.display = mobileMenu.style.display === 'none' ? 'block' : 'none';
+      }
+    });
+  </script>
+</BaseLayout>

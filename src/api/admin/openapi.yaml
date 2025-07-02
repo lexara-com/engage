@@ -1,0 +1,1547 @@
+openapi: 3.1.0
+info:
+  title: Engage Firm Admin API
+  description: RESTful API for managing law firm configurations, conflicts, and supporting documents in the Engage AI Legal Intake Platform
+  version: 1.0.0
+  contact:
+    name: Lexara Support
+    email: support@lexara.com
+servers:
+  - url: https://api.engage.lexara.com/v1/admin
+    description: Production server
+  - url: http://localhost:8787/v1/admin
+    description: Development server
+security:
+  - bearerAuth: []
+paths:
+  /firms:
+    get:
+      tags:
+        - Firms
+      summary: List all firms
+      description: Retrieve a paginated list of law firms (admin only)
+      operationId: listFirms
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+        - $ref: '#/components/parameters/SearchParam'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FirmListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+    post:
+      tags:
+        - Firms
+      summary: Create a new firm
+      description: Register a new law firm in the system (admin only)
+      operationId: createFirm
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateFirmRequest'
+      responses:
+        '201':
+          description: Firm created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Firm'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+  
+  /firms/{firmId}:
+    get:
+      tags:
+        - Firms
+      summary: Get firm details
+      description: Retrieve detailed information about a specific firm
+      operationId: getFirm
+      parameters:
+        - $ref: '#/components/parameters/FirmIdParam'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Firm'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags:
+        - Firms
+      summary: Update firm details
+      description: Update configuration and settings for a law firm
+      operationId: updateFirm
+      parameters:
+        - $ref: '#/components/parameters/FirmIdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateFirmRequest'
+      responses:
+        '200':
+          description: Firm updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Firm'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags:
+        - Firms
+      summary: Delete a firm
+      description: Permanently delete a law firm and all associated data (admin only)
+      operationId: deleteFirm
+      parameters:
+        - $ref: '#/components/parameters/FirmIdParam'
+      responses:
+        '204':
+          description: Firm deleted successfully
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  
+  /firms/{firmId}/conflicts:
+    get:
+      tags:
+        - Conflicts
+      summary: List conflict entries
+      description: Retrieve all conflict of interest entries for a firm
+      operationId: listConflicts
+      parameters:
+        - $ref: '#/components/parameters/FirmIdParam'
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+        - $ref: '#/components/parameters/SearchParam'
+        - name: type
+          in: query
+          description: Filter by conflict type
+          schema:
+            type: string
+            enum: [client, party, matter, other]
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConflictListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    post:
+      tags:
+        - Conflicts
+      summary: Add conflict entry
+      description: Add a new conflict of interest entry
+      operationId: createConflict
+      parameters:
+        - $ref: '#/components/parameters/FirmIdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateConflictRequest'
+      responses:
+        '201':
+          description: Conflict entry created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConflictEntry'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+  
+  /firms/{firmId}/conflicts/{conflictId}:
+    get:
+      tags:
+        - Conflicts
+      summary: Get conflict details
+      description: Retrieve details of a specific conflict entry
+      operationId: getConflict
+      parameters:
+        - $ref: '#/components/parameters/FirmIdParam'
+        - $ref: '#/components/parameters/ConflictIdParam'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConflictEntry'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags:
+        - Conflicts
+      summary: Update conflict entry
+      description: Update an existing conflict of interest entry
+      operationId: updateConflict
+      parameters:
+        - $ref: '#/components/parameters/FirmIdParam'
+        - $ref: '#/components/parameters/ConflictIdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateConflictRequest'
+      responses:
+        '200':
+          description: Conflict updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConflictEntry'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags:
+        - Conflicts
+      summary: Delete conflict entry
+      description: Remove a conflict of interest entry
+      operationId: deleteConflict
+      parameters:
+        - $ref: '#/components/parameters/FirmIdParam'
+        - $ref: '#/components/parameters/ConflictIdParam'
+      responses:
+        '204':
+          description: Conflict deleted successfully
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  
+  /firms/{firmId}/conflicts/bulk:
+    post:
+      tags:
+        - Conflicts
+      summary: Bulk import conflicts
+      description: Import multiple conflict entries from CSV or JSON
+      operationId: bulkImportConflicts
+      parameters:
+        - $ref: '#/components/parameters/FirmIdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BulkConflictRequest'
+          text/csv:
+            schema:
+              type: string
+              description: CSV file with headers name,type,description,metadata
+      responses:
+        '202':
+          description: Import accepted and processing
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BulkImportResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  
+  /firms/{firmId}/documents:
+    get:
+      tags:
+        - Supporting Documents
+      summary: List supporting documents
+      description: Retrieve all supporting documents for a firm
+      operationId: listDocuments
+      parameters:
+        - $ref: '#/components/parameters/FirmIdParam'
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+        - name: category
+          in: query
+          description: Filter by document category
+          schema:
+            type: string
+            enum: [case_template, goal_definition, agent_instruction, other]
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    post:
+      tags:
+        - Supporting Documents
+      summary: Upload supporting document
+      description: Upload a new supporting document for the firm
+      operationId: uploadDocument
+      parameters:
+        - $ref: '#/components/parameters/FirmIdParam'
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - file
+                - category
+                - title
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: Document file (PDF, DOCX, TXT, MD)
+                category:
+                  type: string
+                  enum: [case_template, goal_definition, agent_instruction, other]
+                title:
+                  type: string
+                  maxLength: 255
+                description:
+                  type: string
+                  maxLength: 1000
+                metadata:
+                  type: object
+                  additionalProperties: true
+      responses:
+        '201':
+          description: Document uploaded successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SupportingDocument'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '413':
+          description: File too large
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  
+  /firms/{firmId}/documents/{documentId}:
+    get:
+      tags:
+        - Supporting Documents
+      summary: Get document details
+      description: Retrieve metadata for a specific document
+      operationId: getDocument
+      parameters:
+        - $ref: '#/components/parameters/FirmIdParam'
+        - $ref: '#/components/parameters/DocumentIdParam'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SupportingDocument'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags:
+        - Supporting Documents
+      summary: Update document metadata
+      description: Update metadata for a supporting document
+      operationId: updateDocument
+      parameters:
+        - $ref: '#/components/parameters/FirmIdParam'
+        - $ref: '#/components/parameters/DocumentIdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateDocumentRequest'
+      responses:
+        '200':
+          description: Document updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SupportingDocument'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags:
+        - Supporting Documents
+      summary: Delete document
+      description: Delete a supporting document
+      operationId: deleteDocument
+      parameters:
+        - $ref: '#/components/parameters/FirmIdParam'
+        - $ref: '#/components/parameters/DocumentIdParam'
+      responses:
+        '204':
+          description: Document deleted successfully
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  
+  /firms/{firmId}/documents/{documentId}/content:
+    get:
+      tags:
+        - Supporting Documents
+      summary: Download document content
+      description: Download the actual file content
+      operationId: downloadDocument
+      parameters:
+        - $ref: '#/components/parameters/FirmIdParam'
+        - $ref: '#/components/parameters/DocumentIdParam'
+      responses:
+        '200':
+          description: Document content
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+            application/vnd.openxmlformats-officedocument.wordprocessingml.document:
+              schema:
+                type: string
+                format: binary
+            text/plain:
+              schema:
+                type: string
+            text/markdown:
+              schema:
+                type: string
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  
+  /firms/{firmId}/guidelines:
+    get:
+      tags:
+        - Guidelines
+      summary: List firm guidelines
+      description: Retrieve all conversation guidelines for the firm
+      operationId: listGuidelines
+      parameters:
+        - $ref: '#/components/parameters/FirmIdParam'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GuidelineListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    post:
+      tags:
+        - Guidelines
+      summary: Add guideline
+      description: Add a new conversation guideline
+      operationId: createGuideline
+      parameters:
+        - $ref: '#/components/parameters/FirmIdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateGuidelineRequest'
+      responses:
+        '201':
+          description: Guideline created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Guideline'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  
+  /firms/{firmId}/conversations:
+    get:
+      tags:
+        - Conversations
+      summary: List firm conversations
+      description: Retrieve all conversations for a firm with filtering options
+      operationId: listConversations
+      parameters:
+        - $ref: '#/components/parameters/FirmIdParam'
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+        - name: status
+          in: query
+          description: Filter by conversation status
+          schema:
+            type: string
+            enum: [active, completed, terminated]
+        - name: startDate
+          in: query
+          description: Filter conversations after this date
+          schema:
+            type: string
+            format: date-time
+        - name: endDate
+          in: query
+          description: Filter conversations before this date
+          schema:
+            type: string
+            format: date-time
+        - name: userId
+          in: query
+          description: Filter by user ID
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConversationListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  
+  /firms/{firmId}/conversations/{conversationId}:
+    get:
+      tags:
+        - Conversations
+      summary: Get conversation details
+      description: Retrieve full conversation transcript and metadata
+      operationId: getConversation
+      parameters:
+        - $ref: '#/components/parameters/FirmIdParam'
+        - name: conversationId
+          in: path
+          required: true
+          description: Conversation ID (not session ID)
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConversationDetail'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags:
+        - Conversations
+      summary: Update conversation metadata
+      description: Update administrative metadata for a conversation (cannot modify conversation content)
+      operationId: updateConversation
+      parameters:
+        - $ref: '#/components/parameters/FirmIdParam'
+        - name: conversationId
+          in: path
+          required: true
+          description: Conversation ID
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateConversationRequest'
+      responses:
+        '200':
+          description: Conversation updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConversationDetail'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags:
+        - Conversations
+      summary: Delete conversation
+      description: Permanently delete a conversation (admin only)
+      operationId: deleteConversation
+      parameters:
+        - $ref: '#/components/parameters/FirmIdParam'
+        - name: conversationId
+          in: path
+          required: true
+          description: Conversation ID
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Conversation deleted successfully
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  
+  /firms/{firmId}/conversations/{conversationId}/notes:
+    post:
+      tags:
+        - Conversations
+      summary: Add internal note
+      description: Add an internal note to a conversation
+      operationId: addConversationNote
+      parameters:
+        - $ref: '#/components/parameters/FirmIdParam'
+        - name: conversationId
+          in: path
+          required: true
+          description: Conversation ID
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddNoteRequest'
+      responses:
+        '201':
+          description: Note added successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConversationNote'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  
+  /firms/{firmId}/conversations/{conversationId}/actions:
+    post:
+      tags:
+        - Conversations
+      summary: Perform admin action
+      description: Perform an administrative action on a conversation
+      operationId: performConversationAction
+      parameters:
+        - $ref: '#/components/parameters/FirmIdParam'
+        - name: conversationId
+          in: path
+          required: true
+          description: Conversation ID
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConversationActionRequest'
+      responses:
+        '200':
+          description: Action performed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConversationActionResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token from Auth0
+  
+  parameters:
+    FirmIdParam:
+      name: firmId
+      in: path
+      required: true
+      description: Unique identifier of the law firm
+      schema:
+        type: string
+        format: ulid
+    ConflictIdParam:
+      name: conflictId
+      in: path
+      required: true
+      description: Unique identifier of the conflict entry
+      schema:
+        type: string
+        format: ulid
+    DocumentIdParam:
+      name: documentId
+      in: path
+      required: true
+      description: Unique identifier of the document
+      schema:
+        type: string
+        format: ulid
+    PageParam:
+      name: page
+      in: query
+      description: Page number for pagination
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+    LimitParam:
+      name: limit
+      in: query
+      description: Number of items per page
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+    SearchParam:
+      name: search
+      in: query
+      description: Search query string
+      schema:
+        type: string
+        maxLength: 255
+  
+  schemas:
+    Firm:
+      type: object
+      required:
+        - id
+        - name
+        - status
+        - settings
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: string
+          format: ulid
+        name:
+          type: string
+          maxLength: 255
+        domain:
+          type: string
+          format: hostname
+          description: Custom domain for white-label deployment
+        status:
+          type: string
+          enum: [active, suspended, inactive]
+        settings:
+          $ref: '#/components/schemas/FirmSettings'
+        subscription:
+          $ref: '#/components/schemas/Subscription'
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    
+    FirmSettings:
+      type: object
+      required:
+        - practiceAreas
+        - restrictions
+        - branding
+      properties:
+        practiceAreas:
+          type: array
+          items:
+            type: string
+          description: Areas of law the firm practices
+        restrictions:
+          type: array
+          items:
+            type: string
+          description: Areas of law to avoid discussing
+        branding:
+          type: object
+          properties:
+            logoUrl:
+              type: string
+              format: uri
+            primaryColor:
+              type: string
+              pattern: '^#[0-9A-Fa-f]{6}$'
+            companyName:
+              type: string
+        contactInfo:
+          type: object
+          properties:
+            email:
+              type: string
+              format: email
+            phone:
+              type: string
+            address:
+              type: string
+    
+    CreateFirmRequest:
+      type: object
+      required:
+        - name
+        - adminEmail
+        - practiceAreas
+      properties:
+        name:
+          type: string
+          maxLength: 255
+        adminEmail:
+          type: string
+          format: email
+        domain:
+          type: string
+          format: hostname
+        practiceAreas:
+          type: array
+          items:
+            type: string
+          minItems: 1
+        restrictions:
+          type: array
+          items:
+            type: string
+    
+    UpdateFirmRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 255
+        domain:
+          type: string
+          format: hostname
+        status:
+          type: string
+          enum: [active, suspended, inactive]
+        settings:
+          $ref: '#/components/schemas/FirmSettings'
+    
+    ConflictEntry:
+      type: object
+      required:
+        - id
+        - firmId
+        - name
+        - type
+        - createdAt
+      properties:
+        id:
+          type: string
+          format: ulid
+        firmId:
+          type: string
+          format: ulid
+        name:
+          type: string
+          maxLength: 255
+        type:
+          type: string
+          enum: [client, party, matter, other]
+        description:
+          type: string
+          maxLength: 1000
+        metadata:
+          type: object
+          additionalProperties: true
+          description: Additional searchable metadata
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    
+    CreateConflictRequest:
+      type: object
+      required:
+        - name
+        - type
+      properties:
+        name:
+          type: string
+          maxLength: 255
+        type:
+          type: string
+          enum: [client, party, matter, other]
+        description:
+          type: string
+          maxLength: 1000
+        metadata:
+          type: object
+          additionalProperties: true
+    
+    UpdateConflictRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 255
+        type:
+          type: string
+          enum: [client, party, matter, other]
+        description:
+          type: string
+          maxLength: 1000
+        metadata:
+          type: object
+          additionalProperties: true
+    
+    BulkConflictRequest:
+      type: object
+      required:
+        - conflicts
+      properties:
+        conflicts:
+          type: array
+          items:
+            $ref: '#/components/schemas/CreateConflictRequest'
+          minItems: 1
+          maxItems: 1000
+    
+    SupportingDocument:
+      type: object
+      required:
+        - id
+        - firmId
+        - title
+        - category
+        - fileType
+        - fileSize
+        - createdAt
+      properties:
+        id:
+          type: string
+          format: ulid
+        firmId:
+          type: string
+          format: ulid
+        title:
+          type: string
+          maxLength: 255
+        description:
+          type: string
+          maxLength: 1000
+        category:
+          type: string
+          enum: [case_template, goal_definition, agent_instruction, other]
+        fileType:
+          type: string
+          enum: [pdf, docx, txt, md]
+        fileSize:
+          type: integer
+          description: File size in bytes
+        contentUrl:
+          type: string
+          format: uri
+          description: Presigned URL for content download
+        metadata:
+          type: object
+          additionalProperties: true
+        vectorized:
+          type: boolean
+          description: Whether document has been processed for vector search
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    
+    UpdateDocumentRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          maxLength: 255
+        description:
+          type: string
+          maxLength: 1000
+        category:
+          type: string
+          enum: [case_template, goal_definition, agent_instruction, other]
+        metadata:
+          type: object
+          additionalProperties: true
+    
+    Guideline:
+      type: object
+      required:
+        - id
+        - firmId
+        - content
+        - priority
+        - active
+        - createdAt
+      properties:
+        id:
+          type: string
+          format: ulid
+        firmId:
+          type: string
+          format: ulid
+        content:
+          type: string
+          maxLength: 1000
+          description: The guideline text to be added to system prompts
+        priority:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Higher priority guidelines are processed first
+        active:
+          type: boolean
+        category:
+          type: string
+          enum: [conversation_style, data_gathering, compliance, other]
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    
+    CreateGuidelineRequest:
+      type: object
+      required:
+        - content
+      properties:
+        content:
+          type: string
+          maxLength: 1000
+        priority:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 50
+        category:
+          type: string
+          enum: [conversation_style, data_gathering, compliance, other]
+        active:
+          type: boolean
+          default: true
+    
+    ConversationSummary:
+      type: object
+      required:
+        - id
+        - firmId
+        - userId
+        - status
+        - phase
+        - createdAt
+        - lastActivity
+      properties:
+        id:
+          type: string
+          format: ulid
+        firmId:
+          type: string
+          format: ulid
+        userId:
+          type: string
+          format: ulid
+        sessionId:
+          type: string
+          format: ulid
+          description: Original session ID for DO access
+        userIdentity:
+          type: object
+          properties:
+            name:
+              type: string
+            email:
+              type: string
+            phone:
+              type: string
+        status:
+          type: string
+          enum: [active, completed, terminated]
+        phase:
+          type: string
+          enum: [pre_login, login_suggested, secured, conflict_check_complete, data_gathering, completed, terminated]
+        conflictStatus:
+          type: string
+          enum: [pending, clear, conflict_detected]
+        assignedTo:
+          type: string
+          description: Attorney or staff member ID
+        priority:
+          type: string
+          enum: [low, normal, high, urgent]
+        tags:
+          type: array
+          items:
+            type: string
+        followUpDate:
+          type: string
+          format: date-time
+        messageCount:
+          type: integer
+        completedGoals:
+          type: integer
+        totalGoals:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+        lastActivity:
+          type: string
+          format: date-time
+    
+    ConversationDetail:
+      allOf:
+        - $ref: '#/components/schemas/ConversationSummary'
+        - type: object
+          properties:
+            messages:
+              type: array
+              items:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    format: ulid
+                  role:
+                    type: string
+                    enum: [user, assistant, system]
+                  content:
+                    type: string
+                  timestamp:
+                    type: string
+                    format: date-time
+            dataGoals:
+              type: array
+              items:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  description:
+                    type: string
+                  completed:
+                    type: boolean
+            supportDocuments:
+              type: array
+              items:
+                type: string
+              description: IDs of relevant support documents found
+            internalNotes:
+              type: array
+              items:
+                $ref: '#/components/schemas/ConversationNote'
+            auditLog:
+              type: array
+              items:
+                $ref: '#/components/schemas/AuditEntry'
+    
+    UpdateConversationRequest:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [active, completed, terminated]
+        assignedTo:
+          type: string
+          description: Attorney or staff member ID
+        priority:
+          type: string
+          enum: [low, normal, high, urgent]
+        tags:
+          type: array
+          items:
+            type: string
+        followUpDate:
+          type: string
+          format: date-time
+    
+    AddNoteRequest:
+      type: object
+      required:
+        - note
+      properties:
+        note:
+          type: string
+          maxLength: 2000
+        type:
+          type: string
+          enum: [assessment, follow_up, general]
+          default: general
+    
+    ConversationNote:
+      type: object
+      required:
+        - id
+        - note
+        - type
+        - createdBy
+        - createdAt
+      properties:
+        id:
+          type: string
+          format: ulid
+        note:
+          type: string
+        type:
+          type: string
+          enum: [assessment, follow_up, general]
+        createdBy:
+          type: string
+          description: User ID who created the note
+        createdAt:
+          type: string
+          format: date-time
+    
+    ConversationActionRequest:
+      type: object
+      required:
+        - action
+      properties:
+        action:
+          type: string
+          enum: [assign, reassign, flag_review, mark_urgent, request_follow_up]
+        assigneeId:
+          type: string
+          description: Required for assign/reassign actions
+        note:
+          type: string
+          description: Optional note explaining the action
+        metadata:
+          type: object
+          additionalProperties: true
+    
+    ConversationActionResponse:
+      type: object
+      required:
+        - success
+        - action
+        - timestamp
+      properties:
+        success:
+          type: boolean
+        action:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        result:
+          type: object
+          description: Action-specific result data
+    
+    AuditEntry:
+      type: object
+      required:
+        - id
+        - action
+        - performedBy
+        - performedAt
+      properties:
+        id:
+          type: string
+          format: ulid
+        action:
+          type: string
+          description: The action performed (e.g., status_change, assignment)
+        performedBy:
+          type: string
+          description: User ID who performed the action
+        performedAt:
+          type: string
+          format: date-time
+        details:
+          type: object
+          additionalProperties: true
+          description: Action-specific details
+    
+    Subscription:
+      type: object
+      properties:
+        plan:
+          type: string
+          enum: [starter, professional, enterprise]
+        status:
+          type: string
+          enum: [active, past_due, cancelled]
+        conversationLimit:
+          type: integer
+        currentUsage:
+          type: integer
+        billingPeriodEnd:
+          type: string
+          format: date-time
+    
+    # Response schemas
+    FirmListResponse:
+      type: object
+      required:
+        - firms
+        - pagination
+      properties:
+        firms:
+          type: array
+          items:
+            $ref: '#/components/schemas/Firm'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+    
+    ConflictListResponse:
+      type: object
+      required:
+        - conflicts
+        - pagination
+      properties:
+        conflicts:
+          type: array
+          items:
+            $ref: '#/components/schemas/ConflictEntry'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+    
+    DocumentListResponse:
+      type: object
+      required:
+        - documents
+        - pagination
+      properties:
+        documents:
+          type: array
+          items:
+            $ref: '#/components/schemas/SupportingDocument'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+    
+    GuidelineListResponse:
+      type: object
+      required:
+        - guidelines
+      properties:
+        guidelines:
+          type: array
+          items:
+            $ref: '#/components/schemas/Guideline'
+    
+    ConversationListResponse:
+      type: object
+      required:
+        - conversations
+        - pagination
+      properties:
+        conversations:
+          type: array
+          items:
+            $ref: '#/components/schemas/ConversationSummary'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+    
+    BulkImportResponse:
+      type: object
+      required:
+        - jobId
+        - status
+        - total
+      properties:
+        jobId:
+          type: string
+          format: ulid
+        status:
+          type: string
+          enum: [processing, completed, failed]
+        total:
+          type: integer
+        processed:
+          type: integer
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              line:
+                type: integer
+              error:
+                type: string
+    
+    Pagination:
+      type: object
+      required:
+        - page
+        - limit
+        - total
+        - totalPages
+      properties:
+        page:
+          type: integer
+        limit:
+          type: integer
+        total:
+          type: integer
+        totalPages:
+          type: integer
+    
+    ErrorResponse:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: object
+          required:
+            - code
+            - message
+          properties:
+            code:
+              type: string
+            message:
+              type: string
+            details:
+              type: object
+              additionalProperties: true
+  
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Unauthorized:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Forbidden:
+      description: Insufficient permissions
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Conflict:
+      description: Resource conflict
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+tags:
+  - name: Firms
+    description: Law firm management endpoints
+  - name: Conflicts
+    description: Conflict of interest management
+  - name: Supporting Documents
+    description: Supporting document management
+  - name: Guidelines
+    description: Conversation guideline management
+  - name: Conversations
+    description: Conversation review and management

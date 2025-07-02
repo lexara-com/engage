@@ -39,7 +39,17 @@
       "Bash(python:*)",
       "Bash(gh auth:*)",
       "Bash(git init:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(gh repo view:*)",
+      "Bash(gh issue list:*)",
+      "Bash(gh issue create:*)",
+      "Bash(gh issue close:*)",
+      "Bash(rg:*)",
+      "Bash(npm test:*)",
+      "Bash(node:*)",
+      "Bash(npm run:*)",
+      "Bash(npx wrangler:*)",
+      "Bash(env)"
     ],
     "deny": []
   }

@@ -1,0 +1,319 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import { Icon } from 'astro-icon/components';
+import type { AdminUser } from '../../middleware/admin-auth';
+
+// Get authenticated user from middleware
+const user = Astro.locals.user as AdminUser;
+const firmId = user?.firmId || 'test-firm-id';
+const adminApiUrl = import.meta.env.PUBLIC_ADMIN_API_URL || 'http://localhost:8787/v1/admin';
+---
+
+<AdminLayout title="Dashboard" currentPage="dashboard">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <!-- Page Header -->
+    <div class="mb-8">
+      <h1 class="text-2xl font-bold text-gray-900">Dashboard</h1>
+      <p class="mt-1 text-sm text-gray-600">
+        Overview of your firm's conversations and activity
+      </p>
+    </div>
+
+    <!-- Stats Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <!-- Active Conversations -->
+      <div class="bg-white overflow-hidden shadow rounded-lg">
+        <div class="p-5">
+          <div class="flex items-center">
+            <div class="flex-shrink-0">
+              <div class="p-3 bg-indigo-500 rounded-md">
+                <svg class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+                </svg>
+              </div>
+            </div>
+            <div class="ml-5 w-0 flex-1">
+              <dl>
+                <dt class="text-sm font-medium text-gray-500 truncate">
+                  Active Conversations
+                </dt>
+                <dd class="mt-1 text-3xl font-semibold text-gray-900" id="active-count">
+                  --
+                </dd>
+              </dl>
+            </div>
+          </div>
+        </div>
+        <div class="bg-gray-50 px-5 py-3">
+          <div class="text-sm">
+            <a href="/admin/conversations?status=active" class="font-medium text-indigo-600 hover:text-indigo-500">
+              View all
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Needs Review -->
+      <div class="bg-white overflow-hidden shadow rounded-lg">
+        <div class="p-5">
+          <div class="flex items-center">
+            <div class="flex-shrink-0">
+              <div class="p-3 bg-yellow-500 rounded-md">
+                <svg class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+              </div>
+            </div>
+            <div class="ml-5 w-0 flex-1">
+              <dl>
+                <dt class="text-sm font-medium text-gray-500 truncate">
+                  Needs Review
+                </dt>
+                <dd class="mt-1 text-3xl font-semibold text-gray-900" id="review-count">
+                  --
+                </dd>
+              </dl>
+            </div>
+          </div>
+        </div>
+        <div class="bg-gray-50 px-5 py-3">
+          <div class="text-sm">
+            <a href="/admin/conversations?priority=urgent" class="font-medium text-yellow-600 hover:text-yellow-500">
+              Review now
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Completed Today -->
+      <div class="bg-white overflow-hidden shadow rounded-lg">
+        <div class="p-5">
+          <div class="flex items-center">
+            <div class="flex-shrink-0">
+              <div class="p-3 bg-green-500 rounded-md">
+                <svg class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+            </div>
+            <div class="ml-5 w-0 flex-1">
+              <dl>
+                <dt class="text-sm font-medium text-gray-500 truncate">
+                  Completed Today
+                </dt>
+                <dd class="mt-1 text-3xl font-semibold text-gray-900" id="completed-today">
+                  --
+                </dd>
+              </dl>
+            </div>
+          </div>
+        </div>
+        <div class="bg-gray-50 px-5 py-3">
+          <div class="text-sm">
+            <a href="/admin/conversations?status=completed" class="font-medium text-green-600 hover:text-green-500">
+              View completed
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Conflict Detected -->
+      <div class="bg-white overflow-hidden shadow rounded-lg">
+        <div class="p-5">
+          <div class="flex items-center">
+            <div class="flex-shrink-0">
+              <div class="p-3 bg-red-500 rounded-md">
+                <svg class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                </svg>
+              </div>
+            </div>
+            <div class="ml-5 w-0 flex-1">
+              <dl>
+                <dt class="text-sm font-medium text-gray-500 truncate">
+                  Conflicts Detected
+                </dt>
+                <dd class="mt-1 text-3xl font-semibold text-gray-900" id="conflict-count">
+                  --
+                </dd>
+              </dl>
+            </div>
+          </div>
+        </div>
+        <div class="bg-gray-50 px-5 py-3">
+          <div class="text-sm">
+            <a href="/admin/conversations?conflictStatus=conflict_detected" class="font-medium text-red-600 hover:text-red-500">
+              Review conflicts
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent Conversations -->
+    <div class="bg-white shadow rounded-lg">
+      <div class="px-4 py-5 sm:px-6 border-b border-gray-200">
+        <h2 class="text-lg font-medium text-gray-900">Recent Conversations</h2>
+        <p class="mt-1 text-sm text-gray-500">Latest client interactions requiring attention</p>
+      </div>
+      <div class="overflow-hidden">
+        <table class="min-w-full divide-y divide-gray-200">
+          <thead class="bg-gray-50">
+            <tr>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Client
+              </th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Status
+              </th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Priority
+              </th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Last Activity
+              </th>
+              <th scope="col" class="relative px-6 py-3">
+                <span class="sr-only">View</span>
+              </th>
+            </tr>
+          </thead>
+          <tbody class="bg-white divide-y divide-gray-200" id="recent-conversations">
+            <tr>
+              <td colspan="5" class="px-6 py-4 text-center text-sm text-gray-500">
+                Loading conversations...
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { getAdminApiClient } from '../../utils/admin-api-client.js';
+    
+    const firmId = '${firmId}';
+    const apiClient = getAdminApiClient();
+    let useMockData = false; // Using real API
+    
+    // Fetch dashboard stats
+    async function loadDashboardStats() {
+      try {
+        let stats;
+        
+        if (useMockData) {
+          // Mock data for development
+          stats = {
+            active: 12,
+            needsReview: 3,
+            completedToday: 5,
+            conflicts: 1
+          };
+        } else {
+          // Real API calls to gather stats
+          // This would require multiple API calls or a dedicated stats endpoint
+          const [activeResp, urgentResp, completedResp, conflictResp] = await Promise.all([
+            apiClient.listConversations(firmId, { status: 'active', limit: 1 }),
+            apiClient.listConversations(firmId, { priority: 'urgent', limit: 1 }),
+            apiClient.listConversations(firmId, { 
+              status: 'completed', 
+              startDate: new Date().toISOString().split('T')[0],
+              limit: 1 
+            }),
+            apiClient.listConversations(firmId, { conflictStatus: 'conflict_detected', limit: 1 })
+          ]);
+          
+          stats = {
+            active: activeResp.pagination.total,
+            needsReview: urgentResp.pagination.total,
+            completedToday: completedResp.pagination.total,
+            conflicts: conflictResp.pagination.total
+          };
+        }
+
+        document.getElementById('active-count').textContent = stats.active;
+        document.getElementById('review-count').textContent = stats.needsReview;
+        document.getElementById('completed-today').textContent = stats.completedToday;
+        document.getElementById('conflict-count').textContent = stats.conflicts;
+
+        // Load recent conversations
+        await loadRecentConversations();
+      } catch (error) {
+        console.error('Failed to load dashboard stats:', error);
+      }
+    }
+
+    // Load recent conversations
+    async function loadRecentConversations() {
+      try {
+        let conversations;
+        
+        if (useMockData) {
+          // Mock data for development
+          conversations = [
+            {
+              id: '01HK8Z2X3Y4V5W6A7B8C9D0E1F',
+              userName: 'John Doe',
+              userEmail: 'john.doe@example.com',
+              status: 'active',
+              priority: 'normal',
+              lastActivity: new Date().toISOString()
+            },
+            {
+              id: '01HK8Z4X5Y6V7W8A9B0C1D2E3F',
+              userName: 'Jane Smith',
+              userEmail: 'jane.smith@example.com',
+              status: 'active',
+              priority: 'urgent',
+              lastActivity: new Date(Date.now() - 3600000).toISOString()
+            }
+          ];
+        } else {
+          // Real API call for recent conversations
+          const response = await apiClient.listConversations(firmId, {
+            limit: 5,
+            status: 'active'
+          });
+          conversations = response.conversations;
+        }
+
+        const tbody = document.getElementById('recent-conversations');
+        tbody.innerHTML = conversations.map(conv => `
+          <tr>
+            <td class="px-6 py-4 whitespace-nowrap">
+              <div class="text-sm font-medium text-gray-900">${conv.userName || 'Unknown'}</div>
+              <div class="text-sm text-gray-500">${conv.userEmail || 'No email'}</div>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+              <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                conv.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+              }">
+                ${conv.status}
+              </span>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+              <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                conv.priority === 'urgent' ? 'bg-red-100 text-red-800' : 
+                conv.priority === 'high' ? 'bg-yellow-100 text-yellow-800' : 
+                'bg-gray-100 text-gray-800'
+              }">
+                ${conv.priority}
+              </span>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+              ${new Date(conv.lastActivity).toLocaleString()}
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+              <a href="/admin/conversations/${conv.id}" class="text-indigo-600 hover:text-indigo-900">View</a>
+            </td>
+          </tr>
+        `).join('');
+      } catch (error) {
+        console.error('Failed to load recent conversations:', error);
+      }
+    }
+
+    // Load stats on page load
+    document.addEventListener('DOMContentLoaded', loadDashboardStats);
+  </script>
+</AdminLayout>
