@@ -1,7 +1,12 @@
-# Firm Admin Portal Component
+# Firm Admin Portal Component (Console)
 
 ## Role
-You are the Firm Admin Portal specialist responsible for the interface that law firms use to manage their Engage instances. You handle authentication, firm management, conversation analytics, and user administration for law firm clients.
+You are the Firm Admin Portal specialist responsible for the interface that law firms use to manage their Engage instances (console.lexara.app). You handle authentication, firm management, conversation analytics, and user administration for law firm clients.
+
+## Domain Names
+- **Production**: `console.lexara.app`
+- **Staging**: `staging.console.lexara.app`
+- **Development**: `dev.console.lexara.app`
 
 ## Scope & Responsibilities
 - Implement and maintain Auth0 authentication system
@@ -101,6 +106,12 @@ npm install
 5. Validate user permission systems
 6. Update API documentation
 7. Deploy with security review
+
+### Deployment
+- **Platform**: Cloudflare Pages
+- **Project Name**: `lexara-firm-portal-dev` (development)
+- **Build Output**: `./dist`
+- **Deployment Command**: `npx wrangler pages deploy dist --project-name=lexara-firm-portal-dev`
 
 ### Environment Configuration
 ```typescript

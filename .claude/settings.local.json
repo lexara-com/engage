@@ -96,7 +96,8 @@
       "WebFetch(domain:dev-www.lexara.app)",
       "Bash(git fetch:*)",
       "Bash(git stash:*)",
-      "Bash(git pull:*)"
+      "Bash(git pull:*)",
+      "Bash(gh issue comment:*)"
     ],
     "deny": []
   }

@@ -1,89 +1,97 @@
-# Firm Admin Portal
+# Lexara Firm Admin Portal (Console)
 
-Interface for law firms to manage their Lexara Engage instances, including Auth0 authentication, dashboard analytics, and user management.
+The Lexara Firm Admin Portal provides law firms with a comprehensive dashboard to manage their Engage AI assistant instances, view conversation analytics, and administer user access.
 
-## Overview
+## URLs
 
-The Firm Admin Portal provides law firms with comprehensive tools to manage their Engage deployment:
+- **Production**: https://console.lexara.app
+- **Staging**: https://staging.console.lexara.app
+- **Development**: https://dev.console.lexara.app
 
-- **Auth0 Authentication**: Secure login and user management
-- **Dashboard Analytics**: Conversation metrics and lead tracking  
-- **User Management**: Role-based access control for firm employees
-- **Firm Settings**: Configuration and customization options
-- **Conversation Review**: Access to client interaction history
+## Features
 
-## Architecture
+- **Auth0 Authentication**: Secure single sign-on for law firm users
+- **Dashboard Analytics**: Real-time conversation metrics and insights
+- **User Management**: Role-based access control for firm members
+- **Conversation Review**: Browse and analyze client conversations
+- **Firm Settings**: Configure practice areas, branding, and preferences
+- **Conflict Checking**: Review potential conflict alerts
 
-```
-src/
-├── auth/                 # Authentication utilities (legacy)
-├── layouts/              # Page layouts
-├── middleware.ts         # Auth0 route protection  
-├── pages/                # Route pages
-│   ├── firm/             # Firm-specific pages
-│   │   ├── login.astro   # Auth0 login
-│   │   ├── callback.astro # Auth0 callback handler
-│   │   ├── signup.astro  # Firm registration
-│   │   ├── dashboard.astro # Main dashboard
-│   │   └── conversations.astro # Conversation management
-│   └── index.astro       # Marketing homepage
-├── types/                # TypeScript definitions
-└── utils/                # Utility functions
-    ├── auth.ts           # Auth0 integration
-    └── api-client.ts     # API client utilities
-```
+## Tech Stack
 
-## Key Features
-
-### Auth0 Authentication
-- Universal Login with secure session management
-- Role-based access (admin, lawyer, staff, viewer)
-- Multi-factor authentication support
-- JWT token handling and validation
-
-### Dashboard Analytics
-- Conversation metrics and completion rates
-- Lead generation and conversion tracking
-- Practice area performance analytics
-- User engagement statistics
-
-### Firm Management
-- User administration with role assignment
-- Branding customization (colors, logos, disclaimers)
-- Practice area configuration
-- Billing and subscription management
+- **Framework**: Astro with TypeScript
+- **Styling**: Tailwind CSS
+- **Authentication**: Auth0
+- **Deployment**: Cloudflare Pages
+- **API**: Cloudflare Workers (api-dev.lexara.app)
 
 ## Development
 
-### Setup
 ```bash
+# Install dependencies
 npm install
-```
 
-### Environment Variables
-```bash
-AUTH0_DOMAIN=your-auth0-domain.auth0.com
-AUTH0_CLIENT_ID=your-auth0-client-id
-AUTH0_CLIENT_SECRET=your-auth0-client-secret
-```
-
-### Development Server
-```bash
+# Start development server
 npm run dev
+
+# Build for production
+npm run build
+
+# Deploy to Cloudflare Pages
+npx wrangler pages deploy dist --project-name=lexara-firm-portal-dev
 ```
 
-### Deployment
-```bash
-npm run deploy:dev      # Development
-npm run deploy:staging  # Staging
-npm run deploy:production # Production
+## Project Structure
+
+```
+src/
+├── components/     # Reusable UI components
+├── layouts/        # Page layouts
+├── pages/          # Astro pages and API routes
+│   ├── api/        # Server-side API endpoints
+│   └── firm/       # Firm portal pages
+├── styles/         # Global styles
+├── types/          # TypeScript type definitions
+└── utils/          # Utility functions and API client
 ```
 
-## Integration
+## Environment Variables
 
-This component integrates with:
-- **Conversation Agent**: Conversation data and analytics
-- **Platform Admin Portal**: System-wide firm management
-- **Chat UI**: Firm branding and customization
+Required environment variables for deployment:
 
-For detailed development information, see the component's CLAUDE.md file.
+- `AUTH0_DOMAIN`: Auth0 tenant domain
+- `AUTH0_CLIENT_ID`: Auth0 application client ID
+- `AUTH0_CLIENT_SECRET`: Auth0 application client secret
+- `AUTH0_AUDIENCE`: Auth0 API audience
+- `API_URL`: Backend API URL (e.g., https://api-dev.lexara.app)
+
+## Auth0 Configuration
+
+Configure Auth0 with the following URLs:
+
+- **Allowed Callback URLs**: `https://[domain]/firm/callback`
+- **Allowed Logout URLs**: `https://[domain]`
+- **Allowed Web Origins**: `https://[domain]`
+
+Replace `[domain]` with the appropriate environment domain.
+
+## API Integration
+
+The portal integrates with the Lexara API Worker at:
+- Development: `https://api-dev.lexara.app`
+- Production: `https://api.lexara.app`
+
+All API calls are proxied through server-side endpoints in `/src/pages/api/` for security.
+
+## Deployment
+
+The portal is deployed using Cloudflare Pages:
+
+1. Build the project: `npm run build`
+2. Deploy to Pages: `npx wrangler pages deploy dist --project-name=lexara-firm-portal-[env]`
+3. Configure custom domain in Cloudflare dashboard
+4. Update DNS records to point to Pages deployment
+
+## Contributing
+
+See CLAUDE.md for detailed development guidelines and architectural decisions.
