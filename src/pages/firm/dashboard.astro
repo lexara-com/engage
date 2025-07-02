@@ -285,6 +285,37 @@ const { title = `Dashboard - Lexara Firm Portal`, description = "Your firm's AI-
       <a href="/" class="action-button">Back to Home</a>
     </div>
 
+    <!-- Chatbot Integration -->
+    {user?.firmId && (
+      <div class="quick-actions" style="margin-top: 2rem;">
+        <h3>Your Firm's Chatbot</h3>
+        <p style="margin-bottom: 1rem; color: #718096;">
+          Share this link with your website visitors to start conversations with your AI assistant.
+        </p>
+        <div style="background: #f8f9fa; padding: 1rem; border-radius: 0.25rem; margin-bottom: 1rem;">
+          <strong>Chatbot URL:</strong>
+          <code style="display: block; margin-top: 0.5rem; padding: 0.5rem; background: white; border: 1px solid #e2e8f0; border-radius: 0.25rem; word-break: break-all;">
+            https://chat.lexara.app?firm={user.firmId}
+          </code>
+        </div>
+        <a 
+          href={`https://chat.lexara.app?firm=${user.firmId}`} 
+          target="_blank" 
+          class="action-button"
+          style="background: #10b981;"
+        >
+          Open Chatbot →
+        </a>
+        <button 
+          onclick={`navigator.clipboard.writeText('https://chat.lexara.app?firm=${user.firmId}'); alert('Chatbot URL copied to clipboard!');`}
+          class="action-button"
+          style="background: #6b7280; cursor: pointer; border: none; font-size: 1rem;"
+        >
+          Copy URL
+        </button>
+      </div>
+    )}
+
     <!-- Session Debug Information -->
     <div class="debug-section">
       <h3 class="debug-title">Session Debug Information</h3>
