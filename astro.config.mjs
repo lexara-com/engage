@@ -9,7 +9,7 @@ export default defineConfig({
     platformProxy: {
       enabled: true
     },
-    mode: 'advanced'
+    mode: 'directory'
   }),
   integrations: [tailwind()],
   vite: {
