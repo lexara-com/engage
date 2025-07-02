@@ -9,7 +9,8 @@ export default defineConfig({
     platformProxy: {
       enabled: true
     },
-    mode: 'directory'
+    mode: 'directory',
+    functionPerRoute: false
   }),
   integrations: [tailwind()],
   vite: {
