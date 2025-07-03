@@ -1,0 +1,17 @@
+---
+// Handle logout - clear session and redirect
+const response = new Response(null, {
+  status: 302,
+  headers: {
+    'Location': '/'
+  }
+});
+
+// Clear the session cookie
+response.headers.append('Set-Cookie', 'firm_session=; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=0');
+
+// Also clear any other session-related cookies if they exist
+response.headers.append('Set-Cookie', 'auth0_session=; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=0');
+
+return response;
+---
