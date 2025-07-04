@@ -1,389 +1,316 @@
 ---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+
 // Server-side authentication is handled by middleware
 // User info is available via Astro.locals if authenticated
 const user = Astro.locals.user;
 const isAuthenticated = Astro.locals.isAuthenticated;
-const sessionExpiry = Astro.locals.sessionExpiry;
-
-const { title = `Dashboard - Lexara Firm Portal`, description = "Your firm's AI-powered client intake dashboard" } = Astro.props;
 ---
 
-<!DOCTYPE html>
-<html lang="en" class="scroll-smooth">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>{title}</title>
-  <meta name="description" content={description}>
-  
-  <!-- Favicon -->
-  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
-  
-  <!-- Official Brand Fonts -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&family=Open+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,300;1,400;1,500;1,600;1,700;1,800&display=swap" rel="stylesheet">
-  
-  <style>
-    body {
-      font-family: 'Open Sans', sans-serif;
-      margin: 0;
-      padding: 0;
-      background: #f7fafc;
-      color: #2d3748;
-    }
-    .container {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 1rem;
-    }
-    .header {
-      background: white;
-      border-bottom: 1px solid #e2e8f0;
-      padding: 1rem 0;
-      margin-bottom: 2rem;
-    }
-    .header-content {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 0 1rem;
-    }
-    .logo {
-      display: flex;
-      align-items: center;
-      font-size: 1.5rem;
-      font-weight: bold;
-      color: #2d3748;
-    }
-    .logo-icon {
-      width: 2rem;
-      height: 2rem;
-      background: #667eea;
-      border-radius: 0.5rem;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin-right: 0.75rem;
-      color: white;
-      font-weight: bold;
-    }
-    .user-tile {
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-      background: #f8f9fa;
-      padding: 0.75rem 1rem;
-      border-radius: 0.5rem;
-      border: 1px solid #e2e8f0;
-    }
-    .user-avatar {
-      width: 2.5rem;
-      height: 2.5rem;
-      background: #667eea;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: white;
-      font-weight: bold;
-      font-size: 1rem;
-    }
-    .user-info {
-      display: flex;
-      flex-direction: column;
-    }
-    .user-name {
-      font-weight: 600;
-      color: #2d3748;
-      font-size: 0.875rem;
-    }
-    .user-email {
-      color: #718096;
-      font-size: 0.75rem;
-    }
-    .logout-link {
-      color: #dc3545;
-      text-decoration: none;
-      font-size: 0.875rem;
-      padding: 0.5rem 1rem;
-      border: 1px solid #dc3545;
-      border-radius: 0.25rem;
-      transition: all 0.2s;
-    }
-    .logout-link:hover {
-      background: #dc3545;
-      color: white;
-    }
-    .welcome-section {
-      background: white;
-      border-radius: 0.5rem;
-      padding: 2rem;
-      margin-bottom: 2rem;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    }
-    .debug-section {
-      background: #f8f9fa;
-      border: 1px solid #e2e8f0;
-      border-radius: 0.5rem;
-      padding: 1.5rem;
-      margin: 2rem 0;
-    }
-    .debug-title {
-      font-weight: 600;
-      margin-bottom: 1rem;
-      color: #2d3748;
-    }
-    .debug-data {
-      background: #f1f3f4;
-      padding: 1rem;
-      border-radius: 0.25rem;
-      overflow-x: auto;
-      white-space: pre-wrap;
-      font-family: 'Courier New', monospace;
-      font-size: 0.875rem;
-      line-height: 1.4;
-    }
-    .stats-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-      gap: 1.5rem;
-      margin: 2rem 0;
-    }
-    .stat-card {
-      background: white;
-      border-radius: 0.5rem;
-      padding: 1.5rem;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-      text-align: center;
-    }
-    .stat-number {
-      font-size: 2rem;
-      font-weight: bold;
-      color: #667eea;
-      margin-bottom: 0.5rem;
-    }
-    .stat-label {
-      color: #718096;
-      font-size: 0.875rem;
-    }
-    .quick-actions {
-      background: white;
-      border-radius: 0.5rem;
-      padding: 1.5rem;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    }
-    .action-button {
-      display: inline-block;
-      background: #667eea;
-      color: white;
-      padding: 0.75rem 1.5rem;
-      border-radius: 0.25rem;
-      text-decoration: none;
-      margin: 0.5rem;
-      transition: all 0.2s;
-    }
-    .action-button:hover {
-      background: #5a67d8;
-      transform: translateY(-1px);
-    }
-    .session-status {
-      display: inline-block;
-      padding: 0.25rem 0.75rem;
-      border-radius: 0.25rem;
-      font-size: 0.75rem;
-      font-weight: 500;
-    }
-    .session-valid {
-      background: #d4edda;
-      color: #155724;
-    }
-    .session-expired {
-      background: #f8d7da;
-      color: #721c24;
-    }
-  </style>
-</head>
-<body>
-  <!-- Header with User Tile -->
-  <header class="header">
-    <div class="header-content">
-      <div class="logo">
-        <div class="logo-icon">L</div>
-        <span>Lexara Firm Portal</span>
-      </div>
-      
-      {user ? (
-        <div style="display: flex; align-items: center; gap: 1rem;">
-          <div class="user-tile">
-            <div class="user-avatar">
-              {user.name ? user.name.split(' ').map(n => n[0]).join('').toUpperCase() : user.email[0].toUpperCase()}
+<BaseLayout 
+  title="Dashboard - Lexara Firm Portal" 
+  description="Your firm's AI-powered client intake dashboard"
+  showNavigation={false}
+>
+  <!-- Dashboard Header with User Navigation -->
+  <header class="bg-lexara-pureWhite shadow-sm border-b border-lexara-skyBlue/30">
+    <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex justify-between items-center py-4">
+        <div class="flex items-center">
+          <a href="/firm/dashboard" class="flex items-center">
+            <img src="/lexara-logo.svg" alt="Lexara" class="h-8 w-auto">
+            <span class="ml-3 text-lg font-semibold text-lexara-darkNavy">Firm Portal</span>
+          </a>
+        </div>
+        
+        <div class="hidden md:flex items-center space-x-8">
+          <a href="/firm/conversations" class="text-lexara-lightNavy hover:text-lexara-darkNavy transition-colors font-medium">Conversations</a>
+          <a href="/firm/settings" class="text-lexara-lightNavy hover:text-lexara-darkNavy transition-colors font-medium">Settings</a>
+          <a href="/firm/analytics" class="text-lexara-lightNavy hover:text-lexara-darkNavy transition-colors font-medium">Analytics</a>
+        </div>
+
+        <!-- User Menu -->
+        <div class="flex items-center space-x-4">
+          {isAuthenticated && user && (
+            <div class="flex items-center space-x-3">
+              <div class="text-right">
+                <p class="text-sm font-medium text-lexara-darkNavy">{user.name || 'User'}</p>
+                <p class="text-xs text-lexara-lightNavy">{user.email}</p>
+              </div>
+              <div class="w-10 h-10 bg-lexara-darkNavy rounded-full flex items-center justify-center">
+                <span class="text-sm font-medium text-lexara-pureWhite">
+                  {user.name ? user.name.split(' ').map(n => n[0]).join('').toUpperCase() : 'U'}
+                </span>
+              </div>
             </div>
-            <div class="user-info">
-              <div class="user-name">{user.name || 'User'}</div>
-              <div class="user-email">{user.email}</div>
-              <div style="font-size: 0.75rem; color: #667eea;">
-                {user.roles?.join(', ') || 'User'} • {user.firmId}
+          )}
+          <a href="/firm/logout" class="text-lexara-mahogany hover:text-lexara-darkNavy transition-colors font-medium">
+            Sign Out
+          </a>
+        </div>
+      </div>
+    </nav>
+  </header>
+
+  <main class="min-h-screen bg-lexara-whiteSmoke">
+    <!-- Welcome Header -->
+    <div class="bg-lexara-pureWhite shadow-sm border-b border-lexara-skyBlue/30">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div class="flex items-center justify-between">
+          <div>
+            <h1 class="text-3xl font-heading font-normal text-lexara-darkNavy">
+              Welcome back{user?.name ? `, ${user.name.split(' ')[0]}` : ''}!
+            </h1>
+            <p class="text-lexara-lightNavy mt-2">Here's what's happening with your client intake today.</p>
+          </div>
+          <div class="flex items-center space-x-4">
+            <div class="text-right">
+              <p class="text-sm text-lexara-lightNavy">Today</p>
+              <p class="text-sm font-semibold text-lexara-darkNavy">
+                {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
+              </p>
+            </div>
+            <button class="bg-lexara-darkNavy text-lexara-pureWhite px-6 py-3 rounded-xl hover:bg-lexara-lightNavy transition-all duration-200 shadow-lg hover:shadow-xl font-medium">
+              New Conversation
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <!-- Stats Overview -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <!-- Today's Conversations -->
+        <div class="bg-lexara-pureWhite rounded-2xl shadow-sm border border-lexara-skyBlue/20 p-6 hover:shadow-lg transition-shadow">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm font-medium text-lexara-lightNavy">Today</p>
+              <p class="text-3xl font-heading font-semibold text-lexara-darkNavy mt-1">12</p>
+              <p class="text-xs text-lexara-lightNavy mt-1">New conversations</p>
+            </div>
+            <div class="w-12 h-12 bg-lexara-skyBlue/20 rounded-full flex items-center justify-center">
+              <svg class="w-6 h-6 text-lexara-darkNavy" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <!-- Active Conversations -->
+        <div class="bg-lexara-pureWhite rounded-2xl shadow-sm border border-lexara-skyBlue/20 p-6 hover:shadow-lg transition-shadow">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm font-medium text-lexara-lightNavy">Active</p>
+              <p class="text-3xl font-heading font-semibold text-lexara-darkNavy mt-1">8</p>
+              <p class="text-xs text-lexara-lightNavy mt-1">In progress</p>
+            </div>
+            <div class="w-12 h-12 bg-lexara-mahogany/10 rounded-full flex items-center justify-center">
+              <svg class="w-6 h-6 text-lexara-mahogany" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <!-- Completed This Week -->
+        <div class="bg-lexara-pureWhite rounded-2xl shadow-sm border border-lexara-skyBlue/20 p-6 hover:shadow-lg transition-shadow">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm font-medium text-lexara-lightNavy">This Week</p>
+              <p class="text-3xl font-heading font-semibold text-lexara-darkNavy mt-1">47</p>
+              <p class="text-xs text-lexara-lightNavy mt-1">Completed</p>
+            </div>
+            <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+              <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <!-- Conversion Rate -->
+        <div class="bg-lexara-pureWhite rounded-2xl shadow-sm border border-lexara-skyBlue/20 p-6 hover:shadow-lg transition-shadow">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm font-medium text-lexara-lightNavy">Conversion</p>
+              <p class="text-3xl font-heading font-semibold text-lexara-darkNavy mt-1">68%</p>
+              <p class="text-xs text-lexara-lightNavy mt-1">Lead to client</p>
+            </div>
+            <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
+              <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+              </svg>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recent Conversations & Quick Actions -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Recent Conversations -->
+        <div class="lg:col-span-2">
+          <div class="bg-lexara-pureWhite rounded-2xl shadow-sm border border-lexara-skyBlue/20">
+            <div class="p-6 border-b border-lexara-skyBlue/20">
+              <div class="flex items-center justify-between">
+                <h3 class="text-xl font-heading font-semibold text-lexara-darkNavy">Recent Conversations</h3>
+                <a href="/firm/conversations" class="text-sm text-lexara-darkNavy hover:text-lexara-mahogany transition-colors">View all →</a>
+              </div>
+            </div>
+            
+            <div class="divide-y divide-lexara-skyBlue/20">
+              <!-- Sample conversation items -->
+              <div class="p-6 hover:bg-lexara-whiteSmoke/50 transition-colors cursor-pointer">
+                <div class="flex items-start justify-between">
+                  <div class="flex-1">
+                    <h4 class="font-semibold text-lexara-darkNavy">Sarah Johnson</h4>
+                    <p class="text-sm text-lexara-lightNavy mt-1">Personal injury case - car accident on I-95...</p>
+                    <p class="text-xs text-lexara-lightNavy mt-2">Started 2 hours ago</p>
+                  </div>
+                  <span class="px-3 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 rounded-full">In Progress</span>
+                </div>
+              </div>
+              
+              <div class="p-6 hover:bg-lexara-whiteSmoke/50 transition-colors cursor-pointer">
+                <div class="flex items-start justify-between">
+                  <div class="flex-1">
+                    <h4 class="font-semibold text-lexara-darkNavy">Michael Chen</h4>
+                    <p class="text-sm text-lexara-lightNavy mt-1">Employment law - wrongful termination claim...</p>
+                    <p class="text-xs text-lexara-lightNavy mt-2">Completed 4 hours ago</p>
+                  </div>
+                  <span class="px-3 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">Qualified</span>
+                </div>
+              </div>
+              
+              <div class="p-6 hover:bg-lexara-whiteSmoke/50 transition-colors cursor-pointer">
+                <div class="flex items-start justify-between">
+                  <div class="flex-1">
+                    <h4 class="font-semibold text-lexara-darkNavy">Emily Rodriguez</h4>
+                    <p class="text-sm text-lexara-lightNavy mt-1">Family law - custody modification request...</p>
+                    <p class="text-xs text-lexara-lightNavy mt-2">Started yesterday</p>
+                  </div>
+                  <span class="px-3 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">Follow-up</span>
+                </div>
               </div>
             </div>
           </div>
-          <a href="/firm/logout" class="logout-link">Sign Out</a>
         </div>
-      ) : (
-        <div>Not authenticated</div>
-      )}
-    </div>
-  </header>
 
-  <main class="container">
-    <!-- Welcome Section -->
-    <div class="welcome-section">
-      <h1>Welcome back{user?.name ? `, ${user.name}` : ''}!</h1>
-      <p>Here's your firm portal dashboard. You're successfully authenticated and ready to manage your client intake.</p>
-      
-      <!-- Session Status -->
-      <div style="margin-top: 1rem;">
-        <span class="session-status {isAuthenticated ? 'session-valid' : 'session-expired'}">
-          {isAuthenticated ? '✅ Session Active' : '❌ Session Expired'}
-        </span>
-        {sessionExpiry && (
-          <span style="margin-left: 1rem; font-size: 0.875rem; color: #718096;">
-            Expires: {new Date(sessionExpiry * 1000).toLocaleString()}
-          </span>
-        )}
-      </div>
-    </div>
+        <!-- Quick Actions & Intake Link -->
+        <div class="space-y-6">
+          <!-- Intake Link -->
+          <div class="bg-gradient-to-br from-lexara-darkNavy to-lexara-lightNavy rounded-2xl shadow-sm p-6 text-lexara-pureWhite">
+            <h3 class="text-lg font-heading font-semibold mb-4">Your Intake Link</h3>
+            <p class="text-sm text-lexara-skyBlue mb-4">Share this link with potential clients:</p>
+            <div class="bg-lexara-pureWhite/10 backdrop-blur-sm rounded-lg p-3 mb-4">
+              <code class="text-xs text-lexara-pureWhite break-all">
+                {`https://intake.lexara.app/${user?.firmId || 'your-firm'}`}
+              </code>
+            </div>
+            <button class="w-full bg-lexara-pureWhite text-lexara-darkNavy px-4 py-2 rounded-lg hover:bg-lexara-whiteSmoke transition-colors font-medium text-sm">
+              Copy Link
+            </button>
+          </div>
 
-    <!-- Stats Overview -->
-    <div class="stats-grid">
-      <div class="stat-card">
-        <div class="stat-number">5</div>
-        <div class="stat-label">Active Conversations</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-number">12</div>
-        <div class="stat-label">This Week</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-number">89%</div>
-        <div class="stat-label">Success Rate</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-number">24</div>
-        <div class="stat-label">Total Clients</div>
-      </div>
-    </div>
+          <!-- Quick Actions -->
+          <div class="bg-lexara-pureWhite rounded-2xl shadow-sm border border-lexara-skyBlue/20 p-6">
+            <h3 class="text-lg font-heading font-semibold text-lexara-darkNavy mb-4">Quick Actions</h3>
+            <div class="space-y-3">
+              <a href="/firm/conversations/new" class="flex items-center p-3 rounded-xl border border-lexara-skyBlue/30 hover:bg-lexara-whiteSmoke transition-colors">
+                <div class="w-10 h-10 bg-lexara-skyBlue/20 rounded-lg flex items-center justify-center mr-3">
+                  <svg class="w-5 h-5 text-lexara-darkNavy" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                  </svg>
+                </div>
+                <div>
+                  <p class="text-sm font-semibold text-lexara-darkNavy">Start Conversation</p>
+                  <p class="text-xs text-lexara-lightNavy">Begin manual intake</p>
+                </div>
+              </a>
 
-    <!-- Quick Actions -->
-    <div class="quick-actions">
-      <h3>Quick Actions</h3>
-      <a href="/firm/conversations" class="action-button">View Conversations</a>
-      <a href="/firm/settings" class="action-button">Settings</a>
-      <a href="/firm/debug-session" class="action-button">Debug Session</a>
-      <a href="/" class="action-button">Back to Home</a>
-    </div>
+              <a href="/firm/settings" class="flex items-center p-3 rounded-xl border border-lexara-skyBlue/30 hover:bg-lexara-whiteSmoke transition-colors">
+                <div class="w-10 h-10 bg-lexara-mahogany/10 rounded-lg flex items-center justify-center mr-3">
+                  <svg class="w-5 h-5 text-lexara-mahogany" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                  </svg>
+                </div>
+                <div>
+                  <p class="text-sm font-semibold text-lexara-darkNavy">Customize Intake</p>
+                  <p class="text-xs text-lexara-lightNavy">Configure questions</p>
+                </div>
+              </a>
 
-    <!-- Session Debug Information -->
-    <div class="debug-section">
-      <h3 class="debug-title">Session Debug Information</h3>
-      <p style="margin-bottom: 1rem; color: #718096; font-size: 0.875rem;">
-        This information helps debug authentication issues and verify session data.
-      </p>
-      
-      <div class="debug-data" id="session-debug">
-        {JSON.stringify({
-          serverSide: {
-            user: user,
-            isAuthenticated: isAuthenticated,
-            sessionExpiry: sessionExpiry,
-            firmId: user?.firmId,
-            roles: user?.roles
-          },
-          timestamp: new Date().toISOString(),
-          expiresAt: sessionExpiry ? new Date(sessionExpiry * 1000).toISOString() : null,
-          timeLeft: sessionExpiry ? Math.max(0, sessionExpiry - Math.floor(Date.now() / 1000)) + ' seconds' : null
-        }, null, 2)}
-      </div>
-    </div>
+              <a href="/firm/analytics" class="flex items-center p-3 rounded-xl border border-lexara-skyBlue/30 hover:bg-lexara-whiteSmoke transition-colors">
+                <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center mr-3">
+                  <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                  </svg>
+                </div>
+                <div>
+                  <p class="text-sm font-semibold text-lexara-darkNavy">View Analytics</p>
+                  <p class="text-xs text-lexara-lightNavy">Detailed reports</p>
+                </div>
+              </a>
+            </div>
+          </div>
 
-    <!-- Client-side Session Info -->
-    <div class="debug-section">
-      <h3 class="debug-title">Client-side Session Information</h3>
-      <div class="debug-data" id="client-session-debug">
-        Loading client-side session data...
+          <!-- System Status -->
+          <div class="bg-lexara-pureWhite rounded-2xl shadow-sm border border-lexara-skyBlue/20 p-6">
+            <h3 class="text-lg font-heading font-semibold text-lexara-darkNavy mb-4">System Status</h3>
+            <div class="space-y-3">
+              <div class="flex items-center justify-between">
+                <span class="text-sm text-lexara-lightNavy">AI Agent</span>
+                <div class="flex items-center">
+                  <div class="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
+                  <span class="text-xs text-green-600 font-medium">Operational</span>
+                </div>
+              </div>
+              <div class="flex items-center justify-between">
+                <span class="text-sm text-lexara-lightNavy">Intake Portal</span>
+                <div class="flex items-center">
+                  <div class="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
+                  <span class="text-xs text-green-600 font-medium">Online</span>
+                </div>
+              </div>
+              <div class="flex items-center justify-between">
+                <span class="text-sm text-lexara-lightNavy">Conflict Detection</span>
+                <div class="flex items-center">
+                  <div class="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
+                  <span class="text-xs text-green-600 font-medium">Active</span>
+                </div>
+              </div>
+            </div>
+            
+            <div class="mt-4 pt-4 border-t border-lexara-skyBlue/20">
+              <div class="flex items-center justify-between text-xs text-lexara-lightNavy">
+                <span>Last checked</span>
+                <span>Just now</span>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </main>
 
+  <!-- Client-side intake link copy functionality -->
   <script>
-    // Display client-side session information
-    function displayClientSessionInfo() {
-      const debugElement = document.getElementById('client-session-debug');
-      
-      // Get all cookies
-      const cookies = {};
-      document.cookie.split(';').forEach(cookie => {
-        const [name, value] = cookie.trim().split('=');
-        if (name && value) {
-          cookies[name] = value;
-        }
-      });
-
-      // Parse firm session if it exists
-      let sessionData = null;
-      const sessionCookie = cookies['firm_session'];
-      if (sessionCookie) {
-        try {
-          sessionData = JSON.parse(decodeURIComponent(sessionCookie));
-        } catch (error) {
-          sessionData = { error: 'Failed to parse session cookie: ' + error.message };
-        }
+    document.addEventListener('DOMContentLoaded', () => {
+      const copyButton = document.querySelector('button:contains("Copy Link")');
+      if (copyButton) {
+        copyButton.addEventListener('click', () => {
+          const intakeUrl = document.querySelector('code')?.textContent;
+          if (intakeUrl) {
+            navigator.clipboard.writeText(intakeUrl).then(() => {
+              copyButton.textContent = 'Copied!';
+              setTimeout(() => {
+                copyButton.textContent = 'Copy Link';
+              }, 2000);
+            });
+          }
+        });
       }
-
-      // Get sessionStorage data
-      const sessionStorage = {};
-      try {
-        for (let i = 0; i < window.sessionStorage.length; i++) {
-          const key = window.sessionStorage.key(i);
-          sessionStorage[key] = window.sessionStorage.getItem(key);
-        }
-      } catch (error) {
-        sessionStorage.error = 'Failed to read sessionStorage: ' + error.message;
-      }
-
-      const clientData = {
-        cookies: cookies,
-        firmSession: sessionData,
-        sessionStorage: sessionStorage,
-        url: window.location.href,
-        userAgent: navigator.userAgent,
-        timestamp: new Date().toISOString()
-      };
-
-      debugElement.textContent = JSON.stringify(clientData, null, 2);
-    }
-
-    // Initialize on page load
-    window.addEventListener('load', () => {
-      displayClientSessionInfo();
-      
-      // Update time display every 30 seconds
-      setInterval(() => {
-        const now = new Date();
-        // You can add real-time updates here if needed
-      }, 30000);
-    });
-
-    // Add logout confirmation
-    document.querySelectorAll('a[href="/firm/logout"]').forEach(link => {
-      link.addEventListener('click', (e) => {
-        if (!confirm('Are you sure you want to sign out?')) {
-          e.preventDefault();
-        }
-      });
     });
   </script>
-</body>
-</html>
+</BaseLayout>
