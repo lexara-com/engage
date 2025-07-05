@@ -11,6 +11,12 @@ routes = [
   { pattern = "dev-www.lexara.app/*", zone_name = "lexara.app" }
 ]
 
+# D1 Database for dev
+[[env.dev.d1_databases]]
+binding = "DB"
+database_name = "lexara-auth"
+database_id = "39dd504c-9bf8-44ff-86b0-d5c2c2b860a9"
+
 # Staging environment
 [env.staging]
 name = "lexara-homepage-staging"
@@ -27,6 +33,22 @@ routes = [
   { pattern = "lexara.app/*", zone_name = "lexara.app" },
   { pattern = "www.lexara.app/*", zone_name = "lexara.app" }
 ]
+
+# Durable Objects - temporarily disabled
+# [[durable_objects.bindings]]
+# name = "FIRM_REGISTRY"
+# class_name = "FirmRegistry"
+# script_name = "lexara-homepage"
+
+# [[migrations]]
+# tag = "v1"
+# new_classes = ["FirmRegistry"]
+
+# D1 Database
+[[d1_databases]]
+binding = "DB"
+database_name = "lexara-auth"
+database_id = "39dd504c-9bf8-44ff-86b0-d5c2c2b860a9"
 
 # Environment variables
 [env.dev.vars]

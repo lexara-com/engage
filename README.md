@@ -2,13 +2,21 @@
 
 > AI-powered legal client intake platform built on Cloudflare's edge infrastructure
 
+**Last Updated**: January 3, 2025  
+**Status**: 🚧 In Development
+
 ## 🏗️ Monorepo Structure
 
 This repository is organized as a monorepo with independent applications and shared packages:
 
 ### Applications (`apps/`)
 
-- **`homepage/`** - Law firm marketing and signup site (`lexara.app`)
+- **`homepage/`** - Law firm portal with signup, dashboard, and management
+  - ✅ Firm registration with Auth0 and D1 database
+  - ✅ Multi-tenant architecture with firm isolation
+  - 🚧 Testing framework (10/32 tests passing)
+  - 📋 User management and conversation views
+- **`api-worker/`** - RESTful API for firm data (discovered during development)
 - **`chat-interface/`** - AI-powered client intake chat (`dev.lexara.app`)
 - **`platform-admin/`** - Lexara platform administration (`platform-dev.lexara.app`)
 - **`mcp-servers/`** - Microservices for AI agent functionality
@@ -60,6 +68,9 @@ pnpm build
 
 # Run tests across all packages
 pnpm test
+
+# Run tests for specific app
+pnpm test --filter=homepage
 
 # Type check all packages
 pnpm typecheck
@@ -158,24 +169,62 @@ pnpm deploy:production
 
 ## 📖 Documentation
 
+### Core Documentation
 - **[System Architecture](./docs/CLAUDE.md)** - Complete platform design
 - **[Deployment Guide](./docs/DEPLOYMENT_GUIDE.md)** - Deployment procedures
 - **[Auth0 Setup](./docs/AUTH0_SETUP_GUIDE.md)** - Authentication configuration
 - **[Code Quality Guide](./docs/CODE_QUALITY_GUIDE.md)** - Development standards
-- **[Monorepo Plan](./docs/MONOREPO_RESTRUCTURE_PLAN.md)** - Restructure documentation
+
+### Application-Specific Documentation
+- **[Homepage App](./apps/homepage/docs/)** - Firm portal documentation
+  - [Testing Guide](./apps/homepage/docs/TESTING_GUIDE.md) - Test framework and status
+  - [Database API](./apps/homepage/docs/DATABASE_CLIENT_API.md) - Database client reference
+  - [Registration Setup](./apps/homepage/docs/FIRM_REGISTRATION_SETUP.md) - Registration flow
+
+### Recent Updates
+- **[Test Results Summary](./apps/homepage/TEST_RESULTS_SUMMARY.md)** - Current test status
+- **[Priority Fixes Plan](./apps/homepage/PRIORITY_FIXES_PLAN.md)** - Security and API fixes needed
 
 ## 🏭 Production URLs
 
+- **Homepage/Firm Portal**: `https://www.lexara.app` (production)
 - **Chat Interface**: `https://dev.lexara.app` (development)
 - **Platform Admin**: `https://platform-dev.lexara.app` (development)
+- **API Worker**: `https://lexara-api-demo.cloudswift.workers.dev` (demo)
+
+## 🧪 Testing
+
+The project uses Vitest for unit and integration testing:
+
+```bash
+# Run all tests
+pnpm test
+
+# Run tests for specific app
+pnpm test --filter=homepage
+
+# Run tests with coverage
+pnpm test:coverage --filter=homepage
+
+# Run tests in watch mode
+pnpm test:watch --filter=homepage
+```
+
+**Current Test Status (Homepage App)**:
+- Total: 32 tests
+- Passing: 10 ✅
+- Failing: 22 ❌ (due to method/field name mismatches)
+- [See Priority Fixes](./apps/homepage/PRIORITY_FIXES_PLAN.md)
 
 ## 🤝 Contributing
 
 1. Create feature branch from `main`
 2. Work in appropriate app or package directory
-3. Run `pnpm code:check` before committing
-4. Follow conventional commit format
-5. Submit pull request
+3. Write tests for new functionality
+4. Run `pnpm test` to ensure tests pass
+5. Run `pnpm code:check` before committing
+6. Follow conventional commit format
+7. Submit pull request
 
 ## 📄 License
 

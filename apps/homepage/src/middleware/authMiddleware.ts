@@ -129,9 +129,7 @@ export async function authMiddleware(
     const permissions = await permissionService.getUserPermissions(user);
 
     // Update last login time
-    await database.updateUser(user.id, { 
-      last_login: Math.floor(Date.now() / 1000) 
-    });
+    await database.updateUserLastLogin(user.firm_id, user.id);
 
     // Return authenticated context
     return {

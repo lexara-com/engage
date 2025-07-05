@@ -299,7 +299,10 @@ const isAuthenticated = Astro.locals.isAuthenticated;
   <!-- Client-side intake link copy functionality -->
   <script>
     document.addEventListener('DOMContentLoaded', () => {
-      const copyButton = document.querySelector('button:contains("Copy Link")');
+      // Find button by text content since :contains is not valid CSS
+      const buttons = document.querySelectorAll('button');
+      const copyButton = Array.from(buttons).find(btn => btn.textContent?.includes('Copy Link'));
+      
       if (copyButton) {
         copyButton.addEventListener('click', () => {
           const intakeUrl = document.querySelector('code')?.textContent;

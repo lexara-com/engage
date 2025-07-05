@@ -1,0 +1,275 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+
+// Get conversation ID from URL
+const { conversationId } = Astro.params;
+
+// Server-side authentication is handled by middleware
+const user = Astro.locals.user;
+const isAuthenticated = Astro.locals.isAuthenticated;
+
+// Mock conversation data - in a real app, this would come from your database
+const conversation = {
+  id: conversationId,
+  clientName: "Sarah Johnson",
+  startTime: "2024-01-04T14:30:00Z",
+  status: "in_progress",
+  caseType: "Personal Injury",
+  summary: "Car accident on I-95, seeking representation for injuries and damages",
+  messages: [
+    {
+      id: 1,
+      role: "agent",
+      content: "Hello! I'm here to help you with your legal inquiry. My name is Lexara, and I'll be gathering some initial information to better understand how our firm can assist you. Could you please tell me your name?",
+      timestamp: "2024-01-04T14:30:00Z"
+    },
+    {
+      id: 2,
+      role: "client",
+      content: "Hi, my name is Sarah Johnson.",
+      timestamp: "2024-01-04T14:30:15Z"
+    },
+    {
+      id: 3,
+      role: "agent",
+      content: "Nice to meet you, Sarah. I understand you're looking for legal assistance. Could you briefly describe what kind of legal matter you need help with?",
+      timestamp: "2024-01-04T14:30:30Z"
+    },
+    {
+      id: 4,
+      role: "client",
+      content: "I was in a car accident last week on I-95. Another driver ran a red light and hit my car. I have injuries and my car is totaled.",
+      timestamp: "2024-01-04T14:31:00Z"
+    },
+    {
+      id: 5,
+      role: "agent",
+      content: "I'm so sorry to hear about your accident, Sarah. That must have been a frightening experience. First and foremost, I hope you're getting the medical attention you need. Can you tell me about the injuries you sustained?",
+      timestamp: "2024-01-04T14:31:30Z"
+    },
+    {
+      id: 6,
+      role: "client",
+      content: "I have whiplash, a concussion, and some bruised ribs. I've been to the emergency room and I'm following up with my doctor, but I'm in a lot of pain and haven't been able to work.",
+      timestamp: "2024-01-04T14:32:00Z"
+    },
+    {
+      id: 7,
+      role: "agent",
+      content: "Thank you for sharing that information. It's good that you're getting medical care. Missing work due to injuries can create additional stress. Have you filed a police report for the accident?",
+      timestamp: "2024-01-04T14:32:30Z"
+    },
+    {
+      id: 8,
+      role: "client",
+      content: "Yes, the police came to the scene and filed a report. They said the other driver was clearly at fault for running the red light.",
+      timestamp: "2024-01-04T14:33:00Z"
+    }
+  ],
+  qualificationScore: 85,
+  nextSteps: ["Schedule consultation", "Gather medical records", "Obtain police report"],
+  firmNotes: "Strong personal injury case. Clear liability with police report confirming other driver at fault. Client has documented injuries and is receiving medical treatment."
+};
+
+// Format timestamp for display
+function formatTime(timestamp: string): string {
+  const date = new Date(timestamp);
+  return date.toLocaleTimeString('en-US', { 
+    hour: '2-digit', 
+    minute: '2-digit',
+    hour12: true 
+  });
+}
+
+// Format date for display
+function formatDate(timestamp: string): string {
+  const date = new Date(timestamp);
+  return date.toLocaleDateString('en-US', { 
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: true
+  });
+}
+---
+
+<BaseLayout 
+  title={`Conversation with ${conversation.clientName} - Lexara Firm Portal`}
+  description="View conversation transcript and details"
+  showNavigation={false}
+>
+  <div class="min-h-screen flex flex-col overflow-x-hidden bg-lexara-whiteSmoke">
+    <!-- Dashboard Header with User Navigation -->
+    <header class="bg-lexara-pureWhite shadow-sm border-b border-lexara-skyBlue/30">
+      <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center py-4">
+          <div class="flex items-center">
+            <a href="/firm/dashboard" class="flex items-center">
+              <img src="/lexara-logo.svg" alt="Lexara" class="h-8 w-auto">
+              <span class="ml-3 text-lg font-semibold text-lexara-darkNavy">Firm Portal</span>
+            </a>
+          </div>
+          
+          <div class="hidden md:flex items-center space-x-8">
+            <a href="/firm/conversations" class="text-lexara-lightNavy hover:text-lexara-darkNavy transition-colors font-medium">Conversations</a>
+            <a href="/firm/settings" class="text-lexara-lightNavy hover:text-lexara-darkNavy transition-colors font-medium">Settings</a>
+            <a href="/firm/analytics" class="text-lexara-lightNavy hover:text-lexara-darkNavy transition-colors font-medium">Analytics</a>
+          </div>
+
+          <!-- User Menu -->
+          <div class="flex items-center space-x-4">
+            {isAuthenticated && user && (
+              <div class="flex items-center space-x-3">
+                <div class="text-right">
+                  <p class="text-sm font-medium text-lexara-darkNavy">{user.name || 'User'}</p>
+                  <p class="text-xs text-lexara-lightNavy">{user.email}</p>
+                </div>
+                <div class="w-10 h-10 bg-lexara-darkNavy rounded-full flex items-center justify-center">
+                  <span class="text-sm font-medium text-lexara-pureWhite">
+                    {user.name ? user.name.split(' ').map(n => n[0]).join('').toUpperCase() : 'U'}
+                  </span>
+                </div>
+              </div>
+            )}
+            <a href="/firm/logout" class="text-lexara-mahogany hover:text-lexara-darkNavy transition-colors font-medium">
+              Sign Out
+            </a>
+          </div>
+        </div>
+      </nav>
+    </header>
+
+    <main class="flex-grow">
+      <!-- Breadcrumb and Header -->
+      <div class="bg-lexara-pureWhite shadow-sm border-b border-lexara-skyBlue/30">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <div class="flex items-center text-sm text-lexara-lightNavy mb-2">
+            <a href="/firm/dashboard" class="hover:text-lexara-darkNavy transition-colors">Dashboard</a>
+            <span class="mx-2">/</span>
+            <a href="/firm/conversations" class="hover:text-lexara-darkNavy transition-colors">Conversations</a>
+            <span class="mx-2">/</span>
+            <span class="text-lexara-darkNavy">{conversation.clientName}</span>
+          </div>
+          
+          <div class="flex items-start justify-between">
+            <div>
+              <h1 class="text-2xl font-heading font-semibold text-lexara-darkNavy">
+                {conversation.clientName}
+              </h1>
+              <p class="text-lexara-lightNavy mt-1">{conversation.caseType} • Started {formatDate(conversation.startTime)}</p>
+            </div>
+            <div class="flex items-center space-x-3">
+              {conversation.status === 'in_progress' && (
+                <span class="px-3 py-1 text-sm font-medium bg-yellow-100 text-yellow-800 rounded-full">In Progress</span>
+              )}
+              {conversation.status === 'qualified' && (
+                <span class="px-3 py-1 text-sm font-medium bg-green-100 text-green-800 rounded-full">Qualified</span>
+              )}
+              <button class="bg-lexara-darkNavy text-lexara-pureWhite px-4 py-2 rounded-lg hover:bg-lexara-lightNavy transition-colors text-sm font-medium">
+                Export Transcript
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <!-- Main Conversation Transcript -->
+          <div class="lg:col-span-2">
+            <div class="bg-lexara-pureWhite rounded-2xl shadow-sm border border-lexara-skyBlue/20">
+              <div class="p-6 border-b border-lexara-skyBlue/20">
+                <h2 class="text-xl font-heading font-semibold text-lexara-darkNavy">Conversation Transcript</h2>
+              </div>
+              
+              <div class="p-6 space-y-4 max-h-[600px] overflow-y-auto">
+                {conversation.messages.map((message) => (
+                  <div class={`flex ${message.role === 'agent' ? 'justify-start' : 'justify-end'}`}>
+                    <div class={`max-w-[80%] ${message.role === 'agent' ? 'order-2' : 'order-1'}`}>
+                      <div class={`rounded-2xl px-4 py-3 ${
+                        message.role === 'agent' 
+                          ? 'bg-lexara-whiteSmoke text-lexara-darkNavy' 
+                          : 'bg-lexara-darkNavy text-lexara-pureWhite'
+                      }`}>
+                        <p class="text-sm">{message.content}</p>
+                      </div>
+                      <p class="text-xs text-lexara-lightNavy mt-1 px-2">
+                        {message.role === 'agent' ? 'Lexara AI' : conversation.clientName} • {formatTime(message.timestamp)}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <!-- Sidebar with Details -->
+          <div class="space-y-6">
+            <!-- Case Summary -->
+            <div class="bg-lexara-pureWhite rounded-2xl shadow-sm border border-lexara-skyBlue/20 p-6">
+              <h3 class="text-lg font-heading font-semibold text-lexara-darkNavy mb-4">Case Summary</h3>
+              <p class="text-sm text-lexara-lightNavy">{conversation.summary}</p>
+              
+              <div class="mt-4 pt-4 border-t border-lexara-skyBlue/20">
+                <div class="flex items-center justify-between mb-2">
+                  <span class="text-sm font-medium text-lexara-darkNavy">Qualification Score</span>
+                  <span class="text-sm font-semibold text-lexara-darkNavy">{conversation.qualificationScore}%</span>
+                </div>
+                <div class="w-full bg-lexara-skyBlue/30 rounded-full h-2">
+                  <div 
+                    class="bg-gradient-to-r from-lexara-darkNavy to-lexara-lightNavy h-2 rounded-full"
+                    style={`width: ${conversation.qualificationScore}%`}
+                  ></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Next Steps -->
+            <div class="bg-lexara-pureWhite rounded-2xl shadow-sm border border-lexara-skyBlue/20 p-6">
+              <h3 class="text-lg font-heading font-semibold text-lexara-darkNavy mb-4">Recommended Next Steps</h3>
+              <ul class="space-y-3">
+                {conversation.nextSteps.map((step, index) => (
+                  <li class="flex items-start">
+                    <span class="flex-shrink-0 w-6 h-6 bg-lexara-skyBlue/20 rounded-full flex items-center justify-center text-xs font-semibold text-lexara-darkNavy mt-0.5">
+                      {index + 1}
+                    </span>
+                    <span class="ml-3 text-sm text-lexara-lightNavy">{step}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <!-- Firm Notes -->
+            <div class="bg-lexara-pureWhite rounded-2xl shadow-sm border border-lexara-skyBlue/20 p-6">
+              <h3 class="text-lg font-heading font-semibold text-lexara-darkNavy mb-4">Internal Notes</h3>
+              <p class="text-sm text-lexara-lightNavy">{conversation.firmNotes}</p>
+              
+              <button class="w-full mt-4 bg-lexara-whiteSmoke text-lexara-darkNavy px-4 py-2 rounded-lg hover:bg-lexara-skyBlue/20 transition-colors text-sm font-medium">
+                Add Note
+              </button>
+            </div>
+
+            <!-- Actions -->
+            <div class="bg-gradient-to-br from-lexara-darkNavy to-lexara-lightNavy rounded-2xl shadow-sm p-6 text-lexara-pureWhite">
+              <h3 class="text-lg font-heading font-semibold mb-4">Quick Actions</h3>
+              <div class="space-y-3">
+                <button class="w-full bg-lexara-pureWhite/10 backdrop-blur-sm text-lexara-pureWhite px-4 py-3 rounded-lg hover:bg-lexara-pureWhite/20 transition-colors text-sm font-medium text-left">
+                  📅 Schedule Consultation
+                </button>
+                <button class="w-full bg-lexara-pureWhite/10 backdrop-blur-sm text-lexara-pureWhite px-4 py-3 rounded-lg hover:bg-lexara-pureWhite/20 transition-colors text-sm font-medium text-left">
+                  📧 Send Follow-up Email
+                </button>
+                <button class="w-full bg-lexara-pureWhite/10 backdrop-blur-sm text-lexara-pureWhite px-4 py-3 rounded-lg hover:bg-lexara-pureWhite/20 transition-colors text-sm font-medium text-left">
+                  🔄 Convert to Client
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</BaseLayout>

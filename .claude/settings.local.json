@@ -92,7 +92,24 @@
       "Bash(git remote set-url:*)",
       "Bash(git worktree:*)",
       "Bash(./scripts/create-deployment-validation-issues.sh:*)",
-      "Bash(gh issue list:*)"
+      "Bash(gh issue list:*)",
+      "Bash(gh issue create:*)",
+      "Bash(gh issue view:*)",
+      "Bash(./scripts/setup-d1-database.sh:*)",
+      "Bash(npx turbo run test:*)",
+      "Bash(node:*)",
+      "Bash(/usr/bin/node:*)",
+      "Bash(/usr/bin/env node scripts/test-verification.js)",
+      "Bash(npx ts-node:*)",
+      "Bash(./verify-tests.sh:*)",
+      "Bash(pnpm vitest run:*)",
+      "Bash(pnpm add:*)",
+      "Bash(pnpm exec:*)",
+      "Bash(pnpm list:*)",
+      "Bash(npx playwright test:*)",
+      "Bash(./node_modules/.bin/playwright test:*)",
+      "Bash(realpath:*)",
+      "Bash(git check-ignore:*)"
     ],
     "deny": []
   }

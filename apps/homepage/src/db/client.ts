@@ -126,6 +126,39 @@ export class AuthorizationDatabaseClient implements DatabaseClient {
     return updatedFirm;
   }
 
+  async deleteFirm(id: string): Promise<boolean> {
+    const result = await this.db.prepare(
+      'DELETE FROM firms WHERE id = ?'
+    ).bind(id).run();
+    return result.meta.changes > 0;
+  }
+
+  async listFirms(options: { 
+    status?: string; 
+    limit?: number; 
+    offset?: number 
+  } = {}): Promise<Firm[]> {
+    const { status, limit = 50, offset = 0 } = options;
+    
+    let query = 'SELECT * FROM firms';
+    const params: any[] = [];
+    
+    if (status) {
+      query += ' WHERE status = ?';
+      params.push(status);
+    }
+    
+    query += ' ORDER BY created_at DESC LIMIT ? OFFSET ?';
+    params.push(limit, offset);
+    
+    const { results } = await this.db.prepare(query).bind(...params).all();
+    
+    return results.map(firm => ({
+      ...firm,
+      settings: this.parseJSON(firm.settings as string, {})
+    })) as Firm[];
+  }
+
   // USER OPERATIONS
   async createUser(userData: CreateEntity<User>): Promise<User> {
     const id = this.generateId();
@@ -169,7 +202,21 @@ export class AuthorizationDatabaseClient implements DatabaseClient {
     return user;
   }
 
-  async getUser(id: string): Promise<User | null> {
+  async getUser(firmId: string, id: string): Promise<User | null> {
+    const query = 'SELECT * FROM users WHERE firm_id = ? AND id = ?';
+    const result = await this.db.prepare(query).bind(firmId, id).first();
+    
+    if (!result) return null;
+
+    return {
+      ...result,
+      permissions: this.parseJSON(result.permissions as string, {})
+    } as User;
+  }
+
+  // Backward compatibility wrapper - DEPRECATED
+  async getUserById(id: string): Promise<User | null> {
+    console.warn('getUserById is deprecated and insecure. Use getUser(firmId, id) instead.');
     const query = 'SELECT * FROM users WHERE id = ?';
     const result = await this.db.prepare(query).bind(id).first();
     
@@ -205,13 +252,19 @@ export class AuthorizationDatabaseClient implements DatabaseClient {
     } as User;
   }
 
-  async updateUser(id: string, updates: UpdateEntity<User>): Promise<User> {
+  async updateUser(firmId: string, id: string, updates: UpdateEntity<User>): Promise<User> {
+    // First verify the user belongs to this firm
+    const existingUser = await this.getUser(firmId, id);
+    if (!existingUser) {
+      throw new Error('User not found or access denied');
+    }
+
     const now = this.now();
     const setParts: string[] = [];
     const values: any[] = [];
 
     Object.entries(updates).forEach(([key, value]) => {
-      if (key !== 'id' && key !== 'created_at') {
+      if (key !== 'id' && key !== 'created_at' && key !== 'firm_id') {
         setParts.push(`${key} = ?`);
         values.push(key === 'permissions' ? JSON.stringify(value) : value);
       }
@@ -219,20 +272,22 @@ export class AuthorizationDatabaseClient implements DatabaseClient {
 
     setParts.push('updated_at = ?');
     values.push(now);
+    values.push(firmId);
     values.push(id);
 
-    const query = `UPDATE users SET ${setParts.join(', ')} WHERE id = ?`;
+    const query = `UPDATE users SET ${setParts.join(', ')} WHERE firm_id = ? AND id = ?`;
     await this.db.prepare(query).bind(...values).run();
 
-    const updatedUser = await this.getUser(id);
+    const updatedUser = await this.getUser(firmId, id);
     if (!updatedUser) throw new Error('Failed to retrieve updated user');
     
     return updatedUser;
   }
 
-  async deleteUser(id: string): Promise<void> {
-    const query = 'DELETE FROM users WHERE id = ?';
-    await this.db.prepare(query).bind(id).run();
+  async deleteUser(firmId: string, id: string): Promise<boolean> {
+    const query = 'DELETE FROM users WHERE firm_id = ? AND id = ?';
+    const result = await this.db.prepare(query).bind(firmId, id).run();
+    return result.meta.changes > 0;
   }
 
   async listFirmUsers(firmId: string): Promise<User[]> {
@@ -243,6 +298,18 @@ export class AuthorizationDatabaseClient implements DatabaseClient {
       ...result,
       permissions: this.parseJSON(result.permissions as string, {})
     })) as User[];
+  }
+
+  async updateUserLastLogin(firmId: string, id: string): Promise<void> {
+    // First verify the user belongs to this firm
+    const user = await this.getUser(firmId, id);
+    if (!user) {
+      throw new Error('User not found or access denied');
+    }
+
+    const now = this.now();
+    const query = 'UPDATE users SET last_login = ?, updated_at = ? WHERE firm_id = ? AND id = ?';
+    await this.db.prepare(query).bind(now, now, firmId, id).run();
   }
 
   // SESSION OPERATIONS

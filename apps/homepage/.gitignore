@@ -1,0 +1,24 @@
+# Playwright
+/test-results/
+/playwright-report/
+/playwright/.cache/
+/e2e/screenshots/
+/e2e/videos/
+/e2e/traces/
+
+# Environment
+.env
+.env.local
+.env.test
+.env.e2e
+
+# Test coverage
+/coverage/
+*.lcov
+
+# Vitest
+/tests/reports/
+
+# Build outputs
+/dist/
+/.astro/
