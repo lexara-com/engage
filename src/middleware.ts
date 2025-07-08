@@ -37,7 +37,7 @@ const PUBLIC_ROUTES = [
   '/firm/index',
   '/firm',
   '/',
-  '/api', // All API routes are public for now
+  // API routes will be checked individually
 ];
 
 /**
@@ -57,6 +57,11 @@ function isProtectedRoute(pathname: string): boolean {
   // Check if any public route is a prefix of the current path
   if (PUBLIC_ROUTES.some(route => pathname.startsWith(route))) {
     return false;
+  }
+  
+  // API routes under /api/firm/ require authentication
+  if (pathname.startsWith('/api/firm/')) {
+    return true;
   }
   
   // For any other /firm/ routes, require auth unless explicitly public
@@ -168,47 +173,72 @@ export const onRequest = defineMiddleware(async (context, next) => {
   
   console.log(`🔍 Firm portal middleware checking: ${pathname}`);
   
+  // Log cookie header for API routes
+  if (pathname.startsWith('/api/')) {
+    console.log(`📍 API Route - Cookie header:`, request.headers.get('cookie')?.substring(0, 100));
+  }
+  
   // Skip middleware for static assets
   if (isStaticAsset(pathname)) {
     console.log(`📁 Static asset, skipping auth: ${pathname}`);
     return next();
   }
   
-  // Skip authentication for public routes
+  // Always check for session, even on public routes (for API access)
+  const session = getSessionFromCookie(request);
+  
+  if (session) {
+    console.log(`✅ Valid session found for user: ${session.email}`);
+    
+    // Add user context to Astro locals for pages to use
+    context.locals.user = {
+      id: session.userId,
+      email: session.email,
+      name: session.name,
+      firmId: session.firmId,
+      roles: session.roles || ['User']
+    };
+    
+    context.locals.firm = {
+      id: session.firmId
+    };
+    
+    context.locals.isAuthenticated = true;
+    context.locals.sessionExpiry = session.exp;
+  } else {
+    context.locals.isAuthenticated = false;
+    context.locals.user = null;
+    context.locals.firm = null;
+  }
+  
+  // Skip authentication requirement for public routes
   if (!isProtectedRoute(pathname)) {
-    console.log(`✅ Public route, skipping auth: ${pathname}`);
+    console.log(`✅ Public route, allowing access: ${pathname}`);
     return next();
   }
   
-  console.log(`🔒 Protected route, checking authentication: ${pathname}`);
-  
-  // Extract session from cookie
-  const session = getSessionFromCookie(request);
-  
+  // For protected routes, enforce authentication
   if (!session) {
-    console.log(`❌ No valid session found, redirecting to login: ${pathname}`);
-    // Redirect to our login page (NOT directly to Auth0)
+    console.log(`❌ No valid session found for protected route: ${pathname}`);
+    
+    // For API routes, return 401 instead of redirecting
+    if (pathname.startsWith('/api/')) {
+      return new Response(JSON.stringify({
+        success: false,
+        error: 'Unauthorized'
+      }), {
+        status: 401,
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+    }
+    
+    // For non-API routes, redirect to login
     const loginUrl = `/firm/login?returnTo=${encodeURIComponent(pathname + url.search)}`;
     return redirect(loginUrl);
   }
   
-  console.log(`✅ Valid session found for user: ${session.email}, proceeding`);
-  
-  // Add user context to Astro locals for pages to use
-  context.locals.user = {
-    id: session.userId,
-    email: session.email,
-    name: session.name,
-    firmId: session.firmId,
-    roles: session.roles || ['User']
-  };
-  
-  context.locals.firm = {
-    id: session.firmId
-  };
-  
-  context.locals.isAuthenticated = true;
-  context.locals.sessionExpiry = session.exp;
-  
+  console.log(`🔒 Protected route authenticated: ${pathname}`);
   return next();
 });

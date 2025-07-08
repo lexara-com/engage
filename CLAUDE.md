@@ -313,3 +313,11 @@ npm run test:input-validation
 - HIPAA compliance for legal data
 - SOC 2 compliance requirements
 - Regular security audits and penetration testing
+## Recent Updates
+
+### January 8, 2025
+- Fixed authentication header display in BaseLayout.astro
+- Implemented cache-busting for conversations page to bypass Cloudflare caching
+- Resolved SSR authentication context issues with direct data fetching
+- Updated navigation to show appropriate links based on authentication status
+- Version: v6-2025-01-08-auth-header

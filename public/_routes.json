@@ -1,1 +1,23 @@
-{"version":1,"include":["/*"],"exclude":[]}
+{
+  "version": 1,
+  "include": ["/*"],
+  "exclude": [
+    "/_astro/*",
+    "/js/*",
+    "/css/*",
+    "/images/*",
+    "/fonts/*",
+    "/favicon.svg",
+    "/robots.txt",
+    "/sitemap.xml",
+    "/*.png",
+    "/*.jpg",
+    "/*.jpeg",
+    "/*.gif",
+    "/*.svg",
+    "/*.ico",
+    "/*.webp",
+    "/*.avif",
+    "/lexara_pattern.jpg"
+  ]
+}

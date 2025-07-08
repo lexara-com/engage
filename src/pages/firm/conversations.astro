@@ -1,29 +1,70 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import ConversationDetailModal from '../../components/ConversationDetailModal.astro';
+import { fetchConversations } from '../../lib/api/conversations';
 
 // Server-side authentication is handled by middleware
 const user = Astro.locals.user;
 const isAuthenticated = Astro.locals.isAuthenticated;
 
-// Fetch conversations data from our API proxy
+// Set cache headers to prevent aggressive caching
+Astro.response.headers.set('Cache-Control', 'no-cache, no-store, must-revalidate, private, max-age=0');
+Astro.response.headers.set('Pragma', 'no-cache');
+Astro.response.headers.set('Expires', '0');
+Astro.response.headers.set('X-Cache-Status', 'BYPASS');
+
+// Debug logging
+console.log('[Conversations Page] Server-side render:', {
+  isAuthenticated,
+  user: user ? { email: user.email, firmId: user.firmId } : null,
+  cookies: Astro.request.headers.get('cookie')?.substring(0, 100)
+});
+
+// Fetch conversations data directly (no HTTP request needed)
 let conversations = [];
 let error = null;
 let pagination = null;
+let debugInfo = {
+  ssrAuth: isAuthenticated,
+  ssrUser: user,
+  dataFetchMethod: 'direct',
+  apiResponse: null
+};
 
-try {
-  const response = await fetch(`${Astro.url.origin}/api/firm/conversations`);
-  const data = await response.json();
-  
-  if (data.success) {
-    conversations = data.data.conversations;
-    pagination = data.data.pagination;
-  } else {
-    error = data.error || 'Failed to load conversations';
+// Check authentication before fetching data
+if (!isAuthenticated || !user) {
+  error = 'Authentication required';
+  debugInfo.apiResponse = 'not_authenticated';
+} else {
+  try {
+    // Get query parameters
+    const url = new URL(Astro.request.url);
+    const params = url.searchParams;
+    
+    // Fetch conversations directly using the shared logic
+    const result = await fetchConversations(user.firmId, {
+      page: parseInt(params.get('page') || '1'),
+      limit: parseInt(params.get('limit') || '20'),
+      status: params.get('status') || undefined,
+      search: params.get('search') || undefined,
+      practiceArea: params.get('practice') || undefined,
+      assignedTo: params.get('assigned') || undefined
+    });
+    
+    if (result.success) {
+      conversations = result.data.conversations;
+      pagination = result.data.pagination;
+      debugInfo.apiResponse = 'success';
+    } else {
+      error = result.error || 'Failed to load conversations';
+      debugInfo.apiResponse = 'error';
+    }
+    
+  } catch (e) {
+    error = 'Failed to load conversations';
+    console.error('Error fetching conversations:', e);
+    debugInfo.apiResponse = 'error';
   }
-} catch (e) {
-  error = 'Failed to connect to API';
-  console.error('Error fetching conversations:', e);
 }
 
 // Format date helper
@@ -223,12 +264,14 @@ function formatPracticeArea(area: string) {
           <button 
             class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
             disabled={pagination.page === 1}
+            onclick="handlePagination('prev')"
           >
             Previous
           </button>
           <button 
             class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
             disabled={pagination.page === pagination.pages}
+            onclick="handlePagination('next')"
           >
             Next
           </button>
@@ -248,7 +291,9 @@ function formatPracticeArea(area: string) {
           <pre class="text-sm text-gray-600 overflow-x-auto">{JSON.stringify({
             user: user,
             isAuthenticated: isAuthenticated,
-            timestamp: new Date().toISOString()
+            debugInfo: debugInfo,
+            timestamp: new Date().toISOString(),
+            version: 'v6-2025-01-08-auth-header'
           }, null, 2)}</pre>
         </div>
 
@@ -316,6 +361,9 @@ function formatPracticeArea(area: string) {
       if (status) params.set('status', status);
       if (practice) params.set('practice', practice);
       if (assigned) params.set('assigned', assigned);
+      
+      // Add cache-busting parameter to bypass Cloudflare cache
+      params.set('_cb', Date.now().toString());
 
       const newUrl = window.location.pathname + (params.toString() ? '?' + params.toString() : '');
       window.location.href = newUrl;
@@ -349,6 +397,19 @@ function formatPracticeArea(area: string) {
           window.conversationModal.show(id);
         }
       }
+    }
+
+    // Handle pagination
+    function handlePagination(direction) {
+      const url = new URL(window.location.href);
+      const currentPage = parseInt(url.searchParams.get('page') || '1');
+      const newPage = direction === 'next' ? currentPage + 1 : currentPage - 1;
+      
+      url.searchParams.set('page', newPage.toString());
+      // Add cache-busting parameter
+      url.searchParams.set('_cb', Date.now().toString());
+      
+      window.location.href = url.toString();
     }
 
     // Initialize on page load

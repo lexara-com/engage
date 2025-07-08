@@ -7,6 +7,10 @@ interface Props {
 }
 
 const { title, description = "AI-powered legal client intake platform", image = "/lexara-og.jpg", showNavigation = true } = Astro.props;
+
+// Get authentication status from Astro.locals (set by middleware)
+const user = Astro.locals.user;
+const isAuthenticated = Astro.locals.isAuthenticated;
 ---
 
 <!DOCTYPE html>
@@ -69,7 +73,7 @@ const { title, description = "AI-powered legal client intake platform", image = 
 </head>
 <body class="font-body antialiased bg-white text-lexara-darkNavy min-h-screen">
   {showNavigation && (
-    <header class="fixed top-0 w-full z-50 bg-lexara-pureWhite/95 backdrop-blur-sm border-b border-lexara-skyBlue/30">
+    <header class="fixed top-0 w-full z-50 bg-lexara-pureWhite border-b border-gray-200">
       <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between items-center py-4">
           <div class="flex items-center">
@@ -79,19 +83,41 @@ const { title, description = "AI-powered legal client intake platform", image = 
           </div>
           
           <div class="hidden md:flex items-center space-x-8">
-            <a href="/features" class="text-lexara-lightNavy hover:text-lexara-darkNavy transition-colors font-semibold">Features</a>
-            <a href="/pricing" class="text-lexara-lightNavy hover:text-lexara-darkNavy transition-colors font-semibold">Pricing</a>
-            <a href="/demo" class="text-lexara-lightNavy hover:text-lexara-darkNavy transition-colors font-semibold">Demo</a>
-            <a href="/contact" class="text-lexara-lightNavy hover:text-lexara-darkNavy transition-colors font-semibold">Contact</a>
+            {isAuthenticated ? (
+              <>
+                <a href="/firm/dashboard" class="text-lexara-lightNavy hover:text-lexara-darkNavy transition-colors font-semibold">Dashboard</a>
+                <a href="/firm/conversations" class="text-lexara-lightNavy hover:text-lexara-darkNavy transition-colors font-semibold">Conversations</a>
+                <a href="/firm/users" class="text-lexara-lightNavy hover:text-lexara-darkNavy transition-colors font-semibold">Users</a>
+                <a href="/firm/settings" class="text-lexara-lightNavy hover:text-lexara-darkNavy transition-colors font-semibold">Settings</a>
+              </>
+            ) : (
+              <>
+                <a href="/features" class="text-lexara-lightNavy hover:text-lexara-darkNavy transition-colors font-semibold">Features</a>
+                <a href="/pricing" class="text-lexara-lightNavy hover:text-lexara-darkNavy transition-colors font-semibold">Pricing</a>
+                <a href="/demo" class="text-lexara-lightNavy hover:text-lexara-darkNavy transition-colors font-semibold">Demo</a>
+                <a href="/contact" class="text-lexara-lightNavy hover:text-lexara-darkNavy transition-colors font-semibold">Contact</a>
+              </>
+            )}
           </div>
 
           <div class="flex items-center space-x-4">
-            <a href="/firm/login" class="text-lexara-lightNavy hover:text-lexara-darkNavy transition-colors font-semibold">
-              Sign In
-            </a>
-            <a href="/firm/signup" class="bg-lexara-darkNavy text-lexara-pureWhite px-6 py-2.5 rounded-lg hover:bg-lexara-lightNavy transition-colors font-semibold">
-              Get Started
-            </a>
+            {isAuthenticated && user ? (
+              <>
+                <span class="text-lexara-lightNavy font-medium">{user.email}</span>
+                <a href="/firm/logout" class="bg-lexara-mahogany text-lexara-pureWhite px-6 py-2.5 rounded-lg hover:bg-red-700 transition-colors font-semibold">
+                  Sign Out
+                </a>
+              </>
+            ) : (
+              <>
+                <a href="/firm/login" class="text-lexara-lightNavy hover:text-lexara-darkNavy transition-colors font-semibold">
+                  Sign In
+                </a>
+                <a href="/firm/signup" class="bg-lexara-mahogany text-lexara-pureWhite px-6 py-2.5 rounded-lg hover:bg-red-700 transition-colors font-semibold">
+                  Get Started
+                </a>
+              </>
+            )}
           </div>
 
           <!-- Mobile menu button -->
@@ -112,8 +138,9 @@ const { title, description = "AI-powered legal client intake platform", image = 
       <slot />
     </main>
 
-    <footer class="bg-lexara-darkNavy text-lexara-pureWhite mt-auto">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <footer class="bg-lexara-darkNavy text-lexara-pureWhite mt-auto relative">
+    <div class="absolute inset-0 bg-cover bg-center opacity-10" style="background-image: url('/lexara_pattern.jpg');"></div>
+    <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
         <div class="col-span-1 md:col-span-2">
           <div class="mb-4">
@@ -165,5 +192,69 @@ const { title, description = "AI-powered legal client intake platform", image = 
     </div>
   </footer>
   </div>
+  
+  <!-- Session Helper -->
+  <script>
+    // Session Helper for Lexara Firm Portal
+    window.LexaraSession = {
+      getSession() {
+        const cookies = {};
+        document.cookie.split(';').forEach(cookie => {
+          const [name, value] = cookie.trim().split('=');
+          if (name && value) {
+            cookies[name] = value;
+          }
+        });
+
+        const sessionCookie = cookies['firm_session'];
+        if (!sessionCookie) return null;
+
+        try {
+          const session = JSON.parse(decodeURIComponent(sessionCookie));
+          const now = Math.floor(Date.now() / 1000);
+          if (session.exp && session.exp < now) {
+            console.log('Session expired');
+            return null;
+          }
+          return session;
+        } catch (error) {
+          console.error('Failed to parse session:', error);
+          return null;
+        }
+      },
+
+      isAuthenticated() {
+        const session = this.getSession();
+        return session && session.isAuthenticated === true;
+      },
+
+      refreshSession() {
+        const session = this.getSession();
+        if (!session) return false;
+
+        session.exp = Math.floor(Date.now() / 1000) + (24 * 60 * 60);
+        
+        const cookieOptions = [
+          `firm_session=${encodeURIComponent(JSON.stringify(session))}`,
+          'path=/',
+          `max-age=${24 * 60 * 60}`,
+          'samesite=lax'
+        ];
+        
+        if (window.location.protocol === 'https:') {
+          cookieOptions.push('secure');
+        }
+        
+        document.cookie = cookieOptions.join('; ');
+        console.log('Session refreshed');
+        return true;
+      }
+    };
+
+    // Refresh session on navigation to keep it active
+    if (LexaraSession.isAuthenticated()) {
+      LexaraSession.refreshSession();
+    }
+  </script>
 </body>
 </html>

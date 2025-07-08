@@ -232,7 +232,21 @@
         };
 
         // Create session cookie with real Auth0 user data
-        document.cookie = `firm_session=${encodeURIComponent(JSON.stringify(sessionData))}; path=/; max-age=${24 * 60 * 60}; secure; samesite=strict`;
+        // Use httponly would be better but we're setting from JS, so we'll use secure + samesite
+        const cookieOptions = [
+          `firm_session=${encodeURIComponent(JSON.stringify(sessionData))}`,
+          'path=/',
+          `max-age=${24 * 60 * 60}`,
+          'samesite=lax'  // Changed from strict to lax to allow navigation
+        ];
+        
+        // Only add secure flag if on HTTPS
+        if (window.location.protocol === 'https:') {
+          cookieOptions.push('secure');
+        }
+        
+        document.cookie = cookieOptions.join('; ');
+        console.log('Session cookie set:', cookieOptions);
 
         document.getElementById('status-message').textContent = 'Authentication successful! Redirecting...';
 

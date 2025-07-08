@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Auth Test</title>
+  <style>
+    body { font-family: monospace; padding: 20px; }
+    button { margin: 10px; padding: 10px; }
+    pre { background: #f0f0f0; padding: 10px; }
+  </style>
+</head>
+<body>
+  <h1>Authentication Test</h1>
+  
+  <button onclick="setTestSession()">Set Test Session</button>
+  <button onclick="checkSession()">Check Session</button>
+  <button onclick="callAPI()">Call API</button>
+  <button onclick="clearSession()">Clear Session</button>
+  
+  <h2>Output:</h2>
+  <pre id="output"></pre>
+  
+  <script>
+    function log(message) {
+      const output = document.getElementById('output');
+      output.textContent += message + '\n';
+    }
+    
+    function setTestSession() {
+      const mockSession = {
+        userId: 'test-user-123',
+        email: 'test@example.com',
+        name: 'Test User',
+        firmId: 'test-firm-123',
+        roles: ['User'],
+        exp: Math.floor(Date.now() / 1000) + (24 * 60 * 60),
+        isAuthenticated: true
+      };
+      
+      document.cookie = `firm_session=${encodeURIComponent(JSON.stringify(mockSession))}; path=/; max-age=${24 * 60 * 60}; samesite=lax`;
+      log('Session cookie set');
+    }
+    
+    function checkSession() {
+      log('\nChecking cookies:');
+      log(document.cookie);
+      
+      const cookies = {};
+      document.cookie.split(';').forEach(cookie => {
+        const [name, value] = cookie.trim().split('=');
+        if (name && value) {
+          cookies[name] = value;
+        }
+      });
+      
+      const sessionCookie = cookies['firm_session'];
+      if (sessionCookie) {
+        try {
+          const session = JSON.parse(decodeURIComponent(sessionCookie));
+          log('\nSession data:');
+          log(JSON.stringify(session, null, 2));
+        } catch (e) {
+          log('Failed to parse session: ' + e.message);
+        }
+      } else {
+        log('No session cookie found');
+      }
+    }
+    
+    async function callAPI() {
+      log('\nCalling API...');
+      try {
+        const response = await fetch('/api/firm/conversations');
+        const data = await response.json();
+        log(`Response: ${response.status}`);
+        log(JSON.stringify(data, null, 2));
+      } catch (e) {
+        log('Error: ' + e.message);
+      }
+    }
+    
+    function clearSession() {
+      document.cookie = 'firm_session=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+      log('\nSession cleared');
+    }
+  </script>
+</body>
+</html>
