@@ -460,6 +460,17 @@ const UI_HTML = `<!DOCTYPE html>
       }
 
       showDisclaimerOnLoad() {
+        // Check for query parameter to bypass disclaimer
+        const urlParams = new URLSearchParams(window.location.search);
+        const skipDisclaimer = urlParams.get('ack') === 'false';
+        
+        if (skipDisclaimer) {
+          console.log('Skipping disclaimer due to ack=false query parameter');
+          // Directly start the chat without showing disclaimer
+          this.startChat();
+          return;
+        }
+        
         // TEMPORARY: Clear localStorage for testing
         localStorage.removeItem('engage-disclaimer-agreed');
         

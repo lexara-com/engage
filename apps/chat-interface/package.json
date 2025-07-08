@@ -9,16 +9,21 @@
     "deploy": "wrangler deploy",
     "deploy:dev": "wrangler deploy --env dev",
     "deploy:production": "wrangler deploy --env production",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:debug": "playwright test --debug",
+    "test:e2e:headed": "playwright test --headed"
   },
   "dependencies": {
+    "@lexara/auth-lib": "workspace:*",
     "@lexara/shared-types": "workspace:*",
-    "@lexara/shared-utils": "workspace:*",
-    "@lexara/auth-lib": "workspace:*"
+    "@lexara/shared-utils": "workspace:*"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^4.20240909.0",
-    "typescript": "^5.5.0",
-    "wrangler": "^4.20.3"
+    "@cloudflare/workers-types": "^4.20250705.0",
+    "@playwright/test": "^1.48.0",
+    "typescript": "^5.8.3",
+    "wrangler": "^4.23.0"
   }
 }
