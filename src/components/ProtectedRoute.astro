@@ -15,10 +15,21 @@ if (!isAuthenticated) {
 // Check if user has required roles
 if (requiredRoles.length > 0 && user) {
   const userRoles = user.roles || [];
-  const hasRequiredRole = requiredRoles.some(role => userRoles.includes(role));
+  
+  // Map old role format to new format for compatibility
+  const mappedRequiredRoles = requiredRoles.map(role => {
+    if (role === 'firm:admin') return 'admin';
+    if (role === 'firm:lawyer') return 'lawyer';
+    if (role === 'firm:staff') return 'staff';
+    if (role === 'firm:viewer') return 'viewer';
+    return role;
+  });
+  
+  const hasRequiredRole = mappedRequiredRoles.some(role => userRoles.includes(role));
   
   console.log('ProtectedRoute check:', {
     requiredRoles,
+    mappedRequiredRoles,
     userRoles,
     hasRequiredRole,
     user: user.email

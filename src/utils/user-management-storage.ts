@@ -28,9 +28,6 @@ export class UserManagementStorage {
         name,
         role,
         is_active as isActive,
-        last_synced_at as lastSyncedAt,
-        deleted_at as deletedAt,
-        deletion_reason as deletionReason,
         created_at as createdAt,
         updated_at as updatedAt
       FROM firm_users
@@ -40,9 +37,7 @@ export class UserManagementStorage {
     const params: any[] = [firmId];
 
     // Apply filters
-    if (!filters.includeDeleted) {
-      query += ' AND deleted_at IS NULL';
-    }
+    // Note: deleted_at column doesn't exist in remote DB, skip this filter
 
     if (filters.search) {
       query += ' AND (email LIKE ? OR name LIKE ?)';
@@ -58,10 +53,10 @@ export class UserManagementStorage {
     if (filters.status) {
       switch (filters.status) {
         case 'active':
-          query += ' AND is_active = 1 AND deleted_at IS NULL';
+          query += ' AND is_active = 1';
           break;
         case 'inactive':
-          query += ' AND is_active = 0 AND deleted_at IS NULL';
+          query += ' AND is_active = 0';
           break;
         case 'blocked':
           // This would need to be synced from Auth0
@@ -72,7 +67,7 @@ export class UserManagementStorage {
 
     // Get total count
     const countQuery = query.replace(
-      'SELECT id, firm_id as firmId, auth0_user_id as auth0UserId, email, name, role, is_active as isActive, last_synced_at as lastSyncedAt, deleted_at as deletedAt, deletion_reason as deletionReason, created_at as createdAt, updated_at as updatedAt',
+      'SELECT id, firm_id as firmId, auth0_user_id as auth0UserId, email, name, role, is_active as isActive, created_at as createdAt, updated_at as updatedAt',
       'SELECT COUNT(*) as total'
     );
     const countResult = await this.db.prepare(countQuery).bind(...params).first<{ total: number }>();
@@ -104,9 +99,6 @@ export class UserManagementStorage {
         name,
         role,
         is_active as isActive,
-        last_synced_at as lastSyncedAt,
-        deleted_at as deletedAt,
-        deletion_reason as deletionReason,
         created_at as createdAt,
         updated_at as updatedAt
       FROM firm_users
@@ -129,9 +121,6 @@ export class UserManagementStorage {
         name,
         role,
         is_active as isActive,
-        last_synced_at as lastSyncedAt,
-        deleted_at as deletedAt,
-        deletion_reason as deletionReason,
         created_at as createdAt,
         updated_at as updatedAt
       FROM firm_users
@@ -158,14 +147,13 @@ export class UserManagementStorage {
     await this.db.prepare(`
       INSERT INTO firm_users (
         id, firm_id, auth0_user_id, email, name, role, is_active, 
-        last_synced_at, created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
       ON CONFLICT(auth0_user_id) DO UPDATE SET
         email = excluded.email,
         name = excluded.name,
         role = excluded.role,
         is_active = excluded.is_active,
-        last_synced_at = excluded.last_synced_at,
         updated_at = excluded.updated_at
     `).bind(
       id,
@@ -175,7 +163,6 @@ export class UserManagementStorage {
       userData.name,
       userData.role,
       userData.isActive ?? true,
-      now,
       now,
       now
     ).run();
@@ -201,7 +188,7 @@ export class UserManagementStorage {
     await this.db.prepare(`
       UPDATE firm_users 
       SET role = ?, updated_at = ?
-      WHERE firm_id = ? AND id = ? AND deleted_at IS NULL
+      WHERE firm_id = ? AND id = ?
     `).bind(newRole, now, firmId, userId).run();
   }
 
@@ -218,12 +205,12 @@ export class UserManagementStorage {
     await this.db.prepare(`
       UPDATE firm_users 
       SET is_active = ?, updated_at = ?
-      WHERE firm_id = ? AND id = ? AND deleted_at IS NULL
+      WHERE firm_id = ? AND id = ?
     `).bind(isActive ? 1 : 0, now, firmId, userId).run();
   }
 
   /**
-   * Soft delete a user
+   * Soft delete a user (marks as inactive since deleted_at doesn't exist)
    */
   async softDeleteUser(
     firmId: string, 
@@ -232,11 +219,12 @@ export class UserManagementStorage {
   ): Promise<void> {
     const now = new Date().toISOString();
     
+    // Since deleted_at doesn't exist, just mark as inactive
     await this.db.prepare(`
       UPDATE firm_users 
-      SET deleted_at = ?, deletion_reason = ?, is_active = 0, updated_at = ?
+      SET is_active = 0, updated_at = ?
       WHERE firm_id = ? AND id = ?
-    `).bind(now, reason || null, now, firmId, userId).run();
+    `).bind(now, firmId, userId).run();
   }
 
   /**
@@ -245,7 +233,7 @@ export class UserManagementStorage {
   async canDeleteUser(firmId: string, userId: string): Promise<boolean> {
     // Get the user to check their role
     const user = await this.getUser(firmId, userId);
-    if (!user || user.role !== 'firm:admin') {
+    if (!user || (user.role !== 'firm:admin' && user.role !== 'admin')) {
       return true; // Non-admins can always be deleted
     }
 
@@ -254,8 +242,7 @@ export class UserManagementStorage {
       SELECT COUNT(*) as count
       FROM firm_users
       WHERE firm_id = ? 
-        AND role = 'firm:admin' 
-        AND deleted_at IS NULL 
+        AND role IN ('firm:admin', 'admin') 
         AND is_active = 1
         AND id != ?
     `).bind(firmId, userId).first<{ count: number }>();
@@ -264,16 +251,11 @@ export class UserManagementStorage {
   }
 
   /**
-   * Update last synced timestamp
+   * Update last synced timestamp (no-op since column doesn't exist)
    */
   async updateLastSyncedAt(auth0UserId: string): Promise<void> {
-    const now = new Date().toISOString();
-    
-    await this.db.prepare(`
-      UPDATE firm_users 
-      SET last_synced_at = ?
-      WHERE auth0_user_id = ?
-    `).bind(now, auth0UserId).run();
+    // Column doesn't exist in remote DB, skip this update
+    console.log(`Would update last_synced_at for ${auth0UserId} but column doesn't exist`);
   }
 
   /**
@@ -374,7 +356,7 @@ export class UserManagementStorage {
   async getUserStats(firmId: string): Promise<{
     totalUsers: number;
     activeUsers: number;
-    usersByRole: Record<FirmUserRole, number>;
+    usersByRole: Record<string, number>;
   }> {
     // Get total and active users
     const statsResult = await this.db.prepare(`
@@ -382,22 +364,26 @@ export class UserManagementStorage {
         COUNT(*) as totalUsers,
         SUM(CASE WHEN is_active = 1 THEN 1 ELSE 0 END) as activeUsers
       FROM firm_users
-      WHERE firm_id = ? AND deleted_at IS NULL
+      WHERE firm_id = ?
     `).bind(firmId).first<{ totalUsers: number; activeUsers: number }>();
 
     // Get users by role
     const roleResult = await this.db.prepare(`
       SELECT role, COUNT(*) as count
       FROM firm_users
-      WHERE firm_id = ? AND deleted_at IS NULL
+      WHERE firm_id = ?
       GROUP BY role
     `).bind(firmId).all<{ role: FirmUserRole; count: number }>();
 
-    const usersByRole: Record<FirmUserRole, number> = {
+    const usersByRole: Record<string, number> = {
       'firm:admin': 0,
       'firm:lawyer': 0,
       'firm:staff': 0,
       'firm:viewer': 0,
+      'admin': 0,
+      'lawyer': 0,
+      'staff': 0,
+      'viewer': 0,
     };
 
     (roleResult.results || []).forEach(row => {

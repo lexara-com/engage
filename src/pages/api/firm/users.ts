@@ -14,7 +14,7 @@ export const GET: APIRoute = async (context) => {
 
   // Check permissions
   const userRoles = locals.user.roles || [];
-  const canViewUsers = userRoles.includes('FirmAdmin') || userRoles.includes('firm:admin');
+  const canViewUsers = userRoles.includes('FirmAdmin') || userRoles.includes('firm:admin') || userRoles.includes('admin');
   
   if (!canViewUsers) {
     return new Response(JSON.stringify({ error: 'Insufficient permissions' }), {

@@ -254,7 +254,7 @@
           userId: user.sub,
           email: user.email,
           name: user.name || user.nickname || user.given_name || 'User',
-          roles: firmUser?.role ? [firmUser.role] : ['User'], // Use role from database
+          roles: firmUser?.role ? [firmUser.role, `firm:${firmUser.role}`] : ['User'], // Include both formats
           firmId: firmUser?.firm_id || null, // Use firmId from database - no fallback!
           exp: Math.floor(Date.now() / 1000) + (24 * 60 * 60), // 24 hours
           isAuthenticated: true

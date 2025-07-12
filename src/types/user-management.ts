@@ -22,7 +22,7 @@ export interface FirmUser {
   blocked?: boolean;
 }
 
-export type FirmUserRole = 'firm:admin' | 'firm:lawyer' | 'firm:staff' | 'firm:viewer';
+export type FirmUserRole = 'firm:admin' | 'firm:lawyer' | 'firm:staff' | 'firm:viewer' | 'admin' | 'lawyer' | 'staff' | 'viewer';
 
 export interface UserAuditLog {
   id: string;
@@ -95,26 +95,34 @@ export interface UserStats {
   totalUsers: number;
   activeUsers: number;
   blockedUsers: number;
-  usersByRole: Record<FirmUserRole, number>;
+  usersByRole: Record<string, number>;
   recentActivity: UserAuditLog[];
 }
 
 // Helper functions for role management
-export const roleLabels: Record<FirmUserRole, string> = {
+export const roleLabels: Record<string, string> = {
   'firm:admin': 'Administrator',
   'firm:lawyer': 'Lawyer',
   'firm:staff': 'Staff',
   'firm:viewer': 'Viewer',
+  'admin': 'Administrator',
+  'lawyer': 'Lawyer',
+  'staff': 'Staff',
+  'viewer': 'Viewer',
 };
 
-export const roleColors: Record<FirmUserRole, string> = {
+export const roleColors: Record<string, string> = {
   'firm:admin': 'bg-purple-100 text-purple-800',
   'firm:lawyer': 'bg-blue-100 text-blue-800',
   'firm:staff': 'bg-green-100 text-green-800',
   'firm:viewer': 'bg-gray-100 text-gray-800',
+  'admin': 'bg-purple-100 text-purple-800',
+  'lawyer': 'bg-blue-100 text-blue-800',
+  'staff': 'bg-green-100 text-green-800',
+  'viewer': 'bg-gray-100 text-gray-800',
 };
 
-export const rolePermissions: Record<FirmUserRole, string[]> = {
+export const rolePermissions: Record<string, string[]> = {
   'firm:admin': [
     'manage_users',
     'manage_settings',
@@ -134,10 +142,29 @@ export const rolePermissions: Record<FirmUserRole, string[]> = {
   'firm:viewer': [
     'view_conversations',
   ],
+  'admin': [
+    'manage_users',
+    'manage_settings',
+    'view_analytics',
+    'manage_conversations',
+    'manage_billing',
+  ],
+  'lawyer': [
+    'view_conversations',
+    'manage_own_conversations',
+    'view_analytics',
+  ],
+  'staff': [
+    'view_conversations',
+    'create_conversations',
+  ],
+  'viewer': [
+    'view_conversations',
+  ],
 };
 
 export function canManageUsers(role: FirmUserRole): boolean {
-  return role === 'firm:admin';
+  return role === 'firm:admin' || role === 'admin';
 }
 
 export function getStatusColor(user: FirmUser): string {

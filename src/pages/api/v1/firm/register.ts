@@ -106,7 +106,7 @@ export const POST: APIRoute = async (context) => {
         auth0User.user_id,
         email,
         `${firstName} ${lastName}`,
-        'firm:admin',
+        'admin', // Changed from 'firm:admin' to match DB constraint
         1,
         now,
         now

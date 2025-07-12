@@ -15,7 +15,7 @@ export const POST: APIRoute = async (context) => {
 
   // Check permissions
   const userRoles = locals.user.roles || [];
-  const canInviteUsers = userRoles.includes('FirmAdmin') || userRoles.includes('firm:admin');
+  const canInviteUsers = userRoles.includes('FirmAdmin') || userRoles.includes('firm:admin') || userRoles.includes('admin');
   
   if (!canInviteUsers) {
     console.log('API Access denied for user:', locals.user.email, 'with roles:', userRoles);
@@ -164,7 +164,7 @@ export const GET: APIRoute = async (context) => {
 
   // Check permissions
   const userRoles = locals.user.roles || [];
-  const canViewInvitations = userRoles.includes('FirmAdmin') || userRoles.includes('firm:admin');
+  const canViewInvitations = userRoles.includes('FirmAdmin') || userRoles.includes('firm:admin') || userRoles.includes('admin');
   
   if (!canViewInvitations) {
     return new Response(JSON.stringify({ error: 'Insufficient permissions' }), {

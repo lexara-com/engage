@@ -102,7 +102,7 @@ export const POST: APIRoute = async (context) => {
       auth0UserId,
       email,
       `${firstName || 'Unknown'} ${lastName || 'User'}`,
-      'firm:admin',
+      'admin', // Changed from 'firm:admin' to match DB constraint
       1,
       now,
       now
@@ -114,7 +114,8 @@ export const POST: APIRoute = async (context) => {
       await auth0Client.updateUser(auth0UserId, {
         app_metadata: {
           firmId,
-          role: 'firm:admin'
+          role: 'firm:admin',
+          roles: ['admin', 'firm:admin'] // Include both formats
         }
       });
       console.log('Updated Auth0 user metadata');

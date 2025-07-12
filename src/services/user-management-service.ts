@@ -164,7 +164,8 @@ export class UserManagementService {
     // Update role if changed
     if (updates.role && updates.role !== user.role) {
       // Check if trying to demote last admin
-      if (user.role === 'firm:admin' && updates.role !== 'firm:admin') {
+      if ((user.role === 'firm:admin' || user.role === 'admin') && 
+          updates.role !== 'firm:admin' && updates.role !== 'admin') {
         const canDemote = await this.storage.canDeleteUser(this.currentUser.firmId, userId);
         if (!canDemote) {
           throw new Error('Cannot demote the last administrator');
@@ -349,12 +350,8 @@ export class UserManagementService {
    * Check if user should be synced
    */
   private shouldSyncUser(user: FirmUser): boolean {
-    if (!user.lastSyncedAt) return true;
-    
-    const lastSync = new Date(user.lastSyncedAt).getTime();
-    const hourAgo = Date.now() - (60 * 60 * 1000);
-    
-    return lastSync < hourAgo;
+    // Always sync since we can't track lastSyncedAt
+    return true;
   }
 
   /**
