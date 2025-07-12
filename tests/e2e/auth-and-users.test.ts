@@ -19,16 +19,16 @@ describe('Authentication and User Management E2E Tests', () => {
       logLevel: 'error',
       vars: {
         ENVIRONMENT: 'test',
-        AUTH0_DOMAIN: 'dev-sv0pf6cz2530xz0o.us.auth0.com',
-        AUTH0_CLIENT_ID: 'OjsR6To3nDqYDLVHtRjDFpk7wRcCfrfi',
-        AUTH0_CLIENT_SECRET: 'test-secret',
-        AUTH0_MGMT_CLIENT_ID: '8joVG4YXDLZwpkwvaEyPJn8urP4oiTwM',
-        AUTH0_MGMT_CLIENT_SECRET: 'SU_Eg-D9Pq9JAdvL2__vrKjVz2HcNU-l4bUHiVwWPeuvxqfwANT_kxv2xuNfPKpC',
-        JWT_SECRET: 'test-jwt-secret'
+        AUTH0_DOMAIN: process.env.AUTH0_DOMAIN || 'your-domain.us.auth0.com',
+        AUTH0_CLIENT_ID: process.env.AUTH0_CLIENT_ID || 'your-client-id',
+        AUTH0_CLIENT_SECRET: process.env.AUTH0_CLIENT_SECRET || 'your-client-secret',
+        AUTH0_MGMT_CLIENT_ID: process.env.AUTH0_MGMT_CLIENT_ID || 'your-mgmt-client-id',
+        AUTH0_MGMT_CLIENT_SECRET: process.env.AUTH0_MGMT_CLIENT_SECRET || 'your-mgmt-client-secret',
+        JWT_SECRET: process.env.JWT_SECRET || 'test-jwt-secret'
       },
       d1Databases: [{
         binding: 'DB',
-        id: 'c856a886-cf6b-421e-b24e-d24a441c0426'
+        id: process.env.D1_DATABASE_ID || 'your-d1-database-id'
       }]
     });
   });

@@ -24,13 +24,13 @@ This document provides the definitive guide for implementing Auth0 authenticatio
 ### Auth0 Applications
 
 **Test Site (test.lexara.app):**
-- Client ID: `nI1qZf7RIHMfJTTrQQoosfWu9d204apX`
-- Domain: `dev-sv0pf6cz2530xz0o.us.auth0.com`
+- Client ID: `<YOUR_TEST_SITE_CLIENT_ID>`
+- Domain: `<YOUR_AUTH0_DOMAIN>`
 - Application Type: Single Page Application (SPA)
 
 **Firm Portal (dev-www.lexara.app/firm):**
-- Client ID: `OjsR6To3nDqYDLVHtRjDFpk7wRcCfrfi`
-- Domain: `dev-sv0pf6cz2530xz0o.us.auth0.com`
+- Client ID: `<YOUR_FIRM_PORTAL_CLIENT_ID>`
+- Domain: `<YOUR_AUTH0_DOMAIN>`
 - Application Type: Single Page Application (SPA)
 
 ### Required Auth0 Settings
@@ -86,8 +86,8 @@ For each application, ensure these settings in Auth0 Dashboard:
 
     <script>
         const auth0Config = {
-            domain: 'your-domain.us.auth0.com',
-            clientId: 'your-client-id',
+            domain: '<YOUR_AUTH0_DOMAIN>',
+            clientId: '<YOUR_AUTH0_CLIENT_ID>',
             redirectUri: window.location.origin + '/callback',
             scope: 'openid profile email'
         };
@@ -215,8 +215,8 @@ For each application, ensure these settings in Auth0 Dashboard:
 
     <script>
         const auth0Config = {
-            domain: 'your-domain.us.auth0.com',
-            clientId: 'your-client-id',
+            domain: '<YOUR_AUTH0_DOMAIN>',
+            clientId: '<YOUR_AUTH0_CLIENT_ID>',
             redirectUri: window.location.origin + '/callback',
             scope: 'openid profile email'
         };

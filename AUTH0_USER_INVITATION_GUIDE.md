@@ -21,11 +21,11 @@ This guide explains how to implement user invitations using Auth0's Management A
 ### 2. Environment Variables
 Add to your `.env` file:
 ```env
-AUTH0_DOMAIN=dev-sv0pf6cz2530xz0o.us.auth0.com
-AUTH0_CLIENT_ID=OjsR6To3nDqYDLVHtRjDFpk7wRcCfrfi
-AUTH0_CLIENT_SECRET=your-client-secret
-AUTH0_MGMT_CLIENT_ID=your-management-api-client-id
-AUTH0_MGMT_CLIENT_SECRET=your-management-api-client-secret
+AUTH0_DOMAIN=<YOUR_AUTH0_DOMAIN>
+AUTH0_CLIENT_ID=<YOUR_AUTH0_CLIENT_ID>
+AUTH0_CLIENT_SECRET=<YOUR_AUTH0_CLIENT_SECRET>
+AUTH0_MGMT_CLIENT_ID=<YOUR_AUTH0_MGMT_CLIENT_ID>
+AUTH0_MGMT_CLIENT_SECRET=<YOUR_AUTH0_MGMT_CLIENT_SECRET>
 ```
 
 ## Implementation Steps

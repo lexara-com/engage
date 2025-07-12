@@ -4,7 +4,7 @@
   "description": "Firm admin portal for Lexara Engage - Law firm dashboard and management interface",
   "scripts": {
     "dev": "astro dev",
-    "dev:d1": "npm run build && npx wrangler pages dev dist --compatibility-date=2024-01-01 --compatibility-flags nodejs_compat --port 4321 --d1 DB=c856a886-cf6b-421e-b24e-d24a441c0426",
+    "dev:d1": "npm run build && npx wrangler pages dev dist --compatibility-date=2024-01-01 --compatibility-flags nodejs_compat --port 4321 --d1 DB=${D1_DATABASE_ID}",
     "build": "astro build",
     "preview": "astro preview",
     "deploy:dev": "wrangler deploy --env dev",

@@ -10,11 +10,11 @@ You need to add allowed callback URLs to your Auth0 application.
 
 ### 1. Log into Auth0 Dashboard
 - Go to https://manage.auth0.com
-- Select your tenant: `dev-sv0pf6cz2530xz0o`
+- Select your tenant: `<YOUR_AUTH0_TENANT>`
 
 ### 2. Navigate to Your Application
 - Go to Applications → Applications
-- Find your application: `OjsR6To3nDqYDLVHtRjDFpk7wRcCfrfi`
+- Find your application: `<YOUR_AUTH0_CLIENT_ID>`
 - Click on the application name
 
 ### 3. Add Allowed Callback URLs
@@ -82,9 +82,9 @@ Create a `.env` file in the project root:
 
 ```env
 # Auth0 Configuration
-AUTH0_DOMAIN=dev-sv0pf6cz2530xz0o.us.auth0.com
-AUTH0_CLIENT_ID=OjsR6To3nDqYDLVHtRjDFpk7wRcCfrfi
-AUTH0_CLIENT_SECRET=your-client-secret-here
+AUTH0_DOMAIN=<YOUR_AUTH0_DOMAIN>
+AUTH0_CLIENT_ID=<YOUR_AUTH0_CLIENT_ID>
+AUTH0_CLIENT_SECRET=<YOUR_AUTH0_CLIENT_SECRET>
 AUTH0_AUDIENCE=https://api.lexara.app
 
 # JWT Secret for session cookies
