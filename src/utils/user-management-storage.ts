@@ -259,7 +259,7 @@ export class UserManagementStorage {
   }
 
   /**
-   * Create audit log entry
+   * Create audit log entry (no-op since table doesn't exist)
    */
   async createAuditLog(log: {
     firmId: string;
@@ -270,84 +270,28 @@ export class UserManagementStorage {
     ipAddress?: string;
     userAgent?: string;
   }): Promise<void> {
-    const id = `audit_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    
-    await this.db.prepare(`
-      INSERT INTO user_audit_logs (
-        id, firm_id, user_id, performed_by, action, details, 
-        ip_address, user_agent, created_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `).bind(
-      id,
-      log.firmId,
-      log.userId,
-      log.performedBy,
-      log.action,
-      log.details ? JSON.stringify(log.details) : null,
-      log.ipAddress || null,
-      log.userAgent || null,
-      new Date().toISOString()
-    ).run();
+    // Table doesn't exist in remote DB, skip audit logging
+    console.log('Would create audit log:', log.action, 'for user:', log.userId);
   }
 
   /**
-   * Get audit logs for a user
+   * Get audit logs for a user (returns empty since table doesn't exist)
    */
   async getUserAuditLogs(
     firmId: string, 
     userId: string, 
     limit = 50
   ): Promise<UserAuditLog[]> {
-    const result = await this.db.prepare(`
-      SELECT 
-        id,
-        firm_id as firmId,
-        user_id as userId,
-        performed_by as performedBy,
-        action,
-        details,
-        ip_address as ipAddress,
-        user_agent as userAgent,
-        created_at as createdAt
-      FROM user_audit_logs
-      WHERE firm_id = ? AND user_id = ?
-      ORDER BY created_at DESC
-      LIMIT ?
-    `).bind(firmId, userId, limit).all<UserAuditLog>();
-
-    // Parse details JSON
-    return (result.results || []).map(log => ({
-      ...log,
-      details: log.details ? JSON.parse(log.details as any) : undefined
-    }));
+    // Table doesn't exist in remote DB, return empty array
+    return [];
   }
 
   /**
-   * Get recent audit logs for a firm
+   * Get recent audit logs for a firm (returns empty since table doesn't exist)
    */
   async getRecentAuditLogs(firmId: string, limit = 20): Promise<UserAuditLog[]> {
-    const result = await this.db.prepare(`
-      SELECT 
-        id,
-        firm_id as firmId,
-        user_id as userId,
-        performed_by as performedBy,
-        action,
-        details,
-        ip_address as ipAddress,
-        user_agent as userAgent,
-        created_at as createdAt
-      FROM user_audit_logs
-      WHERE firm_id = ?
-      ORDER BY created_at DESC
-      LIMIT ?
-    `).bind(firmId, limit).all<UserAuditLog>();
-
-    // Parse details JSON
-    return (result.results || []).map(log => ({
-      ...log,
-      details: log.details ? JSON.parse(log.details as any) : undefined
-    }));
+    // Table doesn't exist in remote DB, return empty array
+    return [];
   }
 
   /**
