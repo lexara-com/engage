@@ -1,0 +1,126 @@
+---
+interface Conversation {
+  id: string;
+  clientName: string;
+  topic: string;
+  timestamp: string;
+  status: 'in_progress' | 'qualified' | 'follow_up';
+  duration?: string;
+}
+
+interface Props {
+  conversations?: Conversation[];
+}
+
+// TODO: Replace with real data from API
+const { conversations = [
+  {
+    id: '1',
+    clientName: 'Jane Smith',
+    topic: 'Employment discrimination case consultation',
+    timestamp: '2 hours ago',
+    status: 'in_progress' as const,
+    duration: '15 min'
+  },
+  {
+    id: '2',
+    clientName: 'Robert Johnson',
+    topic: 'Personal injury claim - car accident',
+    timestamp: '3 hours ago',
+    status: 'qualified' as const,
+    duration: '22 min'
+  },
+  {
+    id: '3',
+    clientName: 'Maria Garcia',
+    topic: 'Divorce proceedings and asset division',
+    timestamp: '5 hours ago',
+    status: 'follow_up' as const,
+    duration: '18 min'
+  },
+  {
+    id: '4',
+    clientName: 'David Lee',
+    topic: 'Business contract review',
+    timestamp: 'Yesterday',
+    status: 'qualified' as const,
+    duration: '25 min'
+  },
+  {
+    id: '5',
+    clientName: 'Sarah Wilson',
+    topic: 'Estate planning and will preparation',
+    timestamp: 'Yesterday',
+    status: 'in_progress' as const,
+    duration: '30 min'
+  }
+]} = Astro.props;
+
+// Status badge styles
+const statusStyles = {
+  in_progress: 'bg-blue-100 text-blue-800',
+  qualified: 'bg-green-100 text-green-800',
+  follow_up: 'bg-yellow-100 text-yellow-800'
+};
+
+const statusLabels = {
+  in_progress: 'In Progress',
+  qualified: 'Qualified',
+  follow_up: 'Follow up'
+};
+---
+
+<div class="bg-white rounded-lg shadow-sm">
+  <div class="px-6 py-4 border-b border-gray-200">
+    <div class="flex items-center justify-between">
+      <h2 class="text-xl font-semibold text-gray-900">Recent Conversations</h2>
+      <a href="/firm/conversations" class="text-sm text-lexara-darkNavy hover:text-lexara-lightNavy font-medium">
+        View all →
+      </a>
+    </div>
+  </div>
+  
+  <div class="divide-y divide-gray-200">
+    {conversations.map((conversation) => (
+      <div class="px-6 py-4 hover:bg-gray-50 transition-colors cursor-pointer">
+        <div class="flex items-start justify-between">
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-3 mb-1">
+              <h3 class="text-sm font-medium text-gray-900 truncate">
+                {conversation.clientName}
+              </h3>
+              <span class={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusStyles[conversation.status]}`}>
+                {statusLabels[conversation.status]}
+              </span>
+            </div>
+            <p class="text-sm text-gray-600 truncate">
+              {conversation.topic}
+            </p>
+            <div class="flex items-center gap-4 mt-1">
+              <span class="text-xs text-gray-500">{conversation.timestamp}</span>
+              {conversation.duration && (
+                <>
+                  <span class="text-xs text-gray-400">•</span>
+                  <span class="text-xs text-gray-500">{conversation.duration}</span>
+                </>
+              )}
+            </div>
+          </div>
+          <div class="ml-4 flex-shrink-0">
+            <button class="text-gray-400 hover:text-gray-600">
+              <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    ))}
+  </div>
+  
+  <div class="px-6 py-3 bg-gray-50 text-center">
+    <a href="/firm/conversations" class="text-sm text-lexara-darkNavy hover:text-lexara-lightNavy font-medium">
+      Load more conversations
+    </a>
+  </div>
+</div>

@@ -1,0 +1,95 @@
+---
+import BaseLayout from './BaseLayout.astro';
+
+interface Props {
+  title?: string;
+  description?: string;
+}
+
+const { 
+  title = 'Dashboard - Lexara', 
+  description = 'AI-powered legal client intake dashboard' 
+} = Astro.props;
+
+// Get user from locals (set by middleware)
+const user = Astro.locals.user;
+const isAuthenticated = Astro.locals.isAuthenticated;
+
+// Redirect if not authenticated
+if (!isAuthenticated) {
+  return Astro.redirect('/firm/login');
+}
+
+// Extract user initials for avatar
+const userInitials = user?.name 
+  ? user.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+  : user?.email?.[0]?.toUpperCase() || 'U';
+---
+
+<BaseLayout title={title} description={description} showNavigation={false}>
+  <div class="min-h-screen bg-gray-50">
+    <!-- Dashboard Header -->
+    <header class="bg-white border-b border-gray-200">
+      <div class="mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center h-16">
+          <!-- Logo -->
+          <div class="flex items-center">
+            <a href="/firm/dashboard" class="flex items-center">
+              <svg class="h-8 w-auto text-lexara-darkNavy mr-3" viewBox="0 0 32 32" fill="currentColor">
+                <rect x="4" y="4" width="24" height="24" rx="4" fill="currentColor" opacity="0.1"/>
+                <path d="M8 8h16v2H8zm0 6h16v2H8zm0 6h10v2H8z" fill="currentColor"/>
+              </svg>
+              <span class="text-xl font-semibold text-gray-900">LEXARA</span>
+            </a>
+          </div>
+          
+          <!-- User Menu -->
+          <div class="flex items-center space-x-4">
+            <div class="flex items-center space-x-3">
+              <div class="h-10 w-10 rounded-full bg-lexara-darkNavy text-white flex items-center justify-center text-sm font-medium">
+                {userInitials}
+              </div>
+              <div class="hidden md:block">
+                <div class="text-sm font-medium text-gray-900">{user?.name || 'User'}</div>
+                <div class="text-xs text-gray-500">{user?.email}</div>
+              </div>
+            </div>
+            <a 
+              href="/firm/logout" 
+              class="text-sm text-gray-500 hover:text-gray-700 flex items-center"
+            >
+              <svg class="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+              </svg>
+              Sign Out
+            </a>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <main>
+      <slot />
+    </main>
+  </div>
+</BaseLayout>
+
+<style>
+  /* Custom styles for dashboard */
+  :global(.metric-card) {
+    @apply bg-white rounded-lg shadow-sm p-6;
+  }
+  
+  :global(.metric-label) {
+    @apply text-sm font-medium text-gray-500;
+  }
+  
+  :global(.metric-value) {
+    @apply text-3xl font-bold text-gray-900 mt-2;
+  }
+  
+  :global(.metric-description) {
+    @apply text-sm text-gray-600 mt-1;
+  }
+</style>

@@ -15,7 +15,7 @@ class AuthManager {
         domain: import.meta.env.AUTH0_DOMAIN || 'lexara-dev.us.auth0.com',
         clientId: import.meta.env.AUTH0_CLIENT_ID || 'your-client-id',
         authorizationParams: {
-          redirect_uri: window.location.origin + '/callback',
+          redirect_uri: window.location.origin + '/firm/callback',
           audience: import.meta.env.AUTH0_AUDIENCE || 'https://api.lexara.app',
           scope: 'openid profile email'
         },

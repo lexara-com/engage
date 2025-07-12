@@ -1,0 +1,89 @@
+---
+interface SystemMetric {
+  label: string;
+  value: string;
+  status: 'good' | 'warning' | 'critical';
+}
+
+interface Props {
+  metrics?: SystemMetric[];
+}
+
+// TODO: Replace with real system metrics
+const { metrics = [
+  {
+    label: 'API Response Time',
+    value: '45ms',
+    status: 'good' as const
+  },
+  {
+    label: 'System Uptime',
+    value: '99.99%',
+    status: 'good' as const
+  },
+  {
+    label: 'Active Sessions',
+    value: '1,247',
+    status: 'good' as const
+  },
+  {
+    label: 'Queue Status',
+    value: 'Normal',
+    status: 'good' as const
+  }
+]} = Astro.props;
+
+const statusColors = {
+  good: 'text-green-600',
+  warning: 'text-yellow-600',
+  critical: 'text-red-600'
+};
+
+const statusDots = {
+  good: 'bg-green-500',
+  warning: 'bg-yellow-500',
+  critical: 'bg-red-500'
+};
+---
+
+<div class="bg-white rounded-lg shadow-sm">
+  <div class="px-6 py-4 border-b border-gray-200">
+    <div class="flex items-center justify-between">
+      <h2 class="text-xl font-semibold text-gray-900">System Status</h2>
+      <div class="flex items-center space-x-2">
+        <span class="relative flex h-3 w-3">
+          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+          <span class="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
+        </span>
+        <span class="text-sm text-green-600 font-medium">All systems operational</span>
+      </div>
+    </div>
+  </div>
+  
+  <div class="p-6">
+    <div class="grid grid-cols-2 gap-4">
+      {metrics.map((metric) => (
+        <div class="bg-gray-50 rounded-lg p-4">
+          <div class="flex items-start justify-between">
+            <div>
+              <p class="text-sm text-gray-600">{metric.label}</p>
+              <p class={`text-2xl font-semibold mt-1 ${statusColors[metric.status]}`}>
+                {metric.value}
+              </p>
+            </div>
+            <div class={`w-2 h-2 rounded-full mt-1 ${statusDots[metric.status]}`}></div>
+          </div>
+        </div>
+      ))}
+    </div>
+    
+    <div class="mt-6 pt-6 border-t border-gray-200">
+      <div class="flex items-center justify-between text-sm">
+        <span class="text-gray-500">Last updated: Just now</span>
+        <a href="/firm/system-status" class="text-lexara-darkNavy hover:text-lexara-lightNavy font-medium">
+          View detailed status →
+        </a>
+      </div>
+    </div>
+  </div>
+</div>

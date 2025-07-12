@@ -1,0 +1,761 @@
+---
+import DashboardLayout from '../../../layouts/DashboardLayout.astro';
+import EditUserModal from '../../../components/EditUserModal.astro';
+import { canManageUsers, roleLabels, roleColors, getStatusLabel, getStatusColor } from '../../../types/user-management';
+
+// Check authentication
+if (!Astro.locals.isAuthenticated || !Astro.locals.user) {
+  return Astro.redirect('/firm/login');
+}
+
+// Check permissions
+const userRoles = Astro.locals.user.roles || [];
+const isAdmin = userRoles.includes('FirmAdmin') || userRoles.includes('firm:admin');
+
+if (!isAdmin) {
+  return Astro.redirect('/firm/dashboard');
+}
+
+// Set page metadata
+const pageTitle = 'Team Members - Lexara Firm Portal';
+const pageDescription = 'Manage your firm\'s team members';
+---
+
+<DashboardLayout title={pageTitle} description={pageDescription}>
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Header -->
+    <div class="mb-8">
+      <h1 class="text-3xl font-bold text-gray-900">Team Members</h1>
+      <p class="mt-2 text-sm text-gray-600">Manage your firm's users and permissions</p>
+    </div>
+
+    <!-- Stats Cards -->
+    <div id="userStats" class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+      <div class="bg-white rounded-lg shadow-sm p-6">
+        <div class="text-sm font-medium text-gray-500">Total Users</div>
+        <div class="mt-2 text-3xl font-semibold text-gray-900">-</div>
+      </div>
+      <div class="bg-white rounded-lg shadow-sm p-6">
+        <div class="text-sm font-medium text-gray-500">Active Users</div>
+        <div class="mt-2 text-3xl font-semibold text-gray-900">-</div>
+      </div>
+      <div class="bg-white rounded-lg shadow-sm p-6">
+        <div class="text-sm font-medium text-gray-500">Administrators</div>
+        <div class="mt-2 text-3xl font-semibold text-gray-900">-</div>
+      </div>
+      <div class="bg-white rounded-lg shadow-sm p-6">
+        <div class="text-sm font-medium text-gray-500">Pending Invitations</div>
+        <div class="mt-2 text-3xl font-semibold text-gray-900">-</div>
+      </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
+      <h2 class="text-lg font-semibold text-gray-900 mb-4">Filter Users</h2>
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div>
+          <label for="searchInput" class="block text-sm font-medium text-gray-700 mb-1">Search</label>
+          <input 
+            type="text" 
+            id="searchInput" 
+            placeholder="Search by name or email..."
+            class="w-full rounded-md border-gray-300 shadow-sm focus:border-lexara-darkNavy focus:ring-lexara-darkNavy text-sm"
+          />
+        </div>
+        <div>
+          <label for="roleFilter" class="block text-sm font-medium text-gray-700 mb-1">Role</label>
+          <select 
+            id="roleFilter" 
+            class="w-full rounded-md border-gray-300 shadow-sm focus:border-lexara-darkNavy focus:ring-lexara-darkNavy text-sm"
+          >
+            <option value="">All Roles</option>
+            <option value="firm:admin">Administrator</option>
+            <option value="firm:lawyer">Lawyer</option>
+            <option value="firm:staff">Staff</option>
+            <option value="firm:viewer">Viewer</option>
+          </select>
+        </div>
+        <div>
+          <label for="statusFilter" class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+          <select 
+            id="statusFilter" 
+            class="w-full rounded-md border-gray-300 shadow-sm focus:border-lexara-darkNavy focus:ring-lexara-darkNavy text-sm"
+          >
+            <option value="">All Statuses</option>
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+            <option value="blocked">Blocked</option>
+          </select>
+        </div>
+        <div class="flex items-end">
+          <button 
+            id="inviteButton"
+            class="w-full bg-lexara-darkNavy text-white px-4 py-2 rounded-md hover:bg-lexara-lightNavy transition-colors text-sm font-medium"
+          >
+            Invite New User
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Users Table -->
+    <div class="bg-white rounded-lg shadow-sm overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                User
+              </th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Role
+              </th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Status
+              </th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Joined
+              </th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Last Active
+              </th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Actions
+              </th>
+            </tr>
+          </thead>
+          <tbody id="usersTableBody" class="bg-white divide-y divide-gray-200">
+            <!-- Loading state -->
+            <tr id="loadingRow">
+              <td colspan="6" class="px-6 py-12 text-center text-gray-500">
+                <div class="flex justify-center">
+                  <svg class="animate-spin h-8 w-8 text-lexara-darkNavy" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                </div>
+                <p class="mt-2">Loading users...</p>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination -->
+      <div id="pagination" class="bg-gray-50 px-6 py-3 flex items-center justify-between border-t border-gray-200 hidden">
+        <div class="text-sm text-gray-700">
+          Showing page <span id="currentPage">1</span> of <span id="totalPages">1</span>
+          (<span id="totalUsers">0</span> total users)
+        </div>
+        <div class="flex space-x-2">
+          <button 
+            id="prevButton" 
+            class="px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled
+          >
+            Previous
+          </button>
+          <button 
+            id="nextButton" 
+            class="px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled
+          >
+            Next
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- User Detail Modal -->
+  <div id="userModal" class="fixed inset-0 z-50 hidden">
+    <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+      <div class="fixed inset-0 transition-opacity" aria-hidden="true">
+        <div class="absolute inset-0 bg-gray-500 bg-opacity-75"></div>
+      </div>
+
+      <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+
+      <div class="inline-block align-bottom bg-white rounded-lg px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full sm:p-6">
+        <div class="absolute top-0 right-0 pt-4 pr-4">
+          <button id="closeModalButton" type="button" class="bg-white rounded-md text-gray-400 hover:text-gray-500 focus:outline-none">
+            <span class="sr-only">Close</span>
+            <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <div id="modalContent">
+          <!-- Modal content will be dynamically populated -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete Confirmation Modal -->
+  <div id="deleteModal" class="fixed inset-0 z-50 hidden">
+    <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+      <div class="fixed inset-0 transition-opacity" aria-hidden="true">
+        <div class="absolute inset-0 bg-gray-500 bg-opacity-75"></div>
+      </div>
+
+      <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+
+      <div class="inline-block align-bottom bg-white rounded-lg px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full sm:p-6">
+        <div class="sm:flex sm:items-start">
+          <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
+            <svg class="h-6 w-6 text-red-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+          </div>
+          <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+            <h3 class="text-lg leading-6 font-medium text-gray-900">Delete User</h3>
+            <div class="mt-2">
+              <p class="text-sm text-gray-500">
+                Are you sure you want to delete <span id="deleteUserName" class="font-semibold"></span>? 
+                This action cannot be undone.
+              </p>
+              <div class="mt-4">
+                <label for="deleteReason" class="block text-sm font-medium text-gray-700">
+                  Reason for deletion (optional)
+                </label>
+                <textarea 
+                  id="deleteReason" 
+                  rows="3" 
+                  class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-lexara-darkNavy focus:ring-lexara-darkNavy text-sm"
+                  placeholder="Enter reason..."
+                ></textarea>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="mt-5 sm:mt-4 sm:flex sm:flex-row-reverse">
+          <button 
+            id="confirmDeleteButton" 
+            type="button" 
+            class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm"
+          >
+            Delete User
+          </button>
+          <button 
+            id="cancelDeleteButton" 
+            type="button" 
+            class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-lexara-darkNavy sm:mt-0 sm:w-auto sm:text-sm"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit User Modal -->
+  <EditUserModal />
+</DashboardLayout>
+
+<script>
+  // Import types
+  import type { 
+    UserListResponse, 
+    FirmUser, 
+    UserStats,
+    UserDetailResponse 
+  } from '../../../types/user-management';
+
+  // State
+  let currentPage = 0;
+  let totalPages = 0;
+  let totalUsers = 0;
+  let selectedUserId: string | null = null;
+
+  // Elements
+  const searchInput = document.getElementById('searchInput') as HTMLInputElement;
+  const roleFilter = document.getElementById('roleFilter') as HTMLSelectElement;
+  const statusFilter = document.getElementById('statusFilter') as HTMLSelectElement;
+  const inviteButton = document.getElementById('inviteButton');
+  const usersTableBody = document.getElementById('usersTableBody');
+  const loadingRow = document.getElementById('loadingRow');
+  const pagination = document.getElementById('pagination');
+  const currentPageSpan = document.getElementById('currentPage');
+  const totalPagesSpan = document.getElementById('totalPages');
+  const totalUsersSpan = document.getElementById('totalUsers');
+  const prevButton = document.getElementById('prevButton');
+  const nextButton = document.getElementById('nextButton');
+
+  // Modals
+  const userModal = document.getElementById('userModal');
+  const modalContent = document.getElementById('modalContent');
+  const closeModalButton = document.getElementById('closeModalButton');
+  const deleteModal = document.getElementById('deleteModal');
+  const deleteUserName = document.getElementById('deleteUserName');
+  const deleteReason = document.getElementById('deleteReason') as HTMLTextAreaElement;
+  const confirmDeleteButton = document.getElementById('confirmDeleteButton');
+  const cancelDeleteButton = document.getElementById('cancelDeleteButton');
+
+  // Load user stats
+  window.loadUserStats = async function loadUserStats() {
+    try {
+      const response = await fetch('/api/firm/users/stats');
+      if (!response.ok) throw new Error('Failed to load stats');
+      
+      const data = await response.json();
+      const stats: UserStats = data.stats;
+
+      // Update stats cards
+      const statsHtml = `
+        <div class="bg-white rounded-lg shadow-sm p-6">
+          <div class="text-sm font-medium text-gray-500">Total Users</div>
+          <div class="mt-2 text-3xl font-semibold text-gray-900">${stats.totalUsers}</div>
+        </div>
+        <div class="bg-white rounded-lg shadow-sm p-6">
+          <div class="text-sm font-medium text-gray-500">Active Users</div>
+          <div class="mt-2 text-3xl font-semibold text-gray-900">${stats.activeUsers}</div>
+        </div>
+        <div class="bg-white rounded-lg shadow-sm p-6">
+          <div class="text-sm font-medium text-gray-500">Administrators</div>
+          <div class="mt-2 text-3xl font-semibold text-gray-900">${stats.usersByRole['firm:admin'] || 0}</div>
+        </div>
+        <div class="bg-white rounded-lg shadow-sm p-6">
+          <div class="text-sm font-medium text-gray-500">Lawyers</div>
+          <div class="mt-2 text-3xl font-semibold text-gray-900">${stats.usersByRole['firm:lawyer'] || 0}</div>
+        </div>
+      `;
+      
+      const userStatsDiv = document.getElementById('userStats');
+      if (userStatsDiv) {
+        userStatsDiv.innerHTML = statsHtml;
+      }
+    } catch (error) {
+      console.error('Failed to load user stats:', error);
+    }
+  }
+
+  // Load users
+  window.loadUsers = async function loadUsers() {
+    if (!usersTableBody || !loadingRow) return;
+
+    // Show loading state
+    loadingRow.style.display = 'table-row';
+    pagination?.classList.add('hidden');
+
+    try {
+      // Build query params
+      const params = new URLSearchParams({
+        page: currentPage.toString(),
+        pageSize: '50',
+        _t: Date.now().toString() // Cache buster
+      });
+
+      const search = searchInput?.value.trim();
+      if (search) params.set('search', search);
+
+      const role = roleFilter?.value;
+      if (role) params.set('role', role);
+
+      const status = statusFilter?.value;
+      if (status) params.set('status', status);
+
+      // Fetch users
+      const response = await fetch(`/api/firm/users?${params}`);
+      if (!response.ok) throw new Error('Failed to load users');
+
+      const data: UserListResponse = await response.json();
+
+      // Update state
+      totalUsers = data.total;
+      totalPages = Math.ceil(data.total / data.pageSize);
+
+      // Update pagination
+      if (currentPageSpan) currentPageSpan.textContent = (currentPage + 1).toString();
+      if (totalPagesSpan) totalPagesSpan.textContent = totalPages.toString();
+      if (totalUsersSpan) totalUsersSpan.textContent = totalUsers.toString();
+
+      // Enable/disable pagination buttons
+      if (prevButton) prevButton.disabled = currentPage === 0;
+      if (nextButton) nextButton.disabled = currentPage >= totalPages - 1;
+
+      // Hide loading, show pagination
+      loadingRow.style.display = 'none';
+      pagination?.classList.remove('hidden');
+
+      // Render users
+      if (data.users.length === 0) {
+        usersTableBody.innerHTML = `
+          <tr>
+            <td colspan="6" class="px-6 py-12 text-center text-gray-500">
+              No users found matching your filters.
+            </td>
+          </tr>
+        `;
+      } else {
+        usersTableBody.innerHTML = data.users.map(user => renderUserRow(user)).join('');
+      }
+    } catch (error) {
+      console.error('Failed to load users:', error);
+      loadingRow.style.display = 'none';
+      usersTableBody.innerHTML = `
+        <tr>
+          <td colspan="6" class="px-6 py-12 text-center text-red-600">
+            Failed to load users. Please try again.
+          </td>
+        </tr>
+      `;
+    }
+  }
+
+  // Render user row
+  function renderUserRow(user: FirmUser): string {
+    const roleLabel = getRoleLabel(user.role);
+    const roleColor = getRoleColor(user.role);
+    const statusLabel = getStatusLabel(user);
+    const statusColor = getStatusColor(user);
+    const joinedDate = new Date(user.createdAt).toLocaleDateString();
+    const lastActive = user.lastSyncedAt ? new Date(user.lastSyncedAt).toLocaleDateString() : 'Never';
+
+    return `
+      <tr class="hover:bg-gray-50">
+        <td class="px-6 py-4 whitespace-nowrap">
+          <div class="flex items-center">
+            <div class="flex-shrink-0 h-10 w-10">
+              <div class="h-10 w-10 rounded-full bg-lexara-skyBlue flex items-center justify-center">
+                <span class="text-sm font-medium text-lexara-darkNavy">
+                  ${user.name.split(' ').map(n => n[0]).join('').toUpperCase()}
+                </span>
+              </div>
+            </div>
+            <div class="ml-4">
+              <div class="text-sm font-medium text-gray-900">${user.name}</div>
+              <div class="text-sm text-gray-500">${user.email}</div>
+            </div>
+          </div>
+        </td>
+        <td class="px-6 py-4 whitespace-nowrap">
+          <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full ${roleColor}">
+            ${roleLabel}
+          </span>
+        </td>
+        <td class="px-6 py-4 whitespace-nowrap">
+          <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full ${statusColor}">
+            ${statusLabel}
+          </span>
+        </td>
+        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+          ${joinedDate}
+        </td>
+        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+          ${lastActive}
+        </td>
+        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+          <button 
+            onclick="viewUser('${user.id}')"
+            class="text-lexara-darkNavy hover:text-lexara-lightNavy mr-3"
+          >
+            View
+          </button>
+          <button 
+            onclick="editUser('${user.id}')"
+            class="text-lexara-darkNavy hover:text-lexara-lightNavy mr-3"
+          >
+            Edit
+          </button>
+          ${!user.deletedAt ? `
+            <button 
+              onclick="deleteUser('${user.id}', '${user.name}')"
+              class="text-red-600 hover:text-red-900"
+            >
+              Delete
+            </button>
+          ` : ''}
+        </td>
+      </tr>
+    `;
+  }
+
+  // Helper functions for role and status
+  function getRoleLabel(role: string): string {
+    const labels: Record<string, string> = {
+      'firm:admin': 'Administrator',
+      'firm:lawyer': 'Lawyer',
+      'firm:staff': 'Staff',
+      'firm:viewer': 'Viewer',
+    };
+    return labels[role] || role;
+  }
+
+  function getRoleColor(role: string): string {
+    const colors: Record<string, string> = {
+      'firm:admin': 'bg-purple-100 text-purple-800',
+      'firm:lawyer': 'bg-blue-100 text-blue-800',
+      'firm:staff': 'bg-green-100 text-green-800',
+      'firm:viewer': 'bg-gray-100 text-gray-800',
+    };
+    return colors[role] || 'bg-gray-100 text-gray-800';
+  }
+
+  function getStatusLabel(user: FirmUser): string {
+    if (user.deletedAt) return 'Deleted';
+    if (user.blocked) return 'Blocked';
+    if (!user.isActive) return 'Inactive';
+    return 'Active';
+  }
+
+  function getStatusColor(user: FirmUser): string {
+    if (user.deletedAt) return 'bg-red-100 text-red-800';
+    if (user.blocked) return 'bg-orange-100 text-orange-800';
+    if (!user.isActive) return 'bg-gray-100 text-gray-800';
+    return 'bg-green-100 text-green-800';
+  }
+
+  // View user details
+  window.viewUser = async function(userId: string) {
+    selectedUserId = userId;
+    
+    // Show modal with loading state
+    if (userModal && modalContent) {
+      modalContent.innerHTML = '<div class="text-center py-8">Loading user details...</div>';
+      userModal.classList.remove('hidden');
+    }
+
+    try {
+      const response = await fetch(`/api/firm/users/${userId}`);
+      if (!response.ok) throw new Error('Failed to load user details');
+
+      const data: UserDetailResponse = await response.json();
+      const user = data.user;
+
+      // Render user details
+      if (modalContent) {
+        modalContent.innerHTML = `
+          <div>
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">User Details</h3>
+            
+            <div class="space-y-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700">Name</label>
+                <p class="mt-1 text-sm text-gray-900">${user.name}</p>
+              </div>
+              
+              <div>
+                <label class="block text-sm font-medium text-gray-700">Email</label>
+                <p class="mt-1 text-sm text-gray-900">${user.email}</p>
+              </div>
+              
+              <div>
+                <label class="block text-sm font-medium text-gray-700">Role</label>
+                <p class="mt-1">
+                  <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getRoleColor(user.role)}">
+                    ${getRoleLabel(user.role)}
+                  </span>
+                </p>
+              </div>
+              
+              <div>
+                <label class="block text-sm font-medium text-gray-700">Status</label>
+                <p class="mt-1">
+                  <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(user)}">
+                    ${getStatusLabel(user)}
+                  </span>
+                </p>
+              </div>
+              
+              <div>
+                <label class="block text-sm font-medium text-gray-700">Joined</label>
+                <p class="mt-1 text-sm text-gray-900">${new Date(user.createdAt).toLocaleString()}</p>
+              </div>
+              
+              ${user.lastSyncedAt ? `
+                <div>
+                  <label class="block text-sm font-medium text-gray-700">Last Active</label>
+                  <p class="mt-1 text-sm text-gray-900">${new Date(user.lastSyncedAt).toLocaleString()}</p>
+                </div>
+              ` : ''}
+              
+              <div>
+                <label class="block text-sm font-medium text-gray-700">Permissions</label>
+                <div class="mt-1 space-y-1">
+                  ${data.permissions.map(perm => `
+                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800 mr-2">
+                      ${perm}
+                    </span>
+                  `).join('')}
+                </div>
+              </div>
+              
+              ${data.auditLogs.length > 0 ? `
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">Recent Activity</label>
+                  <div class="space-y-2">
+                    ${data.auditLogs.slice(0, 5).map(log => `
+                      <div class="text-sm text-gray-600">
+                        <span class="font-medium">${log.action}</span> - 
+                        ${new Date(log.createdAt).toLocaleString()}
+                      </div>
+                    `).join('')}
+                  </div>
+                </div>
+              ` : ''}
+            </div>
+            
+            <div class="mt-6 flex justify-end space-x-3">
+              <button 
+                onclick="editUser('${user.id}')"
+                class="px-4 py-2 bg-lexara-darkNavy text-white rounded-md hover:bg-lexara-lightNavy transition-colors text-sm font-medium"
+              >
+                Edit User
+              </button>
+              <button 
+                onclick="sendPasswordReset('${user.id}', '${user.name}')"
+                class="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors text-sm font-medium"
+              >
+                Reset Password
+              </button>
+            </div>
+          </div>
+        `;
+      }
+    } catch (error) {
+      console.error('Failed to load user details:', error);
+      if (modalContent) {
+        modalContent.innerHTML = '<div class="text-center py-8 text-red-600">Failed to load user details</div>';
+      }
+    }
+  };
+
+  // Edit user
+  window.editUser = async function(userId: string) {
+    try {
+      // Fetch user details first
+      const response = await fetch(`/api/firm/users/${userId}`);
+      if (!response.ok) throw new Error('Failed to load user details');
+
+      const data: UserDetailResponse = await response.json();
+      const user = data.user;
+
+      // Show edit modal
+      if (window.showEditUserModal) {
+        window.showEditUserModal(userId, user);
+      }
+    } catch (error) {
+      console.error('Failed to load user for editing:', error);
+      alert('Failed to load user details. Please try again.');
+    }
+  };
+
+  // Delete user
+  window.deleteUser = function(userId: string, userName: string) {
+    selectedUserId = userId;
+    if (deleteUserName) deleteUserName.textContent = userName;
+    if (deleteReason) deleteReason.value = '';
+    deleteModal?.classList.remove('hidden');
+  };
+
+  // Send password reset
+  window.sendPasswordReset = async function(userId: string, userName: string) {
+    if (!confirm(`Send password reset email to ${userName}?`)) return;
+
+    try {
+      const response = await fetch(`/api/firm/users/${userId}/reset-password`, {
+        method: 'POST',
+      });
+
+      if (!response.ok) throw new Error('Failed to send password reset');
+
+      alert('Password reset email sent successfully!');
+    } catch (error) {
+      console.error('Failed to send password reset:', error);
+      alert('Failed to send password reset email. Please try again.');
+    }
+  };
+
+  // Event listeners
+  searchInput?.addEventListener('input', debounce(() => {
+    currentPage = 0;
+    window.loadUsers();
+  }, 300));
+
+  roleFilter?.addEventListener('change', () => {
+    currentPage = 0;
+    window.loadUsers();
+  });
+
+  statusFilter?.addEventListener('change', () => {
+    currentPage = 0;
+    window.loadUsers();
+  });
+
+  inviteButton?.addEventListener('click', () => {
+    window.location.href = '/firm/users/invite';
+  });
+
+  prevButton?.addEventListener('click', () => {
+    if (currentPage > 0) {
+      currentPage--;
+      window.loadUsers();
+    }
+  });
+
+  nextButton?.addEventListener('click', () => {
+    if (currentPage < totalPages - 1) {
+      currentPage++;
+      window.loadUsers();
+    }
+  });
+
+  closeModalButton?.addEventListener('click', () => {
+    userModal?.classList.add('hidden');
+  });
+
+  cancelDeleteButton?.addEventListener('click', () => {
+    deleteModal?.classList.add('hidden');
+    selectedUserId = null;
+  });
+
+  confirmDeleteButton?.addEventListener('click', async () => {
+    if (!selectedUserId) return;
+
+    try {
+      const response = await fetch(`/api/firm/users/${selectedUserId}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          reason: deleteReason?.value || undefined,
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to delete user');
+      }
+
+      deleteModal?.classList.add('hidden');
+      selectedUserId = null;
+      
+      // Reload users and stats
+      window.loadUsers();
+      window.loadUserStats();
+      
+      alert('User deleted successfully');
+    } catch (error) {
+      console.error('Failed to delete user:', error);
+      alert(error instanceof Error ? error.message : 'Failed to delete user');
+    }
+  });
+
+  // Utility: Debounce function
+  function debounce<T extends (...args: any[]) => any>(func: T, wait: number): T {
+    let timeout: number;
+    return function(this: any, ...args: Parameters<T>) {
+      clearTimeout(timeout);
+      timeout = window.setTimeout(() => func.apply(this, args), wait);
+    } as T;
+  }
+
+  // Initialize
+  document.addEventListener('DOMContentLoaded', () => {
+    window.loadUserStats();
+    window.loadUsers();
+  });
+</script>

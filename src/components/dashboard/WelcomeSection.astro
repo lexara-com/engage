@@ -1,0 +1,43 @@
+---
+interface Props {
+  userName?: string;
+}
+
+const { userName = 'User' } = Astro.props;
+const firstName = userName.split(' ')[0];
+
+// Format today's date
+const today = new Date();
+const formattedDate = today.toLocaleDateString('en-US', { 
+  weekday: 'long', 
+  month: 'long', 
+  day: 'numeric' 
+});
+---
+
+<div class="mb-8">
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+    <div>
+      <h1 class="text-3xl font-bold text-gray-900">
+        Welcome back, {firstName}
+      </h1>
+      <p class="mt-2 text-lg text-gray-600">
+        Here's what's happening with your client intake today.
+      </p>
+    </div>
+    
+    <div class="mt-4 sm:mt-0 flex items-center space-x-4">
+      <div class="text-right">
+        <p class="text-sm text-gray-500">Today</p>
+        <p class="font-medium text-gray-900">{formattedDate}</p>
+      </div>
+      
+      <a 
+        href="/firm/conversations/new" 
+        class="inline-flex items-center px-4 py-2 bg-lexara-darkNavy text-white text-sm font-medium rounded-md hover:bg-opacity-90 transition-colors"
+      >
+        New Conversation
+      </a>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,50 @@
+---
+interface Metrics {
+  todayCount: number;
+  activeCount: number;
+  weeklyCompletion: number;
+  conversionCount: number;
+}
+
+interface Props {
+  metrics?: Metrics;
+}
+
+// TODO: Replace with real data from API
+const { metrics = {
+  todayCount: 24,
+  activeCount: 156,
+  weeklyCompletion: 94,
+  conversionCount: 1247
+}} = Astro.props;
+---
+
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+  <!-- Today Card -->
+  <div class="metric-card">
+    <h3 class="metric-label">Today</h3>
+    <p class="metric-value">{metrics.todayCount}</p>
+    <p class="metric-description">New conversations</p>
+  </div>
+  
+  <!-- Active Card -->
+  <div class="metric-card">
+    <h3 class="metric-label">Active</h3>
+    <p class="metric-value">{metrics.activeCount}</p>
+    <p class="metric-description">In progress</p>
+  </div>
+  
+  <!-- This Week Card -->
+  <div class="metric-card">
+    <h3 class="metric-label">This Week</h3>
+    <p class="metric-value">{metrics.weeklyCompletion}%</p>
+    <p class="metric-description">Completed</p>
+  </div>
+  
+  <!-- Conversion Card -->
+  <div class="metric-card">
+    <h3 class="metric-label">Conversion</h3>
+    <p class="metric-value">{metrics.conversionCount.toLocaleString()}</p>
+    <p class="metric-description">Lead to client</p>
+  </div>
+</div>

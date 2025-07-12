@@ -1,0 +1,110 @@
+name: Test Firm Portal
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Run unit tests
+      run: npm run test:run
+    
+    - name: Build application
+      run: npm run build
+    
+    - name: Test D1 binding in build
+      run: |
+        # Verify D1 binding configuration
+        if grep -q "env.DB" dist/_worker.js/pages/api/firm/users/invite.astro.mjs; then
+          echo "✅ D1 binding found in build output"
+        else
+          echo "❌ D1 binding not found in build output"
+          exit 1
+        fi
+    
+    - name: Upload coverage reports
+      uses: codecov/codecov-action@v3
+      if: always()
+      with:
+        file: ./coverage/coverage-final.json
+        flags: unittests
+        name: codecov-umbrella
+
+  integration-test:
+    runs-on: ubuntu-latest
+    needs: test
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Build application
+      run: npm run build
+    
+    - name: Setup D1 test database
+      run: |
+        # Create local D1 database for testing
+        npx wrangler d1 execute dev-lexara-firm-portal --file=./schema.sql --local --env dev
+    
+    - name: Run integration tests
+      run: npm run test:integration
+      env:
+        CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+
+  d1-schema-validation:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Validate D1 schema
+      run: |
+        # Check that schema.sql is valid
+        if [ ! -f "schema.sql" ]; then
+          echo "❌ schema.sql not found"
+          exit 1
+        fi
+        
+        # Verify required tables
+        for table in "firms" "firm_users" "user_invitations"; do
+          if ! grep -q "CREATE TABLE.*$table" schema.sql; then
+            echo "❌ Table $table not found in schema"
+            exit 1
+          fi
+        done
+        
+        echo "✅ All required tables found in schema"
+    
+    - name: Check for test firm data
+      run: |
+        if grep -q "firm_test_001" schema.sql; then
+          echo "✅ Test firm data found in schema"
+        else
+          echo "❌ Test firm data not found in schema"
+          exit 1
+        fi

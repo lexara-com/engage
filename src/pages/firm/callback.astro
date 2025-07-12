@@ -178,7 +178,13 @@
     async function initAuth0() {
       try {
         const auth0 = await loadAuth0SDK();
-        auth0Client = await auth0.createAuth0Client(auth0Config);
+        auth0Client = await auth0.createAuth0Client({
+          domain: auth0Config.domain,
+          clientId: auth0Config.clientId,
+          authorizationParams: {
+            redirect_uri: auth0Config.redirectUri
+          }
+        });
         return auth0Client;
       } catch (error) {
         console.error('Failed to initialize Auth0:', error);
@@ -220,16 +226,45 @@
           throw new Error('No user data received from Auth0');
         }
 
-        // Create session with REAL user data from Auth0
+        // Fetch user data from our database to get role and firmId
+        let firmUser = null;
+        try {
+          const userResponse = await fetch(window.location.origin + '/api/v1/auth/user-info', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              auth0UserId: user.sub,
+              email: user.email
+            })
+          });
+          
+          if (userResponse.ok) {
+            const userData = await userResponse.json();
+            firmUser = userData.user;
+            console.log('Fetched firm user data:', firmUser);
+          }
+        } catch (error) {
+          console.error('Failed to fetch firm user data:', error);
+        }
+        
+        // Create session with REAL user data from Auth0 and database
         const sessionData = {
           userId: user.sub,
           email: user.email,
           name: user.name || user.nickname || user.given_name || 'User',
-          roles: user['https://lexara.app/roles'] || ['User'], // Auth0 custom claim for roles
-          firmId: user['https://lexara.app/firmId'] || 'default',
+          roles: firmUser?.role ? [firmUser.role] : ['User'], // Use role from database
+          firmId: firmUser?.firm_id || null, // Use firmId from database - no fallback!
           exp: Math.floor(Date.now() / 1000) + (24 * 60 * 60), // 24 hours
           isAuthenticated: true
         };
+        
+        // Ensure we have valid firm data
+        if (!sessionData.firmId && firmUser) {
+          console.error('User has no firm_id:', firmUser);
+          throw new Error('User account is not associated with a firm. Please contact support.');
+        }
 
         // Create session cookie with real Auth0 user data
         // Use httponly would be better but we're setting from JS, so we'll use secure + samesite

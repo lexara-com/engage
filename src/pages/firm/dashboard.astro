@@ -1,4 +1,12 @@
 ---
+import DashboardLayout from '../../layouts/DashboardLayout.astro';
+import WelcomeSection from '../../components/dashboard/WelcomeSection.astro';
+import MetricsCards from '../../components/dashboard/MetricsCards.astro';
+import RecentConversations from '../../components/dashboard/RecentConversations.astro';
+import CustomizeIntake from '../../components/dashboard/CustomizeIntake.astro';
+import QuickActions from '../../components/dashboard/QuickActions.astro';
+import SystemStatus from '../../components/dashboard/SystemStatus.astro';
+
 // Server-side authentication is handled by middleware
 // User info is available via Astro.locals if authenticated
 const user = Astro.locals.user;
@@ -6,415 +14,36 @@ const isAuthenticated = Astro.locals.isAuthenticated;
 const sessionExpiry = Astro.locals.sessionExpiry;
 
 const { title = `Dashboard - Lexara Firm Portal`, description = "Your firm's AI-powered client intake dashboard" } = Astro.props;
+
+// Set cache headers to prevent aggressive caching
+Astro.response.headers.set('Cache-Control', 'no-cache, no-store, must-revalidate, private, max-age=0');
+Astro.response.headers.set('Pragma', 'no-cache');
+Astro.response.headers.set('Expires', '0');
+Astro.response.headers.set('X-Cache-Status', 'BYPASS');
+Astro.response.headers.set('X-Dashboard-Version', 'v2-new-components');
 ---
 
-<!DOCTYPE html>
-<html lang="en" class="scroll-smooth">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>{title}</title>
-  <meta name="description" content={description}>
-  
-  <!-- Favicon -->
-  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
-  
-  <!-- Official Brand Fonts -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&family=Open+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,300;1,400;1,500;1,600;1,700;1,800&display=swap" rel="stylesheet">
-  
-  <style>
-    body {
-      font-family: 'Open Sans', sans-serif;
-      margin: 0;
-      padding: 0;
-      background: #f7fafc;
-      color: #2d3748;
-    }
-    .container {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 1rem;
-    }
-    .header {
-      background: white;
-      border-bottom: 1px solid #e2e8f0;
-      padding: 1rem 0;
-      margin-bottom: 2rem;
-    }
-    .header-content {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 0 1rem;
-    }
-    .logo {
-      display: flex;
-      align-items: center;
-      font-size: 1.5rem;
-      font-weight: bold;
-      color: #2d3748;
-    }
-    .logo-icon {
-      width: 2rem;
-      height: 2rem;
-      background: #667eea;
-      border-radius: 0.5rem;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin-right: 0.75rem;
-      color: white;
-      font-weight: bold;
-    }
-    .user-tile {
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-      background: #f8f9fa;
-      padding: 0.75rem 1rem;
-      border-radius: 0.5rem;
-      border: 1px solid #e2e8f0;
-    }
-    .user-avatar {
-      width: 2.5rem;
-      height: 2.5rem;
-      background: #667eea;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: white;
-      font-weight: bold;
-      font-size: 1rem;
-    }
-    .user-info {
-      display: flex;
-      flex-direction: column;
-    }
-    .user-name {
-      font-weight: 600;
-      color: #2d3748;
-      font-size: 0.875rem;
-    }
-    .user-email {
-      color: #718096;
-      font-size: 0.75rem;
-    }
-    .logout-link {
-      color: #dc3545;
-      text-decoration: none;
-      font-size: 0.875rem;
-      padding: 0.5rem 1rem;
-      border: 1px solid #dc3545;
-      border-radius: 0.25rem;
-      transition: all 0.2s;
-    }
-    .logout-link:hover {
-      background: #dc3545;
-      color: white;
-    }
-    .welcome-section {
-      background: white;
-      border-radius: 0.5rem;
-      padding: 2rem;
-      margin-bottom: 2rem;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    }
-    .debug-section {
-      background: #f8f9fa;
-      border: 1px solid #e2e8f0;
-      border-radius: 0.5rem;
-      padding: 1.5rem;
-      margin: 2rem 0;
-    }
-    .debug-title {
-      font-weight: 600;
-      margin-bottom: 1rem;
-      color: #2d3748;
-    }
-    .debug-data {
-      background: #f1f3f4;
-      padding: 1rem;
-      border-radius: 0.25rem;
-      overflow-x: auto;
-      white-space: pre-wrap;
-      font-family: 'Courier New', monospace;
-      font-size: 0.875rem;
-      line-height: 1.4;
-    }
-    .stats-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-      gap: 1.5rem;
-      margin: 2rem 0;
-    }
-    .stat-card {
-      background: white;
-      border-radius: 0.5rem;
-      padding: 1.5rem;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-      text-align: center;
-    }
-    .stat-number {
-      font-size: 2rem;
-      font-weight: bold;
-      color: #667eea;
-      margin-bottom: 0.5rem;
-    }
-    .stat-label {
-      color: #718096;
-      font-size: 0.875rem;
-    }
-    .quick-actions {
-      background: white;
-      border-radius: 0.5rem;
-      padding: 1.5rem;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    }
-    .action-button {
-      display: inline-block;
-      background: #667eea;
-      color: white;
-      padding: 0.75rem 1.5rem;
-      border-radius: 0.25rem;
-      text-decoration: none;
-      margin: 0.5rem;
-      transition: all 0.2s;
-    }
-    .action-button:hover {
-      background: #5a67d8;
-      transform: translateY(-1px);
-    }
-    .session-status {
-      display: inline-block;
-      padding: 0.25rem 0.75rem;
-      border-radius: 0.25rem;
-      font-size: 0.75rem;
-      font-weight: 500;
-    }
-    .session-valid {
-      background: #d4edda;
-      color: #155724;
-    }
-    .session-expired {
-      background: #f8d7da;
-      color: #721c24;
-    }
-  </style>
-</head>
-<body>
-  <!-- Header with User Tile -->
-  <header class="header">
-    <div class="header-content">
-      <div class="logo">
-        <div class="logo-icon">L</div>
-        <span>Lexara Firm Portal</span>
-      </div>
-      
-      {user ? (
-        <div style="display: flex; align-items: center; gap: 1rem;">
-          <div class="user-tile">
-            <div class="user-avatar">
-              {user.name ? user.name.split(' ').map(n => n[0]).join('').toUpperCase() : user.email[0].toUpperCase()}
-            </div>
-            <div class="user-info">
-              <div class="user-name">{user.name || 'User'}</div>
-              <div class="user-email">{user.email}</div>
-              <div style="font-size: 0.75rem; color: #667eea;">
-                {user.roles?.join(', ') || 'User'} • {user.firmId}
-              </div>
-            </div>
-          </div>
-          <a href="/firm/logout" class="logout-link">Sign Out</a>
-        </div>
-      ) : (
-        <div>Not authenticated</div>
-      )}
-    </div>
-  </header>
-
-  <main class="container">
+<DashboardLayout title={title} description={description}>
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
     <!-- Welcome Section -->
-    <div class="welcome-section">
-      <h1>Welcome back{user?.name ? `, ${user.name}` : ''}!</h1>
-      <p>Here's your firm portal dashboard. You're successfully authenticated and ready to manage your client intake.</p>
+    <WelcomeSection userName={user?.name} />
+    
+    <!-- Metrics Cards -->
+    <MetricsCards />
+    
+    <!-- Main Grid Layout -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-8">
+      <!-- Left Column - Recent Conversations (spans 2 columns on large screens) -->
+      <div class="lg:col-span-2 space-y-6">
+        <RecentConversations />
+      </div>
       
-      <!-- Session Status -->
-      <div style="margin-top: 1rem;">
-        <span class="session-status {isAuthenticated ? 'session-valid' : 'session-expired'}">
-          {isAuthenticated ? '✅ Session Active' : '❌ Session Expired'}
-        </span>
-        {sessionExpiry && (
-          <span style="margin-left: 1rem; font-size: 0.875rem; color: #718096;">
-            Expires: {new Date(sessionExpiry * 1000).toLocaleString()}
-          </span>
-        )}
+      <!-- Right Column - Stacked Components -->
+      <div class="space-y-6">
+        <CustomizeIntake />
+        <QuickActions />
+        <SystemStatus />
       </div>
     </div>
-
-    <!-- Stats Overview -->
-    <div class="stats-grid">
-      <div class="stat-card">
-        <div class="stat-number">5</div>
-        <div class="stat-label">Active Conversations</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-number">12</div>
-        <div class="stat-label">This Week</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-number">89%</div>
-        <div class="stat-label">Success Rate</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-number">24</div>
-        <div class="stat-label">Total Clients</div>
-      </div>
-    </div>
-
-    <!-- Quick Actions -->
-    <div class="quick-actions">
-      <h3>Quick Actions</h3>
-      <a href="/firm/conversations" class="action-button">View Conversations</a>
-      <a href="/firm/settings" class="action-button">Settings</a>
-      <a href="/firm/debug-session" class="action-button">Debug Session</a>
-      <a href="/" class="action-button">Back to Home</a>
-    </div>
-
-    <!-- Chatbot Integration -->
-    {user?.firmId && (
-      <div class="quick-actions" style="margin-top: 2rem;">
-        <h3>Your Firm's Chatbot</h3>
-        <p style="margin-bottom: 1rem; color: #718096;">
-          Share this link with your website visitors to start conversations with your AI assistant.
-        </p>
-        <div style="background: #f8f9fa; padding: 1rem; border-radius: 0.25rem; margin-bottom: 1rem;">
-          <strong>Chatbot URL:</strong>
-          <code style="display: block; margin-top: 0.5rem; padding: 0.5rem; background: white; border: 1px solid #e2e8f0; border-radius: 0.25rem; word-break: break-all;">
-            https://chat.lexara.app?firm={user.firmId}
-          </code>
-        </div>
-        <a 
-          href={`https://chat.lexara.app?firm=${user.firmId}`} 
-          target="_blank" 
-          class="action-button"
-          style="background: #10b981;"
-        >
-          Open Chatbot →
-        </a>
-        <button 
-          onclick={`navigator.clipboard.writeText('https://chat.lexara.app?firm=${user.firmId}'); alert('Chatbot URL copied to clipboard!');`}
-          class="action-button"
-          style="background: #6b7280; cursor: pointer; border: none; font-size: 1rem;"
-        >
-          Copy URL
-        </button>
-      </div>
-    )}
-
-    <!-- Session Debug Information -->
-    <div class="debug-section">
-      <h3 class="debug-title">Session Debug Information</h3>
-      <p style="margin-bottom: 1rem; color: #718096; font-size: 0.875rem;">
-        This information helps debug authentication issues and verify session data.
-      </p>
-      
-      <div class="debug-data" id="session-debug">
-        {JSON.stringify({
-          serverSide: {
-            user: user,
-            isAuthenticated: isAuthenticated,
-            sessionExpiry: sessionExpiry,
-            firmId: user?.firmId,
-            roles: user?.roles
-          },
-          timestamp: new Date().toISOString(),
-          expiresAt: sessionExpiry ? new Date(sessionExpiry * 1000).toISOString() : null,
-          timeLeft: sessionExpiry ? Math.max(0, sessionExpiry - Math.floor(Date.now() / 1000)) + ' seconds' : null
-        }, null, 2)}
-      </div>
-    </div>
-
-    <!-- Client-side Session Info -->
-    <div class="debug-section">
-      <h3 class="debug-title">Client-side Session Information</h3>
-      <div class="debug-data" id="client-session-debug">
-        Loading client-side session data...
-      </div>
-    </div>
-  </main>
-
-  <script>
-    // Display client-side session information
-    function displayClientSessionInfo() {
-      const debugElement = document.getElementById('client-session-debug');
-      
-      // Get all cookies
-      const cookies = {};
-      document.cookie.split(';').forEach(cookie => {
-        const [name, value] = cookie.trim().split('=');
-        if (name && value) {
-          cookies[name] = value;
-        }
-      });
-
-      // Parse firm session if it exists
-      let sessionData = null;
-      const sessionCookie = cookies['firm_session'];
-      if (sessionCookie) {
-        try {
-          sessionData = JSON.parse(decodeURIComponent(sessionCookie));
-        } catch (error) {
-          sessionData = { error: 'Failed to parse session cookie: ' + error.message };
-        }
-      }
-
-      // Get sessionStorage data
-      const sessionStorage = {};
-      try {
-        for (let i = 0; i < window.sessionStorage.length; i++) {
-          const key = window.sessionStorage.key(i);
-          sessionStorage[key] = window.sessionStorage.getItem(key);
-        }
-      } catch (error) {
-        sessionStorage.error = 'Failed to read sessionStorage: ' + error.message;
-      }
-
-      const clientData = {
-        cookies: cookies,
-        firmSession: sessionData,
-        sessionStorage: sessionStorage,
-        url: window.location.href,
-        userAgent: navigator.userAgent,
-        timestamp: new Date().toISOString()
-      };
-
-      debugElement.textContent = JSON.stringify(clientData, null, 2);
-    }
-
-    // Initialize on page load
-    window.addEventListener('load', () => {
-      displayClientSessionInfo();
-      
-      // Update time display every 30 seconds
-      setInterval(() => {
-        const now = new Date();
-        // You can add real-time updates here if needed
-      }, 30000);
-    });
-
-    // Add logout confirmation
-    document.querySelectorAll('a[href="/firm/logout"]').forEach(link => {
-      link.addEventListener('click', (e) => {
-        if (!confirm('Are you sure you want to sign out?')) {
-          e.preventDefault();
-        }
-      });
-    });
-  </script>
-</body>
-</html>
+  </div>
+</DashboardLayout>

@@ -1,0 +1,64 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+
+const user = Astro.locals.user;
+const isAuthenticated = Astro.locals.isAuthenticated;
+const sessionExpiry = Astro.locals.sessionExpiry;
+---
+
+<BaseLayout title="Session Debug - Lexara" description="Debug session information">
+  <div class="max-w-4xl mx-auto px-4 py-8">
+    <h1 class="text-3xl font-bold mb-8">Session Debug Information</h1>
+    
+    <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
+      <h2 class="text-xl font-semibold mb-4">Current Session</h2>
+      <pre class="bg-gray-100 p-4 rounded overflow-x-auto text-sm">{JSON.stringify({ user, isAuthenticated, sessionExpiry }, null, 2)}</pre>
+    </div>
+
+    <div class="bg-white rounded-lg shadow-sm p-6">
+      <h2 class="text-xl font-semibold mb-4">Update Session Role</h2>
+      <p class="text-gray-600 mb-4">Click the button below to add admin role to your current session:</p>
+      <button id="add-admin-role" class="bg-lexara-darkNavy text-white px-4 py-2 rounded hover:bg-lexara-lightNavy">
+        Add Admin Role
+      </button>
+      <div id="message" class="mt-4"></div>
+    </div>
+  </div>
+</BaseLayout>
+
+<script>
+  document.getElementById('add-admin-role')?.addEventListener('click', () => {
+    // Get current session
+    const cookies = document.cookie.split(';').map(c => c.trim());
+    const sessionCookie = cookies.find(c => c.startsWith('firm_session='));
+    
+    if (sessionCookie) {
+      try {
+        const sessionValue = decodeURIComponent(sessionCookie.split('=')[1]);
+        const session = JSON.parse(sessionValue);
+        
+        // Update roles to include admin
+        session.roles = ['FirmAdmin', 'firm:admin'];
+        
+        // Ensure firm ID is set
+        if (!session.firmId) {
+          session.firmId = 'firm_test_001';
+        }
+        
+        // Update the cookie
+        const newCookie = `firm_session=${encodeURIComponent(JSON.stringify(session))}; path=/; max-age=${24 * 60 * 60}; samesite=lax`;
+        document.cookie = newCookie;
+        
+        document.getElementById('message').innerHTML = '<p class="text-green-600">✅ Admin role added! Refreshing page...</p>';
+        
+        setTimeout(() => {
+          window.location.reload();
+        }, 1000);
+      } catch (error) {
+        document.getElementById('message').innerHTML = '<p class="text-red-600">❌ Error updating session: ' + error.message + '</p>';
+      }
+    } else {
+      document.getElementById('message').innerHTML = '<p class="text-red-600">❌ No session found</p>';
+    }
+  });
+</script>

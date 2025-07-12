@@ -1,0 +1,466 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import ProtectedRoute from '../../components/ProtectedRoute.astro';
+---
+
+<ProtectedRoute requiredRoles={['firm:admin']}>
+  <BaseLayout 
+    title="User Management - Lexara Firm Portal" 
+    description="Manage users and permissions for your law firm"
+  >
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <!-- Page Header -->
+      <div class="mb-8">
+        <h1 class="text-3xl font-bold text-lexara-secondary">User Management</h1>
+        <p class="mt-2 text-lexara-gray">Manage your firm's users, roles, and permissions</p>
+      </div>
+
+      <!-- Add User Button -->
+      <div class="mb-6 flex justify-between items-center">
+        <div class="flex items-center space-x-4">
+          <input 
+            type="text" 
+            id="user-search" 
+            placeholder="Search users..." 
+            class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-lexara-primary focus:border-transparent"
+          >
+        </div>
+        <button 
+          id="add-user-btn"
+          class="bg-lexara-primary text-white px-4 py-2 rounded-lg hover:bg-blue-800 transition-colors flex items-center space-x-2"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+          </svg>
+          <span>Add User</span>
+        </button>
+      </div>
+
+      <!-- Users Table -->
+      <div class="bg-white rounded-lg shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+              <tr>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Active</th>
+                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="users-table-body" class="bg-white divide-y divide-gray-200">
+              <!-- Users will be loaded here -->
+              <tr>
+                <td colspan="6" class="px-6 py-12 text-center text-gray-500">
+                  <div class="flex flex-col items-center">
+                    <svg class="w-12 h-12 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                    </svg>
+                    <p>Loading users...</p>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Recent Invitations -->
+      <div class="mt-8">
+        <h2 class="text-xl font-semibold text-lexara-secondary mb-4">Pending Invitations</h2>
+        <div class="bg-white rounded-lg shadow-sm overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+              <thead class="bg-gray-50">
+                <tr>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Invited By</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sent</th>
+                  <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="invitations-table-body" class="bg-white divide-y divide-gray-200">
+                <!-- Invitations will be loaded here -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Add User Modal -->
+    <div id="add-user-modal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+      <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-lg bg-white">
+        <h3 class="text-lg font-bold text-lexara-secondary mb-4">Invite New User</h3>
+        <form id="invite-user-form">
+          <div class="mb-4">
+            <label for="email" class="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
+            <input 
+              type="email" 
+              id="email" 
+              name="email" 
+              required
+              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-lexara-primary focus:border-transparent"
+            >
+          </div>
+          
+          <div class="grid grid-cols-2 gap-4 mb-4">
+            <div>
+              <label for="firstName" class="block text-sm font-medium text-gray-700 mb-2">First Name</label>
+              <input 
+                type="text" 
+                id="firstName" 
+                name="firstName" 
+                required
+                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-lexara-primary focus:border-transparent"
+              >
+            </div>
+            <div>
+              <label for="lastName" class="block text-sm font-medium text-gray-700 mb-2">Last Name</label>
+              <input 
+                type="text" 
+                id="lastName" 
+                name="lastName" 
+                required
+                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-lexara-primary focus:border-transparent"
+              >
+            </div>
+          </div>
+
+          <div class="mb-4">
+            <label for="role" class="block text-sm font-medium text-gray-700 mb-2">Role</label>
+            <select 
+              id="role" 
+              name="role" 
+              required
+              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-lexara-primary focus:border-transparent"
+            >
+              <option value="">Select a role</option>
+              <option value="firm:admin">Admin</option>
+              <option value="firm:lawyer">Lawyer</option>
+              <option value="firm:staff">Staff</option>
+              <option value="firm:viewer">Viewer</option>
+            </select>
+          </div>
+
+          <div class="mb-4">
+            <label for="message" class="block text-sm font-medium text-gray-700 mb-2">Personal Message (Optional)</label>
+            <textarea 
+              id="message" 
+              name="message" 
+              rows="3"
+              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-lexara-primary focus:border-transparent"
+              placeholder="Add a personal message to the invitation email..."
+            ></textarea>
+          </div>
+
+          <div id="invite-error" class="hidden mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg"></div>
+          <div id="invite-success" class="hidden mb-4 p-3 bg-green-50 border border-green-200 text-green-700 rounded-lg"></div>
+
+          <div class="flex justify-end space-x-3">
+            <button 
+              type="button" 
+              id="cancel-invite-btn"
+              class="px-4 py-2 text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 transition-colors"
+            >
+              Cancel
+            </button>
+            <button 
+              type="submit"
+              class="px-4 py-2 bg-lexara-primary text-white rounded-lg hover:bg-blue-800 transition-colors"
+            >
+              Send Invitation
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </BaseLayout>
+</ProtectedRoute>
+
+<script>
+  // Load users and invitations when page loads
+  document.addEventListener('DOMContentLoaded', async () => {
+    await loadUsers();
+    await loadInvitations();
+    setupEventListeners();
+  });
+
+  async function loadUsers() {
+    try {
+      const response = await fetch('/api/firm/users', {
+        headers: {
+          'Accept': 'application/json',
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to load users');
+      }
+
+      const data = await response.json();
+      displayUsers(data.users || []);
+    } catch (error) {
+      console.error('Error loading users:', error);
+      document.getElementById('users-table-body').innerHTML = `
+        <tr>
+          <td colspan="6" class="px-6 py-12 text-center text-red-600">
+            Failed to load users. Please refresh the page.
+          </td>
+        </tr>
+      `;
+    }
+  }
+
+  async function loadInvitations() {
+    try {
+      const response = await fetch('/api/firm/users/invite', {
+        headers: {
+          'Accept': 'application/json',
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to load invitations');
+      }
+
+      const data = await response.json();
+      displayInvitations(data.invitations || []);
+    } catch (error) {
+      console.error('Error loading invitations:', error);
+      document.getElementById('invitations-table-body').innerHTML = `
+        <tr>
+          <td colspan="6" class="px-6 py-6 text-center text-gray-500">
+            No pending invitations
+          </td>
+        </tr>
+      `;
+    }
+  }
+
+  function displayUsers(users) {
+    const tbody = document.getElementById('users-table-body');
+    
+    if (users.length === 0) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="6" class="px-6 py-12 text-center text-gray-500">
+            No users found. Start by inviting team members.
+          </td>
+        </tr>
+      `;
+      return;
+    }
+
+    tbody.innerHTML = users.map(user => `
+      <tr>
+        <td class="px-6 py-4 whitespace-nowrap">
+          <div class="flex items-center">
+            <div class="flex-shrink-0 h-10 w-10">
+              <div class="h-10 w-10 rounded-full bg-lexara-primary flex items-center justify-center">
+                <span class="text-white font-medium">${user.name.charAt(0).toUpperCase()}</span>
+              </div>
+            </div>
+            <div class="ml-4">
+              <div class="text-sm font-medium text-gray-900">${user.name}</div>
+            </div>
+          </div>
+        </td>
+        <td class="px-6 py-4 whitespace-nowrap">
+          <div class="text-sm text-gray-900">${user.email}</div>
+        </td>
+        <td class="px-6 py-4 whitespace-nowrap">
+          <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+            ${formatRole(user.role)}
+          </span>
+        </td>
+        <td class="px-6 py-4 whitespace-nowrap">
+          <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${user.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}">
+            ${user.is_active ? 'Active' : 'Inactive'}
+          </span>
+        </td>
+        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+          ${user.last_login ? new Date(user.last_login).toLocaleDateString() : 'Never'}
+        </td>
+        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+          <button class="text-lexara-primary hover:text-blue-900 mr-3" onclick="editUser('${user.id}')">Edit</button>
+          <button class="text-red-600 hover:text-red-900" onclick="removeUser('${user.id}')">Remove</button>
+        </td>
+      </tr>
+    `).join('');
+  }
+
+  function displayInvitations(invitations) {
+    const tbody = document.getElementById('invitations-table-body');
+    
+    if (invitations.length === 0) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="6" class="px-6 py-6 text-center text-gray-500">
+            No pending invitations
+          </td>
+        </tr>
+      `;
+      return;
+    }
+
+    tbody.innerHTML = invitations.map(invitation => `
+      <tr>
+        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${invitation.email}</td>
+        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${invitation.firstName} ${invitation.lastName}</td>
+        <td class="px-6 py-4 whitespace-nowrap">
+          <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+            ${formatRole(invitation.role)}
+          </span>
+        </td>
+        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${invitation.invitedBy}</td>
+        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+          ${new Date(invitation.createdAt).toLocaleDateString()}
+        </td>
+        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+          <button class="text-lexara-primary hover:text-blue-900 mr-3" onclick="resendInvitation('${invitation.id}')">Resend</button>
+          <button class="text-red-600 hover:text-red-900" onclick="cancelInvitation('${invitation.id}')">Cancel</button>
+        </td>
+      </tr>
+    `).join('');
+  }
+
+  function formatRole(role) {
+    const roleMap = {
+      'firm:admin': 'Admin',
+      'firm:lawyer': 'Lawyer',
+      'firm:staff': 'Staff',
+      'firm:viewer': 'Viewer'
+    };
+    return roleMap[role] || role;
+  }
+
+  function setupEventListeners() {
+    // Add user button
+    document.getElementById('add-user-btn').addEventListener('click', () => {
+      document.getElementById('add-user-modal').classList.remove('hidden');
+    });
+
+    // Cancel button
+    document.getElementById('cancel-invite-btn').addEventListener('click', () => {
+      document.getElementById('add-user-modal').classList.add('hidden');
+      document.getElementById('invite-user-form').reset();
+      hideMessages();
+    });
+
+    // Modal background click
+    document.getElementById('add-user-modal').addEventListener('click', (e) => {
+      if (e.target.id === 'add-user-modal') {
+        document.getElementById('add-user-modal').classList.add('hidden');
+        document.getElementById('invite-user-form').reset();
+        hideMessages();
+      }
+    });
+
+    // Invite form submission
+    document.getElementById('invite-user-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      await sendInvitation();
+    });
+
+    // Search functionality
+    document.getElementById('user-search').addEventListener('input', (e) => {
+      const searchTerm = e.target.value.toLowerCase();
+      filterUsers(searchTerm);
+    });
+  }
+
+  async function sendInvitation() {
+    const form = document.getElementById('invite-user-form');
+    const formData = new FormData(form);
+    const data = Object.fromEntries(formData.entries());
+
+    try {
+      hideMessages();
+      const response = await fetch('/api/firm/users/invite', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data)
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        showSuccess('Invitation sent successfully!');
+        setTimeout(() => {
+          document.getElementById('add-user-modal').classList.add('hidden');
+          form.reset();
+          hideMessages();
+          loadInvitations(); // Reload invitations
+        }, 2000);
+      } else {
+        showError(result.error || 'Failed to send invitation');
+      }
+    } catch (error) {
+      console.error('Error sending invitation:', error);
+      showError('An error occurred while sending the invitation');
+    }
+  }
+
+  function showError(message) {
+    const errorDiv = document.getElementById('invite-error');
+    errorDiv.textContent = message;
+    errorDiv.classList.remove('hidden');
+  }
+
+  function showSuccess(message) {
+    const successDiv = document.getElementById('invite-success');
+    successDiv.textContent = message;
+    successDiv.classList.remove('hidden');
+  }
+
+  function hideMessages() {
+    document.getElementById('invite-error').classList.add('hidden');
+    document.getElementById('invite-success').classList.add('hidden');
+  }
+
+  function filterUsers(searchTerm) {
+    const rows = document.querySelectorAll('#users-table-body tr');
+    rows.forEach(row => {
+      const text = row.textContent.toLowerCase();
+      row.style.display = text.includes(searchTerm) ? '' : 'none';
+    });
+  }
+
+  // Placeholder functions for user actions
+  window.editUser = (userId) => {
+    console.log('Edit user:', userId);
+    // TODO: Implement edit functionality
+  };
+
+  window.removeUser = (userId) => {
+    if (confirm('Are you sure you want to remove this user?')) {
+      console.log('Remove user:', userId);
+      // TODO: Implement remove functionality
+    }
+  };
+
+  window.resendInvitation = (invitationId) => {
+    console.log('Resend invitation:', invitationId);
+    // TODO: Implement resend functionality
+  };
+
+  window.cancelInvitation = (invitationId) => {
+    if (confirm('Are you sure you want to cancel this invitation?')) {
+      console.log('Cancel invitation:', invitationId);
+      // TODO: Implement cancel functionality
+    }
+  };
+</script>
+
+<style>
+  #add-user-modal {
+    backdrop-filter: blur(4px);
+  }
+</style>

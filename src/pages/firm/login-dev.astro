@@ -1,0 +1,228 @@
+---
+// Development login page that allows custom redirect URIs
+// WARNING: This should ONLY be used in development environments
+---
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Development Login - Lexara Firm Portal</title>
+  <meta name="description" content="Development login page for testing">
+  
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #f5f5f5;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .container {
+      background: white;
+      border-radius: 8px;
+      padding: 2rem;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      max-width: 600px;
+      width: 100%;
+    }
+    h1 {
+      color: #333;
+      margin-bottom: 0.5rem;
+    }
+    .warning {
+      background: #fff3cd;
+      border: 1px solid #ffeaa7;
+      color: #856404;
+      padding: 1rem;
+      border-radius: 4px;
+      margin-bottom: 1.5rem;
+    }
+    .form-group {
+      margin-bottom: 1rem;
+    }
+    label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 600;
+      color: #555;
+    }
+    input, select {
+      width: 100%;
+      padding: 0.75rem;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 1rem;
+      box-sizing: border-box;
+    }
+    input:focus, select:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+    .button {
+      background: #667eea;
+      color: white;
+      padding: 0.75rem 1.5rem;
+      border: none;
+      border-radius: 4px;
+      font-size: 1rem;
+      cursor: pointer;
+      width: 100%;
+      margin-top: 1rem;
+    }
+    .button:hover {
+      background: #5a67d8;
+    }
+    .preset-urls {
+      margin-top: 1rem;
+      padding-top: 1rem;
+      border-top: 1px solid #eee;
+    }
+    .preset-button {
+      background: #e2e8f0;
+      color: #2d3748;
+      padding: 0.5rem 1rem;
+      border: none;
+      border-radius: 4px;
+      font-size: 0.875rem;
+      cursor: pointer;
+      margin: 0.25rem;
+    }
+    .preset-button:hover {
+      background: #cbd5e0;
+    }
+    code {
+      background: #f7fafc;
+      padding: 0.2rem 0.4rem;
+      border-radius: 3px;
+      font-family: monospace;
+      font-size: 0.875rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🔧 Development Login</h1>
+    
+    <div class="warning">
+      <strong>⚠️ Development Only:</strong> This page allows custom redirect URIs for testing. 
+      Make sure these URLs are added to Auth0's allowed callback URLs.
+    </div>
+
+    <form id="login-form">
+      <div class="form-group">
+        <label for="redirect-uri">Redirect URI:</label>
+        <input 
+          type="url" 
+          id="redirect-uri" 
+          name="redirect-uri"
+          placeholder="https://example.pages.dev/firm/callback"
+          required
+        >
+        <small style="color: #666; display: block; margin-top: 0.25rem;">
+          This must be added to Auth0's allowed callback URLs
+        </small>
+      </div>
+
+      <div class="form-group">
+        <label for="return-to">Return To (after login):</label>
+        <input 
+          type="text" 
+          id="return-to" 
+          name="return-to"
+          value="/firm/dashboard"
+          placeholder="/firm/dashboard"
+        >
+      </div>
+
+      <div class="preset-urls">
+        <label>Quick presets:</label>
+        <button type="button" class="preset-button" onclick="setPreset('localhost')">
+          Localhost
+        </button>
+        <button type="button" class="preset-button" onclick="setPreset('dev-custom')">
+          Dev Custom Domain
+        </button>
+        <button type="button" class="preset-button" onclick="setPreset('current')">
+          Current Origin
+        </button>
+      </div>
+
+      <button type="submit" class="button">
+        Login with Auth0
+      </button>
+    </form>
+
+    <div style="margin-top: 2rem; padding-top: 1rem; border-top: 1px solid #eee; color: #666; font-size: 0.875rem;">
+      <strong>Current Auth0 Config:</strong><br>
+      Domain: <code>dev-sv0pf6cz2530xz0o.us.auth0.com</code><br>
+      Client ID: <code>OjsR6To3nDqYDLVHtRjDFpk7wRcCfrfi</code>
+    </div>
+  </div>
+
+  <script>
+    function setPreset(type) {
+      const redirectInput = document.getElementById('redirect-uri');
+      
+      switch(type) {
+        case 'localhost':
+          redirectInput.value = 'http://localhost:4321/firm/callback';
+          break;
+        case 'dev-custom':
+          redirectInput.value = 'https://dev.console.lexara.app/firm/callback';
+          break;
+        case 'current':
+          redirectInput.value = window.location.origin + '/firm/callback';
+          break;
+      }
+    }
+
+    // Set current origin as default
+    window.addEventListener('load', () => {
+      const redirectInput = document.getElementById('redirect-uri');
+      if (!redirectInput.value) {
+        redirectInput.value = window.location.origin + '/firm/callback';
+      }
+    });
+
+    // Handle form submission
+    document.getElementById('login-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const redirectUri = document.getElementById('redirect-uri').value;
+      const returnTo = document.getElementById('return-to').value || '/firm/dashboard';
+      
+      // Store return URL for callback
+      sessionStorage.setItem('firm_auth_return_to', returnTo);
+      
+      // Load Auth0 SDK
+      const script = document.createElement('script');
+      script.src = 'https://cdn.auth0.com/js/auth0-spa-js/2.0/auth0-spa-js.production.js';
+      script.onload = async () => {
+        try {
+          const auth0Client = await auth0.createAuth0Client({
+            domain: 'dev-sv0pf6cz2530xz0o.us.auth0.com',
+            clientId: 'OjsR6To3nDqYDLVHtRjDFpk7wRcCfrfi',
+            redirectUri: redirectUri,
+            scope: 'openid profile email'
+          });
+          
+          await auth0Client.loginWithRedirect({
+            authorizationParams: {
+              redirect_uri: redirectUri,
+              scope: 'openid profile email'
+            }
+          });
+        } catch (error) {
+          alert('Login error: ' + error.message);
+        }
+      };
+      document.head.appendChild(script);
+    });
+  </script>
+</body>
+</html>

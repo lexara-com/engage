@@ -1,0 +1,34 @@
+---
+export interface Props {
+  requiredRoles?: string[];
+  redirectTo?: string;
+}
+
+const { requiredRoles = [], redirectTo = '/firm/login' } = Astro.props;
+const { isAuthenticated, user } = Astro.locals;
+
+// Check if user is authenticated
+if (!isAuthenticated) {
+  return Astro.redirect(redirectTo + '?returnTo=' + encodeURIComponent(Astro.url.pathname));
+}
+
+// Check if user has required roles
+if (requiredRoles.length > 0 && user) {
+  const userRoles = user.roles || [];
+  const hasRequiredRole = requiredRoles.some(role => userRoles.includes(role));
+  
+  console.log('ProtectedRoute check:', {
+    requiredRoles,
+    userRoles,
+    hasRequiredRole,
+    user: user.email
+  });
+  
+  if (!hasRequiredRole) {
+    // User doesn't have required role, redirect to dashboard with error
+    return Astro.redirect('/firm/dashboard?error=unauthorized');
+  }
+}
+---
+
+<slot />

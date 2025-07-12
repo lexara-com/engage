@@ -87,20 +87,21 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 </BaseLayout>
 
 <script>
-  import { initializeAuth, isAuthenticated } from '../../utils/auth';
+  // Temporarily disabled - using different auth flow
+  // import { initializeAuth, isAuthenticated } from '../../utils/auth';
   
-  document.addEventListener('DOMContentLoaded', async () => {
-    try {
-      await initializeAuth();
+  // document.addEventListener('DOMContentLoaded', async () => {
+  //   try {
+  //     await initializeAuth();
       
-      // If user is already authenticated, redirect to dashboard
-      const isAuth = await isAuthenticated();
-      if (isAuth) {
-        window.location.href = '/firm/dashboard';
-      }
-    } catch (error) {
-      console.error('Auth check failed:', error);
-      // Continue showing landing page
-    }
-  });
+  //     // If user is already authenticated, redirect to dashboard
+  //     const isAuth = await isAuthenticated();
+  //     if (isAuth) {
+  //       window.location.href = '/firm/dashboard';
+  //     }
+  //   } catch (error) {
+  //     console.error('Auth check failed:', error);
+  //     // Continue showing landing page
+  //   }
+  // });
 </script>

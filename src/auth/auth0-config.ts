@@ -3,7 +3,19 @@
 
 /// <reference types="@cloudflare/workers-types" />
 
-import { Env } from '@/types/shared';
+// import { Env } from '@/types/shared';
+
+// Define Env interface locally for now
+interface Env {
+  AUTH0_DOMAIN?: string;
+  AUTH0_CLIENT_ID?: string;
+  AUTH0_CLIENT_SECRET?: string;
+  AUTH0_AUDIENCE?: string;
+  AUTH0_MGMT_CLIENT_ID?: string;
+  AUTH0_MGMT_CLIENT_SECRET?: string;
+  JWT_SECRET?: string;
+  [key: string]: any;
+}
 
 export interface Auth0Config {
   domain: string;

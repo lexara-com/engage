@@ -1,0 +1,181 @@
+---
+// This is a client-side component for editing users
+export interface Props {
+  modalId?: string;
+}
+
+const { modalId = 'editUserModal' } = Astro.props;
+---
+
+<div id={modalId} class="fixed inset-0 z-50 hidden">
+  <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+    <div class="fixed inset-0 transition-opacity" aria-hidden="true">
+      <div class="absolute inset-0 bg-gray-500 bg-opacity-75"></div>
+    </div>
+
+    <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+
+    <div class="inline-block align-bottom bg-white rounded-lg px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full sm:p-6">
+      <form id={`${modalId}Form`}>
+        <div>
+          <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">
+            Edit User
+          </h3>
+          
+          <div class="space-y-4">
+            <!-- User Info (read-only) -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700">Name</label>
+              <p id={`${modalId}UserName`} class="mt-1 text-sm text-gray-900">-</p>
+            </div>
+            
+            <div>
+              <label class="block text-sm font-medium text-gray-700">Email</label>
+              <p id={`${modalId}UserEmail`} class="mt-1 text-sm text-gray-900">-</p>
+            </div>
+            
+            <!-- Editable fields -->
+            <div>
+              <label for={`${modalId}Role`} class="block text-sm font-medium text-gray-700">
+                Role <span class="text-red-500">*</span>
+              </label>
+              <select 
+                id={`${modalId}Role`}
+                name="role"
+                required
+                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-lexara-darkNavy focus:ring-lexara-darkNavy"
+              >
+                <option value="firm:admin">Administrator</option>
+                <option value="firm:lawyer">Lawyer</option>
+                <option value="firm:staff">Staff</option>
+                <option value="firm:viewer">Viewer</option>
+              </select>
+              <p class="mt-1 text-xs text-gray-500">
+                Administrators have full access to all firm features
+              </p>
+            </div>
+            
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">
+                Status
+              </label>
+              <div class="space-y-2">
+                <label class="flex items-center">
+                  <input 
+                    type="radio" 
+                    id={`${modalId}StatusActive`}
+                    name="status" 
+                    value="active"
+                    class="h-4 w-4 text-lexara-darkNavy focus:ring-lexara-darkNavy border-gray-300"
+                  />
+                  <span class="ml-2 text-sm text-gray-700">Active - User can access the system</span>
+                </label>
+                <label class="flex items-center">
+                  <input 
+                    type="radio" 
+                    id={`${modalId}StatusInactive`}
+                    name="status" 
+                    value="inactive"
+                    class="h-4 w-4 text-lexara-darkNavy focus:ring-lexara-darkNavy border-gray-300"
+                  />
+                  <span class="ml-2 text-sm text-gray-700">Inactive - User cannot access the system</span>
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="mt-5 sm:mt-6 sm:grid sm:grid-cols-2 sm:gap-3 sm:grid-flow-row-dense">
+          <button 
+            type="submit"
+            class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-lexara-darkNavy text-base font-medium text-white hover:bg-lexara-lightNavy focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-lexara-darkNavy sm:col-start-2 sm:text-sm"
+          >
+            Save Changes
+          </button>
+          <button 
+            type="button"
+            id={`${modalId}CancelButton`}
+            class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-lexara-darkNavy sm:mt-0 sm:col-start-1 sm:text-sm"
+          >
+            Cancel
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script define:vars={{ modalId }}>
+  // Make the edit user function available globally
+  window.showEditUserModal = async function(userId, userData) {
+    const modal = document.getElementById(modalId);
+    const form = document.getElementById(`${modalId}Form`);
+    const userName = document.getElementById(`${modalId}UserName`);
+    const userEmail = document.getElementById(`${modalId}UserEmail`);
+    const roleSelect = document.getElementById(`${modalId}Role`);
+    const statusActive = document.getElementById(`${modalId}StatusActive`);
+    const statusInactive = document.getElementById(`${modalId}StatusInactive`);
+    
+    if (!modal || !form) return;
+    
+    // Set user data
+    if (userName) userName.textContent = userData.name;
+    if (userEmail) userEmail.textContent = userData.email;
+    if (roleSelect) roleSelect.value = userData.role;
+    
+    // Set status
+    if (userData.isActive) {
+      if (statusActive) statusActive.checked = true;
+    } else {
+      if (statusInactive) statusInactive.checked = true;
+    }
+    
+    // Show modal
+    modal.classList.remove('hidden');
+    
+    // Handle form submission
+    form.onsubmit = async (e) => {
+      e.preventDefault();
+      
+      const formData = new FormData(form);
+      const updates = {
+        role: formData.get('role'),
+        isActive: formData.get('status') === 'active'
+      };
+      
+      try {
+        const response = await fetch(`/api/firm/users/${userId}`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(updates),
+        });
+        
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.error || 'Failed to update user');
+        }
+        
+        // Hide modal
+        modal.classList.add('hidden');
+        
+        // Reload users
+        if (window.loadUsers) window.loadUsers();
+        if (window.loadUserStats) window.loadUserStats();
+        
+        alert('User updated successfully');
+      } catch (error) {
+        console.error('Failed to update user:', error);
+        alert(error.message || 'Failed to update user');
+      }
+    };
+  };
+  
+  // Cancel button
+  const cancelButton = document.getElementById(`${modalId}CancelButton`);
+  cancelButton?.addEventListener('click', () => {
+    const modal = document.getElementById(modalId);
+    modal?.classList.add('hidden');
+  });
+</script>

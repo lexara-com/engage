@@ -7,5 +7,19 @@ npx lint-staged
 # Run TypeScript type checking on staged files
 npm run typecheck
 
+# Check D1 binding usage pattern
+echo "Checking D1 binding usage..."
+if grep -r "locals\.runtime\.env\.DB" src/pages/api/ 2>/dev/null; then
+  echo "❌ Found old D1 binding pattern (locals.runtime.env.DB)"
+  echo "Please use context.env.DB instead"
+  exit 1
+fi
+
 # Run critical tests (excluding long-running e2e tests)
 npm run test -- --run tests/unit/
+
+# Run D1 binding tests if API files changed
+if git diff --cached --name-only | grep -q "src/pages/api/"; then
+  echo "API files changed, running D1 binding tests..."
+  npm run test:d1
+fi

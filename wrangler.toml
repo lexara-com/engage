@@ -7,6 +7,8 @@ compatibility_flags = ["nodejs_compat"]
 [site]
 bucket = "./dist"
 
+# D1 Database bindings - configured per environment below
+
 # Development environment
 [env.dev]
 name = "lexara-homepage-dev"
@@ -15,6 +17,12 @@ routes = [
   { pattern = "dev-www.lexara.app/*", zone_name = "lexara.app" }
 ]
 
+# D1 Database for development
+[[env.dev.d1_databases]]
+binding = "DB"
+database_name = "dev-lexara-firm-portal"
+database_id = "c856a886-cf6b-421e-b24e-d24a441c0426"
+
 # Staging environment
 [env.staging]
 name = "lexara-homepage-staging"
@@ -22,6 +30,12 @@ workers_dev = false
 routes = [
   { pattern = "stage-www.lexara.app/*", zone_name = "lexara.app" }
 ]
+
+# D1 Database for staging
+[[env.staging.d1_databases]]
+binding = "DB"
+database_name = "staging-lexara-firm-portal"
+database_id = "00000000-0000-0000-0000-000000000001" # Replace with actual ID from 'wrangler d1 create staging-lexara-firm-portal'
 
 # Production environment
 [env.production]
@@ -32,16 +46,35 @@ routes = [
   { pattern = "www.lexara.app/*", zone_name = "lexara.app" }
 ]
 
+# D1 Database for production
+[[env.production.d1_databases]]
+binding = "DB"
+database_name = "prod-lexara-firm-portal"
+database_id = "00000000-0000-0000-0000-000000000002" # Replace with actual ID from 'wrangler d1 create prod-lexara-firm-portal'
+
 # Environment variables
 [env.dev.vars]
 ENVIRONMENT = "development"
 LOG_LEVEL = "debug"
 API_URL = "https://api-dev.lexara.app"
+AUTH0_DOMAIN = "dev-sv0pf6cz2530xz0o.us.auth0.com"
+AUTH0_CLIENT_ID = "OjsR6To3nDqYDLVHtRjDFpk7wRcCfrfi"
+AUTH0_AUDIENCE = "https://api.lexara.app"
+# Secrets should be set via: wrangler secret put AUTH0_CLIENT_SECRET --env dev
+# wrangler secret put AUTH0_MGMT_CLIENT_ID --env dev
+# wrangler secret put AUTH0_MGMT_CLIENT_SECRET --env dev
+# wrangler secret put JWT_SECRET --env dev
 
 [env.staging.vars]
 ENVIRONMENT = "staging"
 LOG_LEVEL = "info"
+AUTH0_DOMAIN = "dev-sv0pf6cz2530xz0o.us.auth0.com"
+AUTH0_CLIENT_ID = "OjsR6To3nDqYDLVHtRjDFpk7wRcCfrfi"
+AUTH0_AUDIENCE = "https://api.lexara.app"
 
 [env.production.vars]
 ENVIRONMENT = "production"
 LOG_LEVEL = "info"
+AUTH0_DOMAIN = "lexara.us.auth0.com" # Update with production domain
+AUTH0_CLIENT_ID = "your-production-client-id" # Update with production client ID
+AUTH0_AUDIENCE = "https://api.lexara.app"

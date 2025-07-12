@@ -26,7 +26,8 @@ const PROTECTED_ROUTES = [
   '/firm/conversations', 
   '/firm/settings',
   '/firm/settings-new',
-  '/firm/settings-old'
+  '/firm/settings-old',
+  '/firm/users'
 ];
 
 // Routes that should skip authentication (public routes)
